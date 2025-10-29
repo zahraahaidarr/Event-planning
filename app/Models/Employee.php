@@ -9,16 +9,16 @@ class Employee extends Model
 {
     use HasFactory;
 
-    // Table name (optional, Laravel will guess 'employees')
+    // Table name
     protected $table = 'employees';
 
-    // Primary key matches your migration
+    // Primary key (as seen in phpMyAdmin)
     protected $primaryKey = 'employee_id';
 
-    // Your table *does* include timestamps, so keep this true
+    // Timestamps are present in your table
     public $timestamps = true;
 
-    // Allow mass assignment
+    // Fields that can be mass-assigned
     protected $fillable = [
         'user_id',
         'position',
@@ -27,8 +27,14 @@ class Employee extends Model
         'is_active',
     ];
 
+    // Automatically cast types for convenience
+    protected $casts = [
+        'hire_date' => 'date',
+        'is_active' => 'boolean',
+    ];
+
     /**
-     * Each employee belongs to one user.
+     * Relation: each employee belongs to one user.
      */
     public function user()
     {
@@ -36,7 +42,8 @@ class Employee extends Model
     }
 
     /**
-     * If you later use announcements (posted_by = employee_id).
+     * (Optional) Relation if you later link announcements.
+     * Remove if not used yet.
      */
     public function announcements()
     {

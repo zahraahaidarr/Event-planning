@@ -4,10 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Volunteer Oversight - Admin Portal</title>
 
     {{-- Static assets served from /public --}}
     <link rel="stylesheet" href="{{ asset('css/Admin/volunteers.css') }}">
+    <script>
+  window.initialVolunteers = @json($volunteers ?? []);
+</script>
     <script src="{{ asset('js/Admin/volunteers.js') }}" defer></script>
 </head>
 <body>
@@ -94,8 +98,10 @@
                     <label class="filter-label">Approval</label>
                     <select class="filter-select" id="filterApproval" onchange="renderVolunteers()">
                         <option value="">All</option>
-                        <option value="approved">Approved</option>
                         <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="suspended">Suspended</option>
                     </select>
                 </div>
 
@@ -116,6 +122,7 @@
                         <option value="active">Active</option>
                         <option value="suspended">Suspended</option>
                         <option value="banned">Banned</option>
+                        <option value="pending">Pending</option>
                     </select>
                 </div>
             </div>

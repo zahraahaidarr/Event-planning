@@ -93,4 +93,49 @@ class Worker extends Model
     {
         return $query->where('verification_status', 'VERIFIED');
     }
+
+    public function currentRole()
+{
+    return $this->hasOneThrough(
+        WorkRole::class,
+        WorkerReservation::class,
+        'worker_id',   // FK on WorkerReservation
+        'role_id',     // FK on WorkRole
+        'worker_id',   // Local key on Worker
+        'work_role_id' // Local key on WorkerReservation
+    );
+}
+
+public function getApprovalStatusColorAttribute()
+{
+    return match ($this->approval_status) {
+        'APPROVED'  => 'success',
+        'PENDING'   => 'warning',
+        'REJECTED'  => 'danger',
+        'SUSPENDED' => 'muted',
+        default     => 'muted',
+    };
+}
+// app/Models/Worker.php
+protected static function booted()
+{
+    static::updated(function ($worker) {
+        if ($worker->wasChanged('approval_status')) {
+            // Reuse the same mapping (duplicate or create a domain service)
+            $worker->load('user:id,status');
+            if ($worker->user) {
+                $approval = strtoupper((string) $worker->approval_status);
+                $worker->user->status = match ($approval) {
+                    'APPROVED'  => 'ACTIVE',
+                    'SUSPENDED' => 'SUSPENDED',
+                    'REJECTED'  => 'BANNED',
+                    default     => 'PENDING',
+                };
+                $worker->user->save();
+            }
+        }
+    });
+}
+
+
 }

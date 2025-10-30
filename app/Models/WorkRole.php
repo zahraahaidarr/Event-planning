@@ -28,4 +28,17 @@ class WorkRole extends Model
     {
         return $this->hasMany(WorkerReservation::class, 'work_role_id', 'role_id');
     }
+
+    public function workers()
+{
+    return $this->hasManyThrough(
+        Worker::class,
+        WorkerReservation::class,
+        'work_role_id', // FK on WorkerReservation
+        'worker_id',    // FK on Worker
+        'role_id',      // Local key on WorkRole
+        'worker_id'     // Local key on WorkerReservation
+    );
+}
+
 }

@@ -9,6 +9,7 @@ class WorkerReservation extends Model
 {
     use HasFactory;
 
+    protected $table = 'workers_reservations';
     protected $primaryKey = 'reservation_id';
     public $timestamps = false;
 
@@ -28,4 +29,9 @@ class WorkerReservation extends Model
     {
         return $this->belongsTo(WorkRole::class, 'work_role_id', 'role_id');
     }
+
+    protected $casts = [
+    'hours' => 'decimal:2',
+];
+
 }

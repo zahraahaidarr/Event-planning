@@ -119,3 +119,65 @@ body {
   .main-content { padding: 16px; }
   .table-container { overflow-x: auto; }
 }
+/* Base badge style (same for all approval states) */
+.approval-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+/* Specific colors per approval state */
+.approval-approved {
+  background: rgba(54, 211, 153, 0.18);   /* soft green */
+  color: var(--success);                  /* green text */
+}
+
+.approval-suspended {
+  background: rgba(244, 191, 80, 0.18);   /* soft yellow */
+  color: var(--warning);                  /* yellow/orange text */
+}
+
+.approval-rejected {
+  background: rgba(255, 107, 107, 0.18);  /* soft red */
+  color: var(--danger);                   /* red text */
+}
+
+.approval-pending {
+  background: rgba(170, 179, 214, 0.18);  /* soft gray/blue */
+  color: var(--muted);                    /* muted text */
+}
+/* Base style for all status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+/* Individual colors */
+.badge-active {
+  background: rgba(54, 211, 153, 0.18);   /* green */
+  color: var(--success);
+}
+
+.badge-suspended {
+  background: rgba(244, 191, 80, 0.18);   /* yellow */
+  color: var(--warning);
+}
+
+.badge-banned {
+  background: rgba(255, 107, 107, 0.18);  /* red */
+  color: var(--danger);
+}
+
+.badge-pending {
+  background: rgba(170, 179, 214, 0.18);  /* soft gray-blue */
+  color: var(--muted);
+}

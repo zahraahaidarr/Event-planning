@@ -27,6 +27,12 @@ use App\Http\Controllers\Admin\VolunteerController;
         Route::get('/admin/employees/json', [EmployeesController::class, 'json'])->name('employees.json');
         //volunteers routes
         Route::get('/admin/volunteers', [VolunteerController::class, 'index'])->name('volunteers.index');
+        Route::get('/admin/volunteers/list', [VolunteerController::class, 'list'])->name('volunteers.list');
+        Route::get('/admin/volunteers/search', [VolunteerController::class, 'search'])->name('volunteers.search');
+        Route::post('/admin/volunteers/{id}/approve',  [VolunteerController::class, 'approve'])->name('volunteers.approve');
+        Route::post('/admin/volunteers/{id}/suspend',  [VolunteerController::class, 'suspend'])->name('volunteers.suspend');
+        Route::post('/admin/volunteers/{id}/ban', [VolunteerController::class, 'ban'])->name('volunteers.ban');
+        
     });
 
 

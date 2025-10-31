@@ -58,6 +58,7 @@
                 <a href="{{ Route::has('events.index') ? route('Settings.index') : '#' }}" class="nav-item">
                 <span class="nav-icon">🔧</span><span>Settings</span>
             </a>
+            <a href="{{ route('announcements.create') }}">Send Announcement</a>
             </div>
         </nav>
     </aside>

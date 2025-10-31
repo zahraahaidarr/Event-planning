@@ -33,6 +33,9 @@
             <a href="#" class="nav-item">
                 <span class="nav-icon">📅</span><span>Events</span>
             </a>
+            <a href="{{ route('announcements.create') }}" class="nav-item">
+                <span class="nav-icon">📢</span><span>Send Announcement</span>
+            </a>
         </nav>
 
         <nav class="nav-section">
@@ -43,6 +46,7 @@
             <a href="#" class="nav-item">
                 <span class="nav-icon">🔧</span><span>Settings</span>
             </a>
+
         </nav>
     </aside>
 

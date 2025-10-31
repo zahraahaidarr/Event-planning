@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\employeesController;
 use App\Http\Controllers\Admin\dashboardController;
 use App\Http\Controllers\Employee\dashboardController as EmployeeDashboardController;
 use App\Http\Controllers\Admin\VolunteerController;
+use App\Http\Controllers\AnnouncementController;
 
 
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
@@ -40,7 +41,13 @@ use App\Http\Controllers\Admin\VolunteerController;
         Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
     });
 
-    
+
+
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
+        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    });
+
 
 
 

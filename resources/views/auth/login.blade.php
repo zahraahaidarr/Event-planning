@@ -92,6 +92,16 @@
     /* Error + status styles */
     .error{ color: var(--danger); font-size:12px; margin-top:6px }
     .status{ background:rgba(79,124,255,.12); color:var(--text); padding:10px 12px; border-radius:12px; margin:8px 0; }
+    /* put this with your existing styles */
+.card::before{
+  pointer-events: none;   /* <-- allow clicks to pass through */
+  z-index: 0;             /* keep it behind real content */
+}
+
+.head{ 
+  position: relative; 
+  z-index: 1;             /* ensure header is above any backgrounds */
+}
 
     @media (max-width:520px){ .links{flex-direction:column; align-items:flex-start} }
   </style>

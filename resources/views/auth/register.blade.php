@@ -55,6 +55,16 @@
 
     .error{ color:var(--danger); font-size:12px; margin-top:6px }
     .status{ background:rgba(79,124,255,.12); color:var(--text); padding:10px 12px; border-radius:12px; margin:8px 0; }
+      /* put this with your existing styles */
+.card::before{
+  pointer-events: none;   /* <-- allow clicks to pass through */
+  z-index: 0;             /* keep it behind real content */
+}
+
+.head{ 
+  position: relative; 
+  z-index: 1;             /* ensure header is above any backgrounds */
+}
 
     @media (max-width:560px){ .bar-form{ flex-direction:column; align-items:stretch } }
   </style>
@@ -119,15 +129,20 @@
           </div>
 
           <div class="field">
-            <label for="role">@lang('Preferred Role')</label>
-            <select class="input" id="role" name="preferred_role">
-              <option value="">@lang('Select…')</option>
-              @foreach (['Organizer','Civil Defense','Media Staff','Tech Support','Cleaner','Decorator','Cooking Team','Waiter'] as $r)
-                <option value="{{ $r }}" @selected(old('preferred_role')===$r)>{{ $r }}</option>
-              @endforeach
-            </select>
-            @error('preferred_role') <div class="error">{{ $message }}</div> @enderror
-          </div>
+  <label for="role">@lang('Role')</label>
+  <select class="input" id="role" name="role_type_id" required>
+    <option value="">@lang('Select…')</option>
+    @forelse ($roleTypes as $rt)
+      <option value="{{ $rt->role_type_id }}" @selected(old('role_type_id') == $rt->role_type_id)>
+        {{ $rt->name }}
+      </option>
+    @empty
+      <option value="" disabled>@lang('No roles available')</option>
+    @endforelse
+  </select>
+  @error('role_type_id') <div class="error">{{ $message }}</div> @enderror
+</div>
+
 
           <div class="field">
             <label for="pass">@lang('Password')</label>
@@ -178,10 +193,10 @@
   @verbatim
     const STR = {
       en:{ title:'Register', desc:'Create your volunteer account', first:'First Name', last:'Last Name',
-        email:'Email', phone:'Phone', city:'City', role:'Preferred Role', pass:'Password', confirm:'Confirm Password',
+        email:'Email', phone:'Phone', city:'City', role:'Role', pass:'Password', confirm:'Confirm Password',
         tos:'I agree to the Terms', have:'Have an account? Login', create:'Create Account' },
       ar:{ title:'إنشاء حساب', desc:'أنشئ حسابك كمتطوّع', first:'الاسم الأول', last:'اسم العائلة',
-        email:'البريد الإلكتروني', phone:'الهاتف', city:'المدينة', role:'الدور المفضل', pass:'كلمة المرور', confirm:'تأكيد كلمة المرور',
+        email:'البريد الإلكتروني', phone:'الهاتف', city:'المدينة', role:'الدور', pass:'كلمة المرور', confirm:'تأكيد كلمة المرور',
         tos:'أوافق على الشروط', have:'لديك حساب؟ تسجيل الدخول', create:'إنشاء الحساب' }
     };
     let lang = document.documentElement.getAttribute('dir') === 'rtl' ? 'ar' : 'en';

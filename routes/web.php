@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\dashboardController;
 use App\Http\Controllers\Employee\dashboardController as EmployeeDashboardController;
 use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\Admin\TaxonomiesVenuesController;
 
 
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
@@ -33,6 +34,19 @@ use App\Http\Controllers\AnnouncementController;
         Route::get('/admin/volunteers/list', [VolunteerController::class, 'list'])->name('volunteers.list');
         Route::get('/admin/volunteers/search', [VolunteerController::class, 'search'])->name('volunteers.search');
         Route::post('/admin/volunteers/{id}/status', [VolunteerController::class, 'setStatus'])->name('set-status');
+   
+        Route::get('/admin/taxonomies-venues', [TaxonomiesVenuesController::class, 'index'])->name('taxonomies-venues.index');
+        Route::get('/admin/taxonomies-venues/worker-types',    [TaxonomiesVenuesController::class, 'workerTypesIndex'])->name('taxonomies-venues.worker-types.index');
+        Route::post('/admin/taxonomies-venues/worker-types',   [TaxonomiesVenuesController::class, 'workerTypesStore'])->name('taxonomies-venues.worker-types.store');
+        Route::delete('/admin/taxonomies-venues/worker-types/{roleType}', [TaxonomiesVenuesController::class, 'workerTypesDestroy'])->name('taxonomies-venues.worker-types.destroy');
+        
+        Route::get('/admin/taxonomies-venues/event-categories',[TaxonomiesVenuesController::class,'eventCategoriesIndex']) ->name('taxonomies-venues.event-categories.index');
+        Route::post('/admin/taxonomies-venues/event-categories',[TaxonomiesVenuesController::class,'eventCategoriesStore'])->name('taxonomies-venues.event-categories.store');
+        Route::delete('/admin/taxonomies-venues/event-categories/{eventCategory}',[TaxonomiesVenuesController::class,'eventCategoriesDestroy'])->name('taxonomies-venues.event-categories.destroy');
+    
+        Route::get('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesIndex'])->name('taxonomies-venues.venues.index');
+        Route::post('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesStore'])->name('taxonomies-venues.venues.store');
+        Route::delete('/admin/taxonomies-venues/venues/{venue}',[TaxonomiesVenuesController::class,'venuesDestroy'])->name('taxonomies-venues.venues.destroy');
     });
 
 

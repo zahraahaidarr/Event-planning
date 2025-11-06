@@ -37,6 +37,10 @@
             <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
                 <span class="nav-icon">📅</span><span>Events</span>
             </a>
+            <a href="{{ route('taxonomies-venues.index') }}" class="nav-item active">
+                <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+            </a>
+
             <a href="{{ route('announcements.create') }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>

@@ -14,7 +14,7 @@ class Employee extends Model
 
     // Primary key (as seen in phpMyAdmin)
     protected $primaryKey = 'employee_id';
-
+    
     // Timestamps are present in your table
     public $timestamps = true;
 

@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class EventCategory extends Model
 {
     use HasFactory;
-
+    
+    protected $table = 'event_categories';
     protected $primaryKey = 'category_id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = ['name','description'];
 

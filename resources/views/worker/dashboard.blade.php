@@ -1,10 +1,10 @@
-{{-- resources/views/Volunteer/dashboard.blade.php --}}
+{{-- resources/views/Worker/dashboard.blade.php --}}
 <!doctype html>
 <html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale()==='ar' ? 'rtl' : 'ltr' }}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Volunteer • Dashboard</title>
+  <title>Worker • Dashboard</title>
 
   {{-- If you’re not using Vite, keep asset() with files under public/ --}}
   <link rel="stylesheet" href="{{ asset('css/worker/dashboard.css') }}">
@@ -15,18 +15,33 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" aria-label="Sidebar">
-      <div class="brand">🌟 <span id="brandName">Volunteer</span></div>
+      <div class="brand">🌟 <span id="brandName">Worker</span></div>
       <nav class="nav" aria-label="Primary">
-        <a href="#" aria-current="page">🏠 <span id="navDashboard">Dashboard</span></a>
-        <a href="{{ url('event-discovery') }}" id="navEventsDiscoverLink">🗓️ <span id="navDiscover">Discover Events</span></a>
-        <a href="{{ url('my-reservations') }}" id="navReservationsLink">✅ <span id="navMyRes">My Reservations</span></a>
-        <a href="{{ url('post-event-submission') }}" id="navSubmissionsLink">📝 <span id="navSubmissions">Post-Event Submissions</span></a>
-        <a href="{{ url('announcements') }}" id="navAnnouncementsLink">📣 <span id="navAnnouncements">Announcements</span></a>
-        <a href="{{ url('messages') }}" id="navChatLink">💬 <span id="navChat">Chat</span></a>
-        <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" id="navProfileLink">👤 <span id="navProfile">Profile</span></a>
-        <a href="{{ Route::has('events.index') ? route('Settings.index') : '#' }}" class="nav-item">
-                <span class="nav-icon">🔧</span><span>Settings</span>
-            </a>
+        <a href="{{ route('worker.dashboard') }}" aria-current="page">🏠 <span id="navDashboard">Dashboard</span></a>
+
+        <a href="{{ route('worker.events.discover') }}" id="navEventsDiscoverLink">
+          🗓️ <span id="navDiscover">Discover Events</span>
+        </a>
+
+        <a href="{{ route('worker.reservations') }}" id="navReservationsLink">
+          ✅ <span id="navMyRes">My Reservations</span>
+        </a>
+
+        <a href="{{ route('worker.submissions') }}" id="navSubmissionsLink">
+          📝 <span id="navSubmissions">Post-Event Submissions</span>
+        </a>
+
+        <a href="{{ route('worker.announcements') }}" id="navAnnouncementsLink">
+          📣 <span id="navAnnouncements">Announcements</span>
+        </a>
+
+        <a href="{{ route('worker.messages') }}" id="navChatLink">
+          💬 <span id="navChat">Chat</span>
+        </a>
+
+        <a href="{{ route('worker.settings') }}" class="nav-item">
+          <span class="nav-icon">🔧</span><span>Settings</span>
+        </a>
       </nav>
     </aside>
 
@@ -42,7 +57,7 @@
         <div class="bar-actions">
           <button class="btn ghost" id="langToggle" title="Switch Language">EN/AR</button>
           <button class="btn ghost" id="themeToggle" title="Toggle Theme">🌓</button>
-          <button class="btn" id="quickFindEvents">Find Events</button>
+          <button class="btn" id="quickFindEvents" onclick="window.location='{{ route('worker.events.discover') }}'">Find Events</button>
 
           {{-- Logout --}}
           @if(Route::has('logout'))
@@ -57,11 +72,11 @@
       <!-- Hero -->
       <section class="hero" aria-labelledby="heroTitle">
         <div>
-          <h1 id="heroTitle">Welcome back, <span id="volName">Fatima</span> 👋</h1>
+          <h1 id="heroTitle">Welcome back, <span id="volName">{{ Auth::user()->name ?? 'Worker' }}</span> 👋</h1>
           <p id="heroSubtitle">Browse events that match your role and location, track your reservations, and submit post-event reports on time.</p>
           <div class="cta">
-            <button class="btn" id="ctaDiscover">Discover Events</button>
-            <button class="btn secondary" id="ctaAnnouncements">View Announcements</button>
+            <button class="btn" id="ctaDiscover" onclick="window.location='{{ route('worker.events.discover') }}'">Discover Events</button>
+            <button class="btn secondary" id="ctaAnnouncements" onclick="window.location='{{ route('worker.announcements') }}'">View Announcements</button>
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true"></div>
@@ -124,13 +139,13 @@
         <div class="profile">
           <div class="avatar" aria-hidden="true">VH</div>
           <div>
-            <div style="font-weight:700" id="railName">Volunteer</div>
+            <div style="font-weight:700" id="railName">{{ Auth::user()->name ?? 'Worker' }}</div>
             <div class="meta"><span id="railRole">Role: Media Staff</span> · <span id="railLocation">Beirut</span></div>
           </div>
         </div>
         <div style="margin-top:12px; display:flex; gap:8px">
-          <a class="btn small" href="#" id="btnMyReservations">My Reservations</a>
-          <a class="btn small secondary" href="#" id="btnSubmitReport">Submit Report</a>
+          <a class="btn small" href="{{ route('worker.reservations') }}" id="btnMyReservations">My Reservations</a>
+          <a class="btn small secondary" href="{{ route('worker.submissions') }}" id="btnSubmitReport">Submit Report</a>
         </div>
       </div>
 
@@ -142,7 +157,7 @@
         <div id="nextEventTitle" style="margin-top:6px;font-weight:700">—</div>
         <div class="meta" id="nextEventMeta">—</div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn small" id="viewEventBtn">View</button>
+          <button class="btn small" id="viewEventBtn" onclick="window.location='{{ route('worker.events.discover') }}'">View</button>
           <button class="btn small ghost" id="cancelReservationBtn">Cancel (before deadline)</button>
         </div>
       </div>

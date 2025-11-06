@@ -73,5 +73,19 @@ use App\Http\Controllers\AnnouncementController;
 
 
 
-Route::middleware(['auth', 'role:WORKER'])->get('/worker/dashboard', fn() => view('Worker.dashboard'))
-    ->name('worker.dashboard');
+Route::middleware(['auth', 'role:WORKER'])
+    ->prefix('worker')
+    ->name('worker.')
+    ->group(function () {
+
+        Route::view('/dashboard', 'worker.dashboard')->name('dashboard');
+        Route::view('/events/discover', 'worker.event-discovery')->name('events.discover');
+        Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
+        Route::view('/post-event-submission', 'worker.post-event-submission')->name('submissions');
+
+        Route::view('/profile', 'worker.profile')->name('profile');
+        Route::view('/announcements', 'worker.announcements')->name('announcements');
+        Route::view('/messages', 'worker.messages')->name('messages');
+        Route::view('/settings', 'worker.settings')->name('settings');
+    });
+

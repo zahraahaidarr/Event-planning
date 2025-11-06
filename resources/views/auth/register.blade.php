@@ -28,8 +28,8 @@
     .wrap{ min-height:100vh; display:grid; place-items:center; padding:24px }
     .card{ width:min(720px,100%); background:var(--card); border-radius:22px; box-shadow:var(--shadow); padding:24px; position:relative; overflow:hidden }
     .card::before{ content:""; position:absolute; inset:-60px -40px auto auto; width:240px; height:240px; border-radius:50%;
-      background:radial-gradient(closest-side, rgba(79,124,255,.20), transparent); filter:blur(10px) }
-    .head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px }
+      background:radial-gradient(closest-side, rgba(79,124,255,.20), transparent); filter:blur(10px); pointer-events:none; z-index:0 }
+    .head{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; position:relative; z-index:1 }
     .brand{ display:flex; align-items:center; gap:10px; font-weight:800 }
     .logo{ width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff;
       background:linear-gradient(135deg,var(--primary),var(--accent)); font-weight:800 }
@@ -55,17 +55,14 @@
 
     .error{ color:var(--danger); font-size:12px; margin-top:6px }
     .status{ background:rgba(79,124,255,.12); color:var(--text); padding:10px 12px; border-radius:12px; margin:8px 0; }
-      /* put this with your existing styles */
-.card::before{
-  pointer-events: none;   /* <-- allow clicks to pass through */
-  z-index: 0;             /* keep it behind real content */
-}
 
-.head{ 
-  position: relative; 
-  z-index: 1;             /* ensure header is above any backgrounds */
-}
+    /* NEW: role switcher bar */
+    .switcher{ display:flex; gap:8px; background:var(--surface-2); padding:6px; border-radius:14px; border:1px solid var(--border-color); align-items:center }
+    .switcher button{ flex:1; padding:10px 12px; border-radius:10px; border:0; cursor:pointer; font-weight:700; background:transparent; color:var(--text-secondary) }
+    .switcher button[aria-selected="true"]{ background:var(--primary); color:#fff; box-shadow:0 8px 18px rgba(79,124,255,.35) }
 
+    .hidden{ display:none !important }
+    .dimmed{ opacity:.6 }
     @media (max-width:560px){ .bar-form{ flex-direction:column; align-items:stretch } }
   </style>
 </head>
@@ -93,93 +90,150 @@
         <div class="status" role="status">{{ session('status') }}</div>
       @endif
 
+      {{-- ===== ACCOUNT TYPE SWITCHER ===== --}}
+      <div class="switcher" role="tablist" aria-label="Register As">
+        <button id="tab-worker" role="tab" aria-selected="{{ old('account_type','worker')!=='employee' ? 'true' : 'false' }}" aria-controls="panel-worker" type="button">
+          @lang('Worker')
+        </button>
+        <button id="tab-employee" role="tab" aria-selected="{{ old('account_type')==='employee' ? 'true' : 'false' }}" aria-controls="panel-employee" type="button">
+          @lang('Employee')
+        </button>
+      </div>
+
       {{-- MAIN FORM (single form, supports file upload) --}}
       <form id="regForm" method="POST" action="{{ route('register') }}" enctype="multipart/form-data" novalidate>
         @csrf
+        <input type="hidden" name="account_type" id="account_type" value="{{ old('account_type','worker') }}"/>
 
-        <div class="grid">
-          <div class="field">
-            <label for="first">@lang('First Name')</label>
-            <input class="input" id="first" name="first_name" value="{{ old('first_name') }}" required placeholder="Fatima"/>
-            @error('first_name') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-            <label for="last">@lang('Last Name')</label>
-            <input class="input" id="last" name="last_name" value="{{ old('last_name') }}" required placeholder="Hassan"/>
-            @error('last_name') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-            <label for="email">@lang('Email')</label>
-            <input class="input" id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="you@example.com" autocomplete="username"/>
-            @error('email') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-            <label for="phone">@lang('Phone')</label>
-            <input class="input" id="phone" type="tel" name="phone" value="{{ old('phone') }}" placeholder="+961 xx xxx xxx"/>
-            @error('phone') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-            <label for="city">@lang('City')</label>
-            <input class="input" id="city" name="city" value="{{ old('city') }}" placeholder="Beirut"/>
-            @error('city') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-  <label for="role">@lang('Role')</label>
-  <select class="input" id="role" name="role_type_id" required>
-    <option value="">@lang('Select…')</option>
-    @forelse ($roleTypes as $rt)
-      <option value="{{ $rt->role_type_id }}" @selected(old('role_type_id') == $rt->role_type_id)>
-        {{ $rt->name }}
-      </option>
-    @empty
-      <option value="" disabled>@lang('No roles available')</option>
-    @endforelse
-  </select>
-  @error('role_type_id') <div class="error">{{ $message }}</div> @enderror
-</div>
-
-
-          <div class="field">
-            <label for="pass">@lang('Password')</label>
-            <input class="input" id="pass" type="password" name="password" required minlength="6" placeholder="••••••••" autocomplete="new-password"/>
-            @error('password') <div class="error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="field">
-            <label for="confirm">@lang('Confirm Password')</label>
-            <input class="input" id="confirm" type="password" name="password_confirmation" required minlength="6" placeholder="••••••••" autocomplete="new-password"/>
-          </div>
-        </div>
-
-        {{-- Certificate upload (part of the same form) --}}
-        <section class="certificate-bar">
-          <h2 class="bar-title">@lang('Upload Your Volunteer Certificates')</h2>
-          <p class="bar-desc">@lang('If you already have participation certificates, you can upload them here to verify your experience.')</p>
-
-          <div class="bar-form">
-            <div class="upload-field">
-              <label for="certificateFile">@lang('Choose File')</label>
-              <input type="file" id="certificateFile" name="certificate" accept=".pdf,.jpg,.jpeg,.png"/>
-              @error('certificate') <div class="error">{{ $message }}</div> @enderror
+        {{-- ================= Worker Panel (full form) ================= --}}
+        @php $showWorker = old('account_type','worker') !== 'employee'; @endphp
+        <section id="panel-worker" role="tabpanel" aria-labelledby="tab-worker" class="{{ $showWorker ? '' : 'hidden' }}">
+          <div class="grid">
+            <div class="field">
+              <label for="first">@lang('First Name')</label>
+              <input class="input" id="first" name="first_name" value="{{ old('first_name') }}" required placeholder="Fatima"/>
+              @error('first_name') <div class="error">{{ $message }}</div> @enderror
             </div>
+
+            <div class="field">
+              <label for="last">@lang('Last Name')</label>
+              <input class="input" id="last" name="last_name" value="{{ old('last_name') }}" required placeholder="Hassan"/>
+              @error('last_name') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="email">@lang('Email')</label>
+              <input class="input" id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="you@example.com" autocomplete="username"/>
+              @error('email') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="phone">@lang('Phone')</label>
+              <input class="input" id="phone" type="tel" name="phone" value="{{ old('phone') }}" placeholder="+961 xx xxx xxx"/>
+              @error('phone') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="city">@lang('City')</label>
+              <input class="input" id="city" name="city" value="{{ old('city') }}" placeholder="Beirut"/>
+              @error('city') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="role">@lang('Preferred Role')</label>
+              <select class="input" id="role" name="role_type_id" required>
+                <option value="">@lang('Select…')</option>
+                @forelse ($roleTypes as $rt)
+                  <option value="{{ $rt->role_type_id }}" @selected(old('role_type_id') == $rt->role_type_id)>
+                    {{ $rt->name }}
+                  </option>
+                @empty
+                  <option value="" disabled>@lang('No roles available')</option>
+                @endforelse
+              </select>
+              @error('role_type_id') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="pass">@lang('Password')</label>
+              <input class="input" id="pass" type="password" name="password" required minlength="6" placeholder="••••••••" autocomplete="new-password"/>
+              @error('password') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="confirm">@lang('Confirm Password')</label>
+              <input class="input" id="confirm" type="password" name="password_confirmation" required minlength="6" placeholder="••••••••" autocomplete="new-password"/>
+            </div>
+          </div>
+
+          {{-- Certificate upload (Worker only) --}}
+          <section class="certificate-bar">
+            <h2 class="bar-title">@lang('Upload Your Volunteer Certificates')</h2>
+            <p class="bar-desc">@lang('If you already have participation certificates, you can upload them here to verify your experience.')</p>
+            <div class="bar-form">
+              <div class="upload-field">
+                <label for="certificateFile">@lang('Choose File')</label>
+                <input type="file" id="certificateFile" name="certificate" accept=".pdf,.jpg,.jpeg,.png"/>
+                @error('certificate') <div class="error">{{ $message }}</div> @enderror
+              </div>
+            </div>
+          </section>
+
+          <div class="row" style="justify-content:space-between; margin-top:12px">
+            <label class="row" style="font-size:13px;color:var(--text-secondary)">
+              <input type="checkbox" id="tos" name="terms" {{ old('terms') ? 'checked' : '' }} required/>
+              <span id="tosText">@lang('I agree to the Terms')</span>
+            </label>
+
+            @if (Route::has('login'))
+              <a href="{{ route('login') }}" id="toLogin">@lang('Have an account? Login')</a>
+            @endif
           </div>
         </section>
 
-        <div class="row" style="justify-content:space-between; margin-top:12px">
-          <label class="row" style="font-size:13px;color:var(--text-secondary)">
-            <input type="checkbox" id="tos" name="terms" {{ old('terms') ? 'checked' : '' }} required/>
-            <span id="tosText">@lang('I agree to the Terms')</span>
-          </label>
+        {{-- ================= Employee Panel (minimal fields) ================= --}}
+        @php $showEmployee = old('account_type')==='employee'; @endphp
+        <section id="panel-employee" role="tabpanel" aria-labelledby="tab-employee" class="{{ $showEmployee ? '' : 'hidden' }}">
+          <div class="grid">
+            <div class="field">
+              <label for="e_first">@lang('First Name')</label>
+              <input class="input" id="e_first" name="e_first_name" value="{{ old('e_first_name') }}" placeholder="e.g., Lina"/>
+              @error('e_first_name') <div class="error">{{ $message }}</div> @enderror
+            </div>
 
-          @if (Route::has('login'))
-            <a href="{{ route('login') }}" id="toLogin">@lang('Have an account? Login')</a>
-          @endif
-        </div>
+            <div class="field">
+              <label for="e_last">@lang('Last Name')</label>
+              <input class="input" id="e_last" name="e_last_name" value="{{ old('e_last_name') }}" placeholder="e.g., Khoury"/>
+              @error('e_last_name') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="e_email">@lang('Email')</label>
+              <input class="input" id="e_email" type="email" name="e_email" value="{{ old('e_email') }}" placeholder="name@volunteerhub.com" autocomplete="username"/>
+              @error('e_email') <div class="error">{{ $message }}</div> @enderror
+            </div>
+            <div class="field">
+  <label for="e_phone">@lang('Phone')</label>
+  <input class="input" id="e_phone" type="tel" name="e_phone"
+         value="{{ old('e_phone') }}" placeholder="+961 xx xxx xxx"/>
+  @error('e_phone') <div class="error">{{ $message }}</div> @enderror
+</div>
+
+
+            <div class="field">
+              <label for="e_pass">@lang('Password')</label>
+              <input class="input" id="e_pass" type="password" name="e_password" minlength="6" placeholder="@lang('password')" autocomplete="new-password"/>
+              @error('e_password') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+              <label for="e_confirm">@lang('Confirm Password')</label>
+              <input class="input" id="e_confirm" type="password" name="e_password_confirmation" minlength="6" placeholder="••••••••" autocomplete="new-password"/>
+            </div>
+          </div>
+
+          {{-- Note: Terms/certificates removed for employee as requested --}}
+        </section>
 
         <button class="btn full" type="submit" id="regBtn" style="margin-top:12px">@lang('Create Account')</button>
       </form>
@@ -193,11 +247,15 @@
   @verbatim
     const STR = {
       en:{ title:'Register', desc:'Create your volunteer account', first:'First Name', last:'Last Name',
-        email:'Email', phone:'Phone', city:'City', role:'Role', pass:'Password', confirm:'Confirm Password',
-        tos:'I agree to the Terms', have:'Have an account? Login', create:'Create Account' },
+        email:'Email', phone:'Phone', city:'City', role:'Preferred Role', pass:'Password', confirm:'Confirm Password',
+        tos:'I agree to the Terms', have:'Have an account? Login', create:'Create Account',
+        worker:'Worker', employee:'Employee'
+      },
       ar:{ title:'إنشاء حساب', desc:'أنشئ حسابك كمتطوّع', first:'الاسم الأول', last:'اسم العائلة',
-        email:'البريد الإلكتروني', phone:'الهاتف', city:'المدينة', role:'الدور', pass:'كلمة المرور', confirm:'تأكيد كلمة المرور',
-        tos:'أوافق على الشروط', have:'لديك حساب؟ تسجيل الدخول', create:'إنشاء الحساب' }
+        email:'البريد الإلكتروني', phone:'الهاتف', city:'المدينة', role:'الدور المفضّل', pass:'كلمة المرور', confirm:'تأكيد كلمة المرور',
+        tos:'أوافق على الشروط', have:'لديك حساب؟ تسجيل الدخول', create:'إنشاء الحساب',
+        worker:'متطوّع', employee:'موظّف'
+      }
     };
     let lang = document.documentElement.getAttribute('dir') === 'rtl' ? 'ar' : 'en';
 
@@ -205,6 +263,8 @@
       const s=STR[lang];
       document.documentElement.dir = (lang==='ar')?'rtl':'ltr';
       regTitle.textContent=s.title; regDesc.textContent=s.desc;
+
+      // Worker labels
       document.querySelector('label[for="first"]').textContent=s.first;
       document.querySelector('label[for="last"]').textContent=s.last;
       document.querySelector('label[for="email"]').textContent=s.email;
@@ -213,21 +273,78 @@
       document.querySelector('label[for="role"]').textContent=s.role;
       document.querySelector('label[for="pass"]').textContent=s.pass;
       document.querySelector('label[for="confirm"]').textContent=s.confirm;
-      document.getElementById('tosText').textContent=s.tos;
-      document.getElementById('toLogin').textContent=s.have;
+      document.getElementById('tosText') && (document.getElementById('tosText').textContent=s.tos);
+      document.getElementById('toLogin') && (document.getElementById('toLogin').textContent=s.have);
       document.getElementById('regBtn').textContent=s.create;
+
+      // Employee labels
+      document.querySelector('label[for="e_first"]').textContent=s.first;
+      document.querySelector('label[for="e_last"]').textContent=s.last;
+      document.querySelector('label[for="e_email"]').textContent=s.email;
+      document.querySelector('label[for="e_phone"]').textContent = s.phone;
+      document.querySelector('label[for="e_pass"]').textContent=s.pass;
+      document.querySelector('label[for="e_confirm"]').textContent=s.confirm;
+
+      // Switcher text
+      document.getElementById('tab-worker').textContent=s.worker;
+      document.getElementById('tab-employee').textContent=s.employee;
     }
-    langToggle.onclick=()=>{ lang=(lang==='en')?'ar':'en'; t(); };
+
+    // Theme toggler
     themeToggle.onclick=()=>{ const html=document.documentElement; html.setAttribute('data-theme', html.getAttribute('data-theme')==='light'?'dark':'light'); };
+
+    // Language toggler
+    langToggle.onclick=()=>{ lang=(lang==='en')?'ar':'en'; t(); };
+
+    // ====== Switcher logic ======
+    const tabWorker   = document.getElementById('tab-worker');
+    const tabEmployee = document.getElementById('tab-employee');
+    const panelWorker = document.getElementById('panel-worker');
+    const panelEmployee = document.getElementById('panel-employee');
+    const accountType = document.getElementById('account_type');
+
+    function setActive(type){
+      const isWorker = type==='worker';
+      tabWorker.setAttribute('aria-selected', isWorker?'true':'false');
+      tabEmployee.setAttribute('aria-selected', isWorker?'false':'true');
+      panelWorker.classList.toggle('hidden', !isWorker);
+      panelEmployee.classList.toggle('hidden', isWorker);
+
+      accountType.value = type;
+
+      // Disable inputs of the hidden panel so they don't submit
+      panelWorker.querySelectorAll('input,select,textarea').forEach(el=>{
+        el.disabled = !isWorker;
+        if(!isWorker) el.classList.add('dimmed'); else el.classList.remove('dimmed');
+      });
+      panelEmployee.querySelectorAll('input,select,textarea').forEach(el=>{
+        el.disabled = isWorker;
+        if(isWorker) el.classList.add('dimmed'); else el.classList.remove('dimmed');
+      });
+    }
+
+    // Init state (respect old('account_type'))
+    setActive(accountType.value || 'worker');
+
+    tabWorker.addEventListener('click', ()=> setActive('worker'));
+    tabEmployee.addEventListener('click', ()=> setActive('employee'));
 
     // Client-side checks (server will validate again)
     regForm.addEventListener('submit',(e)=>{
-      const pass = document.getElementById('pass').value;
-      const confirm = document.getElementById('confirm').value;
-      const tos = document.getElementById('tos').checked;
-      if(pass !== confirm){ e.preventDefault(); alert('Passwords do not match'); return; }
-      if(!tos){ e.preventDefault(); alert('Please agree to the Terms'); return; }
+      const type = accountType.value || 'worker';
+      if(type==='worker'){
+        const pass = document.getElementById('pass').value;
+        const confirm = document.getElementById('confirm').value;
+        const tos = document.getElementById('tos')?.checked;
+        if(pass !== confirm){ e.preventDefault(); alert('Passwords do not match'); return; }
+        if(!tos){ e.preventDefault(); alert('Please agree to the Terms'); return; }
+      }else{
+        const ep = document.getElementById('e_pass').value;
+        const ec = document.getElementById('e_confirm').value;
+        if(ep !== ec){ e.preventDefault(); alert('Passwords do not match'); return; }
+      }
     });
+
     t();
   @endverbatim
   </script>

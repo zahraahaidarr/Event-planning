@@ -13,12 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+use App\Models\Employee;
+
 class RegisteredUserController extends Controller
 {
     /** GET /register */
     public function create(): View
     {
-        // pass roles to the view
         $roleTypes = RoleType::orderBy('name')->get(['role_type_id','name']);
         return view('auth.register', compact('roleTypes'));
     }
@@ -26,46 +27,78 @@ class RegisteredUserController extends Controller
     /** POST /register */
     public function store(Request $request): RedirectResponse
     {
+        $type = $request->input('account_type', 'worker');
+
+        /* ======================= EMPLOYEE FLOW ======================= */
+        if ($type === 'employee') {
+            $validated = $request->validate([
+                'e_first_name' => ['required','string','max:255'],
+                'e_last_name'  => ['required','string','max:255'],
+                'e_email'      => ['required','string','email','max:255','unique:users,email'],
+                'e_phone'      => ['required','string','max:30'],
+                'e_password'   => ['required','confirmed', Password::min(6)],
+            ]);
+
+            // User: ACTIVE + role = employee
+            $user = User::create([
+                'name'     => trim($validated['e_first_name'].' '.$validated['e_last_name']),
+                'email'    => $validated['e_email'],
+                'phone'    => $validated['e_phone'],
+                'status'   => 'ACTIVE',
+                'role'     => 'employee',      // <<< set employee role
+                'password' => Hash::make($validated['e_password']),
+            ]);
+
+            // Minimal Employee profile
+            if (class_exists(\App\Models\Employee::class)) {
+                Employee::create([
+                    'user_id'  => $user->id,
+                    'status'   => 'ACTIVE',
+                    'hire_date' => now()->toDateString(),
+                ]);
+            }
+
+            event(new Registered($user));
+
+            return redirect()
+                ->route('login')
+                ->with('status', 'Employee account created. You can sign in now.');
+        }
+
+        /* ======================= WORKER FLOW (unchanged UX) ======================= */
         $validated = $request->validate([
-            'first_name'     => ['required','string','max:255'],
-            'last_name'      => ['required','string','max:255'],
-            'email'          => ['required','string','email','max:255','unique:users,email'],
-            'phone'          => ['nullable','string','max:30'],
-            'city'           => ['nullable','string','max:100'],
-
-            // take the role from the dropdown bound to role_types table
-            'role_type_id'   => ['required','integer','exists:role_types,role_type_id'],
-
-            'certificate'    => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
-            'password'       => ['required','confirmed', Password::min(6)],
-            'terms'          => ['accepted'],
+            'first_name'   => ['required','string','max:255'],
+            'last_name'    => ['required','string','max:255'],
+            'email'        => ['required','string','email','max:255','unique:users,email'],
+            'phone'        => ['nullable','string','max:30'],
+            'city'         => ['nullable','string','max:100'],
+            'role_type_id' => ['required','integer','exists:role_types,role_type_id'],
+            'certificate'  => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
+            'password'     => ['required','confirmed', Password::min(6)],
+            'terms'        => ['accepted'],
         ]);
 
-        $roleTypeId = (int) $validated['role_type_id'];
-
-        // Create user with PENDING status
+        // User: PENDING + role = worker
         $user = User::create([
             'name'     => trim($validated['first_name'].' '.$validated['last_name']),
             'email'    => $validated['email'],
             'phone'    => $validated['phone'] ?? null,
             'status'   => 'PENDING',
+            'role'     => 'worker',          // <<< set worker role
             'password' => Hash::make($validated['password']),
         ]);
 
-        // Store certificate
         $certificatePath = $request->file('certificate')->store('certificates', 'public');
 
-        // Create worker profile (role lives here)
         Worker::create([
             'user_id'             => $user->id,
-            'role_type_id'        => $roleTypeId,                 // <-- use resolved id
+            'role_type_id'        => (int) $validated['role_type_id'],
             'engagement_kind'     => 'VOLUNTEER',
             'is_volunteer'        => true,
             'location'            => $validated['city'] ?? null,
             'certificate_path'    => $certificatePath,
             'total_hours'         => 0,
             'verification_status' => 'PENDING',
-            'approval_status'     => 'PENDING',
             'joined_at'           => now()->toDateString(),
         ]);
 

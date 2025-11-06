@@ -130,9 +130,9 @@
         <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" class="nav-item">
           <span class="nav-icon">👤</span><span>Profile</span>
         </a>
-        <a href="{{ Route::has('events.index') ? route('Settings.index') : '#' }}" class="nav-item">
-          <span class="nav-icon">🔧</span><span>Settings</span>
-        </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">🔧</span><span>Settings</span>
+            </a>
       </nav>
     </aside>
 

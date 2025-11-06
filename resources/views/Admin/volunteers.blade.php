@@ -7,11 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Volunteer Oversight - Admin Portal</title>
 
-    {{-- Static assets served from /public --}}
     <link rel="stylesheet" href="{{ asset('css/Admin/volunteers.css') }}">
-    <script>
-  window.initialVolunteers = @json($volunteers ?? []);
-</script>
+    <script>window.initialVolunteers = @json($volunteers ?? []);</script>
     <script src="{{ asset('js/Admin/volunteers.js') }}" defer></script>
 </head>
 <body>
@@ -44,7 +41,7 @@
             <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
                 <span class="nav-icon">📅</span><span>Events</span>
             </a>
-            <a href="{{ route('announcements.create') }}" class="nav-item">
+            <a href="{{ Route::has('announcements.create') ? route('announcements.create') : '#' }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>
         </nav>
@@ -56,7 +53,6 @@
                 <span class="nav-icon">👤</span><span>Profile</span>
             </a>
 
-            {{-- Optional settings link (static) --}}
             <a href="#" class="nav-item">
                 <span class="nav-icon">🔧</span><span>Settings</span>
             </a>
@@ -80,7 +76,7 @@
             </div>
         </div>
 
-        {{-- Filters --}}
+        {{-- Filters (Approval removed) --}}
         <div class="filters-section">
             <div class="filters-grid">
                 <div class="filter-group">
@@ -94,17 +90,6 @@
                         <option value="Cleaner">Cleaner</option>
                         <option value="Decorator">Decorator</option>
                         <option value="Gardener">Gardener</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Approval</label>
-                    <select class="filter-select" id="filterApproval" onchange="renderVolunteers()">
-                        <option value="">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="suspended">Suspended</option>
                     </select>
                 </div>
 
@@ -131,7 +116,7 @@
             </div>
         </div>
 
-        {{-- Table --}}
+        {{-- Table (Approval column removed) --}}
         <div class="table-container">
             <table class="table">
                 <thead>
@@ -142,13 +127,10 @@
                     <th>Events</th>
                     <th>Hours</th>
                     <th>Status</th>
-                    <th>Approval</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
-                <tbody id="volunteersTable">
-                    {{-- Rows injected by volunteers.js --}}
-                </tbody>
+                <tbody id="volunteersTable"><!-- Rows injected by volunteers.js --></tbody>
             </table>
         </div>
     </main>

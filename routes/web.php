@@ -26,14 +26,13 @@ use App\Http\Controllers\AnnouncementController;
         Route::post('admin/employees', [EmployeesController::class, 'store'])->name('employees.store');
         Route::get('/admin/employees/search', [EmployeesController::class, 'search'])->name('employees.search');
         Route::get('/admin/employees/json', [EmployeesController::class, 'json'])->name('employees.json');
+        Route::post('/admin/employees/{id}/status', [EmployeesController::class, 'setStatus'])->name('set-status');
+        Route::delete('/admin/employees/{id}',      [EmployeesController::class, 'destroy'])->name('destroy');
         //volunteers routes
         Route::get('/admin/volunteers', [VolunteerController::class, 'index'])->name('volunteers.index');
         Route::get('/admin/volunteers/list', [VolunteerController::class, 'list'])->name('volunteers.list');
         Route::get('/admin/volunteers/search', [VolunteerController::class, 'search'])->name('volunteers.search');
-        Route::post('/admin/volunteers/{id}/approve',  [VolunteerController::class, 'approve'])->name('volunteers.approve');
-        Route::post('/admin/volunteers/{id}/suspend',  [VolunteerController::class, 'suspend'])->name('volunteers.suspend');
-        Route::post('/admin/volunteers/{id}/ban', [VolunteerController::class, 'ban'])->name('volunteers.ban');
-        
+        Route::post('/admin/volunteers/{id}/status', [VolunteerController::class, 'setStatus'])->name('set-status');
     });
 
 

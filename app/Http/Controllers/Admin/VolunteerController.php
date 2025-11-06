@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Worker;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;                  // <-- add this
-use Symfony\Component\HttpFoundation\Response;     // <-- and this
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 class VolunteerController extends Controller
 {
+    /* ======================= Views & JSON ======================= */
+
     public function index()
     {
         $initial = $this->baseQuery()->get();
@@ -26,155 +28,119 @@ class VolunteerController extends Controller
         return response()->json($this->normalize($rows));
     }
 
+    /**
+     * Filters:
+     *  - q: search in user name/email (optional)
+     *  - role: exact role type name (optional)
+     *  - location: exact location (optional)
+     *  - status: active|suspended|banned|pending (maps to users.status)
+     */
     public function search(Request $request)
     {
         $q = $this->baseQuery();
 
+        // free-text (name/email)
+        if ($term = trim((string) $request->input('q'))) {
+            $q->whereHas('user', function ($uq) use ($term) {
+                $uq->where('name', 'like', "%{$term}%")
+                   ->orWhere('email', 'like', "%{$term}%");
+            });
+        }
+
         if ($loc = $request->string('location')->trim()) {
             $q->where('location', $loc);
         }
-        if ($approval = $request->string('approval')->trim()) {
-            if ($approval === 'approved') $q->where('approval_status', 'APPROVED');
-            if ($approval === 'pending')  $q->where('approval_status', 'PENDING');
-        }
-        if ($status = $request->string('status')->trim()) {
-            $q->where('approval_status', strtoupper($status));
-        }
+
         if ($role = $request->string('role')->trim()) {
             $q->whereHas('reservations.workRole.roleType', fn($qq) => $qq->where('name', $role));
+        }
+
+        if ($status = $request->string('status')->trim()) {
+            // map incoming (lowercase) to DB values on users.status
+            $map = [
+                'active'    => 'ACTIVE',
+                'suspended' => 'SUSPENDED',
+                'banned'    => 'BANNED',
+                'pending'   => 'PENDING',
+            ];
+            if (isset($map[$status])) {
+                $dbStatus = $map[$status];
+                $q->whereHas('user', fn($uq) => $uq->where('status', $dbStatus));
+            }
         }
 
         $rows = $q->get();
         return response()->json($this->normalize($rows));
     }
 
+    /* ======================= Mutations ======================= */
+
+    /**
+     * POST /admin/volunteers/{id}/status
+     * Body: { status: 'ACTIVE' | 'SUSPENDED' | 'BANNED' | 'PENDING' }
+     * Updates ONLY users.status for the worker's linked user.
+     */
+    public function setStatus($id, Request $request)
+    {
+        $request->validate([
+            'status' => 'required|string|in:ACTIVE,SUSPENDED,BANNED,PENDING',
+        ]);
+
+        $worker = Worker::with('user:id,status')->find($id);
+        if (!$worker || !$worker->user) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Worker or linked user not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        DB::transaction(function () use ($worker, $request) {
+            $worker->user->status = $request->input('status'); // ACTIVE/SUSPENDED/BANNED/PENDING
+            $worker->user->save();
+        });
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Status updated.',
+        ]);
+    }
+
+    /* ======================= Internals ======================= */
+
     private function baseQuery()
     {
         return Worker::query()
             ->with([
-                'user:id,name,email',
+                'user:id,name,email,status',
                 'reservations.workRole.roleType:id,name',
             ])
             ->withCount('reservations'); // events count
     }
 
-private function normalize($collection)
-{
-    return $collection->map(function ($w) {
-        $roleName   = $w->reservations->first()?->workRole?->roleType?->name ?? '';
-        $userStatus = strtoupper((string) ($w->user->status ?? ''));
-        $approval   = strtoupper((string) $w->approval_status);   // <-- keep exact DB value
+    private function normalize($collection)
+    {
+        return $collection->map(function ($w) {
+            $roleName   = $w->reservations->first()?->workRole?->roleType?->name ?? '';
+            $userStatus = strtoupper((string) ($w->user->status ?? 'PENDING'));
 
-        // UI status primarily from users.status (fallback to approval)
-        $statusForUi = match ($userStatus) {
-            'ACTIVE'    => 'active',
-            'SUSPENDED' => 'suspended',
-            'BANNED'    => 'banned',
-            'PENDING'   => 'pending',
-            default     => match ($approval) {
-                'APPROVED'  => 'active',
+            $statusForUi = match ($userStatus) {
+                'ACTIVE'    => 'active',
                 'SUSPENDED' => 'suspended',
-                'REJECTED'  => 'banned',
+                'BANNED'    => 'banned',
+                'PENDING'   => 'pending',
                 default     => 'pending',
-            },
-        };
+            };
 
-        return [
-            'id'        => $w->worker_id,
-            'name'      => $w->user->name ?? '',
-            'email'     => $w->user->email ?? '',
-            'role'      => $roleName,
-            'location'  => $w->location ?? '',
-            'events'    => (int) ($w->reservations_count ?? 0),
-            'hours'     => (float) ($w->total_hours ?? 0),
-            'status'    => $statusForUi,                  // active/suspended/banned/pending
-            'approval'  => strtolower($approval ?: 'pending'), // approved/suspended/rejected/pending
-        ];
-    });
-}
-
-
-
-
-public function approve($id)
-{
-    $worker = Worker::with('user')->find($id);
-    if (!$worker) {
-        return response()->json(['ok' => false, 'message' => 'Worker not found'], 404);
+            return [
+                'id'        => $w->worker_id,
+                'name'      => $w->user->name ?? '',
+                'email'     => $w->user->email ?? '',
+                'role'      => $roleName,
+                'location'  => $w->location ?? '',
+                'events'    => (int) ($w->reservations_count ?? 0),
+                'hours'     => (float) ($w->total_hours ?? 0),
+                'status'    => $statusForUi, // active|suspended|banned|pending
+            ];
+        });
     }
-
-    DB::transaction(function () use ($worker) {
-        $worker->approval_status = 'APPROVED';
-        $worker->save();
-
-        $this->syncUserStatusFromApproval($worker);
-    });
-
-    return response()->json(['ok' => true, 'message' => 'Volunteer approved.']);
-}
-
-public function suspend($id)
-{
-    $worker = Worker::with('user')->find($id);
-    if (!$worker) {
-        return response()->json(['ok' => false, 'message' => 'Worker not found'], 404);
-    }
-
-    DB::transaction(function () use ($worker) {
-        $worker->approval_status = 'SUSPENDED';
-        $worker->save();
-
-        $this->syncUserStatusFromApproval($worker);
-    });
-
-    return response()->json(['ok' => true, 'message' => 'Volunteer suspended.']);
-}
-
-// app/Http/Controllers/Admin/VolunteerController.php
-
-public function ban($id)
-{
-    $worker = Worker::with('user')->find($id);
-    if (!$worker) {
-        return response()->json(['ok' => false, 'message' => 'Worker not found'], 404);
-    }
-
-    DB::transaction(function () use ($worker) {
-        $worker->approval_status = 'REJECTED'; // logical pairing
-        $worker->save();
-
-        if ($worker->user) {
-            $worker->user->status = 'BANNED'; // user can’t log in anymore
-            $worker->user->save();
-        }
-    });
-
-    return response()->json(['ok' => true, 'message' => 'Volunteer banned.']);
-}
-
-
-
-// app/Http/Controllers/Admin/VolunteerController.php
-
-private function syncUserStatusFromApproval(\App\Models\Worker $worker): void
-{
-    if (!$worker->relationLoaded('user')) {
-        $worker->load('user:id,status');
-    }
-    if (!$worker->user) {
-        return; // no user attached; nothing to sync
-    }
-
-    // Map approval_status -> users.status
-    $approval = strtoupper((string) $worker->approval_status);
-    $worker->user->status = match ($approval) {
-        'APPROVED'  => 'ACTIVE',
-        'SUSPENDED' => 'SUSPENDED',
-        'REJECTED'  => 'BANNED',
-        default     => 'PENDING',   // e.g., newly registered
-    };
-
-    $worker->user->save();
-}
-
 }

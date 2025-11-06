@@ -1,6 +1,7 @@
-/* public/css/Admin/volunteers.css */
+/* Base reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Theme tokens */
 :root {
   --bg:#0f1222; --surface:#14183a; --surface-2:#0e1330; --card:#171c42; --text:#eaf0ff; --muted:#aab3d6;
   --primary:#4f7cff; --primary-2:#7aa0ff; --accent:#9c6cff; --success:#36d399; --warning:#f4bf50; --danger:#ff6b6b;
@@ -24,11 +25,14 @@
   --shadow-sm: 0 2px 8px rgba(13,24,61,.08); --shadow-md: 0 4px 16px rgba(13,24,61,.12); --shadow-lg: var(--shadow);
 }
 
+/* Layout */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: radial-gradient(1200px 800px at -10% -10%, #1a2050 0%, var(--bg) 55%),
              radial-gradient(1200px 700px at 110% -10%, #281a55 0%, transparent 50%), var(--bg);
-  color: var(--text-primary); line-height: 1.6; transition: background .3s ease, color .3s ease;
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background .3s ease, color .3s ease;
 }
 
 .container { display: flex; min-height: 100vh; }
@@ -94,16 +98,23 @@ body {
 
 .volunteer-name { font-weight: 600; color: var(--text-primary); }
 
-.status-badge { padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
-.badge-active { background: rgba(54,211,153,.18); color: var(--success); }
+/* Status badges only (Approval removed) */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+.badge-active    { background: rgba(54,211,153,.18); color: var(--success); }
 .badge-suspended { background: rgba(244,191,80,.18); color: var(--warning); }
-.badge-banned { background: rgba(255,107,107,.18); color: var(--danger); }
+.badge-banned    { background: rgba(255,107,107,.18); color: var(--danger); }
+.badge-pending   { background: rgba(170,179,214,.18); color: var(--muted); }
 
-.approval-badge { padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; display: inline-block; }
-.approval-pending { background: rgba(244,191,80,.18); color: var(--warning); }
-.approval-approved { background: rgba(54,211,153,.18); color: var(--success); }
-
-.action-buttons { display: flex; gap: 8px; }
+/* Actions */
+.action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn { padding: 6px 12px; border-radius: var(--radius-sm); border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s ease; }
 .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
 .btn-secondary:hover { background: var(--border-color); }
@@ -118,66 +129,4 @@ body {
   .sidebar { display: none; }
   .main-content { padding: 16px; }
   .table-container { overflow-x: auto; }
-}
-/* Base badge style (same for all approval states) */
-.approval-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: capitalize;
-  letter-spacing: 0.3px;
-}
-
-/* Specific colors per approval state */
-.approval-approved {
-  background: rgba(54, 211, 153, 0.18);   /* soft green */
-  color: var(--success);                  /* green text */
-}
-
-.approval-suspended {
-  background: rgba(244, 191, 80, 0.18);   /* soft yellow */
-  color: var(--warning);                  /* yellow/orange text */
-}
-
-.approval-rejected {
-  background: rgba(255, 107, 107, 0.18);  /* soft red */
-  color: var(--danger);                   /* red text */
-}
-
-.approval-pending {
-  background: rgba(170, 179, 214, 0.18);  /* soft gray/blue */
-  color: var(--muted);                    /* muted text */
-}
-/* Base style for all status badges */
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: capitalize;
-  letter-spacing: 0.3px;
-}
-
-/* Individual colors */
-.badge-active {
-  background: rgba(54, 211, 153, 0.18);   /* green */
-  color: var(--success);
-}
-
-.badge-suspended {
-  background: rgba(244, 191, 80, 0.18);   /* yellow */
-  color: var(--warning);
-}
-
-.badge-banned {
-  background: rgba(255, 107, 107, 0.18);  /* red */
-  color: var(--danger);
-}
-
-.badge-pending {
-  background: rgba(170, 179, 214, 0.18);  /* soft gray-blue */
-  color: var(--muted);
 }

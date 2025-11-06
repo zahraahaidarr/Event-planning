@@ -122,6 +122,53 @@ public function index()
 
         return response()->json($employees);
     }
+ public function setStatus($id, Request $request)
+    {
+        $request->validate([
+            'status' => 'required|string|in:ACTIVE,SUSPENDED', // only these two from UI
+        ]);
 
+        // Load employee + linked user
+        $employee = Employee::with('user:id,status')->find($id);
+        if (!$employee || !$employee->user) {
+            return response()->json(['ok' => false, 'message' => 'Employee or user not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        DB::transaction(function () use ($employee, $request) {
+            // Single source of truth on users.status
+            $employee->user->status = $request->input('status'); // ACTIVE | SUSPENDED
+            $employee->user->save();
+
+            // (Optional) mirror a column on employees table if you keep one:
+            // $employee->status = strtolower($request->input('status')); // active/suspended
+            // $employee->save();
+        });
+
+        return response()->json(['ok' => true, 'message' => 'Status updated.']);
+    }
+
+    // DELETE /admin/employees/{id}
+ public function destroy($id)
+{
+    $employee = Employee::with('user:id')->findOrFail($id);
+
+    // (optional) prevent deleting yourself
+    if ($employee->user && $employee->user->id === auth()->id()) {
+        return response()->json(['ok' => false, 'message' => 'You cannot delete your own account.'], 422);
+    }
+
+    DB::transaction(function () use ($employee) {
+        // If you have FK cascade (employees.user_id -> users.id ON DELETE CASCADE):
+        // Deleting the user will automatically delete the employee row.
+        if ($employee->user) {
+            // HARD delete:
+            $employee->user()->forceDelete();
+        } else {
+            $employee->forceDelete();
+        }
+    });
+
+    return response()->json(['ok' => true], 200);
+}
 
 }

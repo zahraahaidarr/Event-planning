@@ -37,24 +37,24 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::get('/admin/volunteers/list', [VolunteerController::class, 'list'])->name('volunteers.list');
         Route::get('/admin/volunteers/search', [VolunteerController::class, 'search'])->name('volunteers.search');
         Route::post('/admin/volunteers/{id}/status', [VolunteerController::class, 'setStatus'])->name('set-status');
-   
+        // Taxonomies & Venues routes
         Route::get('/admin/taxonomies-venues', [TaxonomiesVenuesController::class, 'index'])->name('taxonomies-venues.index');
         Route::get('/admin/taxonomies-venues/worker-types',    [TaxonomiesVenuesController::class, 'workerTypesIndex'])->name('taxonomies-venues.worker-types.index');
         Route::post('/admin/taxonomies-venues/worker-types',   [TaxonomiesVenuesController::class, 'workerTypesStore'])->name('taxonomies-venues.worker-types.store');
         Route::delete('/admin/taxonomies-venues/worker-types/{roleType}', [TaxonomiesVenuesController::class, 'workerTypesDestroy'])->name('taxonomies-venues.worker-types.destroy');
-        
         Route::get('/admin/taxonomies-venues/event-categories',[TaxonomiesVenuesController::class,'eventCategoriesIndex']) ->name('taxonomies-venues.event-categories.index');
         Route::post('/admin/taxonomies-venues/event-categories',[TaxonomiesVenuesController::class,'eventCategoriesStore'])->name('taxonomies-venues.event-categories.store');
         Route::delete('/admin/taxonomies-venues/event-categories/{eventCategory}',[TaxonomiesVenuesController::class,'eventCategoriesDestroy'])->name('taxonomies-venues.event-categories.destroy');
-    
         Route::get('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesIndex'])->name('taxonomies-venues.venues.index');
         Route::post('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesStore'])->name('taxonomies-venues.venues.store');
         Route::delete('/admin/taxonomies-venues/venues/{venue}',[TaxonomiesVenuesController::class,'venuesDestroy'])->name('taxonomies-venues.venues.destroy');
         
-        // routes/web.php
+        // events routes
         Route::get('/admin/events', [EventsController::class, 'index'])->name('events.index');
         Route::post('/admin/events', [EventsController::class, 'store'])->name('admin.events.store');
-
+        Route::get   ('/admin/events/{event}',        [EventsController::class, 'show'])->name('admin.events.show'); // JSON for edit
+        Route::put   ('/admin/events/{event}',        [EventsController::class, 'update'])->name('admin.events.update');
+        Route::patch ('/admin/events/{event}/status', [EventsController::class, 'updateStatus'])->name('admin.events.update-status');
 
     });
 

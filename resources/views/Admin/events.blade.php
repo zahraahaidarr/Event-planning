@@ -44,9 +44,15 @@
           <p>Create and manage volunteer events</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" id="btn_open_create"><span>➕</span>Create Event</button>
-          <button class="icon-btn" id="btn_theme" title="Toggle theme"><span id="theme-icon">☀️</span></button>
-          <button class="icon-btn" id="btn_lang" title="Toggle language"><span id="lang-icon">AR</span></button>
+          <button class="btn btn-primary" id="btn_open_create">
+            <span>➕</span>Create Event
+          </button>
+          <button class="icon-btn" id="btn_theme" title="Toggle theme">
+            <span id="theme-icon">☀️</span>
+          </button>
+          <button class="icon-btn" id="btn_lang" title="Toggle language">
+            <span id="lang-icon">AR</span>
+          </button>
         </div>
       </div>
 
@@ -55,7 +61,9 @@
         <button class="tab active" data-filter="all">All Events</button>
         <button class="tab" data-filter="draft">Drafts</button>
         <button class="tab" data-filter="published">Published</button>
-        <button class="tab" data-filter="closed">Closed</button>
+        <button class="tab" data-filter="active">Active</button>
+        <button class="tab" data-filter="completed">Completed</button>
+        <button class="tab" data-filter="cancelled">Cancelled</button>
       </div>
 
       <!-- Events Table -->
@@ -119,7 +127,9 @@
             <p class="muted">Set how many volunteers/employees per role.</p>
             <div class="table-container">
               <table class="table table-min">
-                <thead><tr><th>Role</th><th>Capacity</th></tr></thead>
+                <thead>
+                  <tr><th>Role</th><th>Capacity</th></tr>
+                </thead>
                 <tbody id="wizard_role_capacity_rows"></tbody>
               </table>
             </div>
@@ -170,7 +180,9 @@
                     <button type="button" class="btn btn-secondary btn-sm" id="btn_add_role">Add Role</button>
                   </div>
                   <div id="rolesContainer"></div>
-                  <small class="muted">Choose a worker type and set its spots. Leave 0 to skip.</small>
+                  <small class="muted">
+                    Choose a worker type and set its spots. Leave 0 to skip.
+                  </small>
                 </div>
               </div>
             </div>
@@ -181,24 +193,30 @@
       <div class="wizard-nav">
         <button id="btn_back" class="btn btn-secondary" type="button">Back</button>
         <button id="btn_next" class="btn btn-primary" type="button">Next</button>
-        <button id="btn_publish" class="btn btn-primary" type="button" style="display:none">Publish Event</button>
+        <button id="btn_save_draft" class="btn btn-secondary" type="button" style="display:none">
+          Save as Draft
+        </button>
+        <button id="btn_publish" class="btn btn-primary" type="button" style="display:none">
+          Publish Event
+        </button>
       </div>
     </div>
   </div>
 
   {{-- JS --}}
 <script>
-    window.csrfToken             = "{{ csrf_token() }}";
-    window.ENDPOINT_CREATE_EVENT = "{{ route('admin.events.store') }}";
-    window.ENDPOINT_AI_STAFFING  = "{{ url('/api/ai/staffing') }}"; // optional
+    window.csrfToken                         = "{{ csrf_token() }}";
+    window.ENDPOINT_CREATE_EVENT             = "{{ route('admin.events.store') }}";
+    window.ENDPOINT_AI_STAFFING              = "{{ url('/api/ai/staffing') }}"; // optional
+    window.ENDPOINT_UPDATE_EVENT_STATUS_BASE = "{{ url('/admin/events') }}";
+    window.ENDPOINT_UPDATE_EVENT_BASE        = "{{ url('/admin/events') }}";
 
-    // Pre-shaped arrays from controller (no map/closures here)
     window.initialEvents     = @json($eventsPayload);
     window.initialCategories = @json($categoriesPayload);
     window.initialRoleTypes  = @json($roleTypesPayload);
 </script>
 
-<script src="{{ asset('js/admin/events.js') }}"></script>
 
+  <script src="{{ asset('js/admin/events.js') }}"></script>
 </body>
 </html>

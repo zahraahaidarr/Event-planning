@@ -14,36 +14,41 @@ const rolesFromBackend = Array.isArray(window.initialRoleTypes)
 // Use real DB values; fall back only if tables are empty
 let categoryList = categoriesFromBackend.length
   ? categoriesFromBackend.map(c => c.name)
-  : ["wedding", "graduation"];
+  : ['wedding', 'graduation'];
 
 let workerTypeList = rolesFromBackend.length
   ? rolesFromBackend.map(r => r.name)
-  : ["Organizer","Civil Defense","Media Staff","Tech Support","Cleaner","Decorator","Cooking Team","Waiter"];
+  : ['Organizer', 'Civil Defense', 'Media Staff', 'Tech Support', 'Cleaner', 'Decorator', 'Cooking Team', 'Waiter'];
 
 /* ========= Helpers ========= */
 
-const $  = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-function slugifyRole(name){
+function slugifyRole(name) {
   return (name || '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/gi,'-')
-    .replace(/(^-|-$)/g,'');
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
 /* ========= Table render ========= */
 
 function renderEvents() {
   const tbody = $('#eventsTableBody');
+
   const filtered = currentFilter === 'all'
     ? events
-    : events.filter(e => (e.status || '').toLowerCase() === currentFilter);
+    : events.filter(e => {
+        const k = (e.status || '').toLowerCase();
+        return k === currentFilter;
+      });
 
   tbody.innerHTML = filtered.map(event => {
-    const status = (event.status || 'draft').toLowerCase();
-    const statusClass = `status-${status}`;
-    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+    const statusRaw   = event.status || 'DRAFT';      // backend sends upper-case
+    const statusKey   = statusRaw.toLowerCase();      // for css / filter
+    const statusLabel = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
+    const statusClass = `status-${statusKey}`;
 
     return `
       <tr>
@@ -52,11 +57,12 @@ function renderEvents() {
         <td>${event.date || ''}</td>
         <td>${event.location || ''}</td>
         <td>${event.applicants || 0} / ${event.totalSpots || 0}</td>
-        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
         <td>
           <div class="action-buttons">
             <button class="btn btn-secondary btn-sm" data-edit="${event.id}">Edit</button>
-            <button class="btn btn-danger btn-sm" data-del="${event.id}">Delete</button>
+            <button class="btn btn-warning btn-sm" data-status="CANCELLED" data-id="${event.id}">Cancel</button>
+            <button class="btn btn-light btn-sm" data-status="DRAFT" data-id="${event.id}">Set as Draft</button>
           </div>
         </td>
       </tr>`;
@@ -65,20 +71,22 @@ function renderEvents() {
 
 /* ========= Tabs ========= */
 
-function wireTabs(){
-  $$('.tab').forEach(tab=>{
-    tab.addEventListener('click', ev=>{
-      $$('.tab').forEach(t=>t.classList.remove('active'));
+function wireTabs() {
+  $$('.tab').forEach(tab => {
+    tab.addEventListener('click', ev => {
+      $$('.tab').forEach(t => t.classList.remove('active'));
       ev.currentTarget.classList.add('active');
-      currentFilter = ev.currentTarget.dataset.filter;
+
+      // expects data-filter = all | draft | published | active | completed | cancelled
+      currentFilter = ev.currentTarget.dataset.filter || 'all';
       renderEvents();
     });
   });
 }
 
-/* ========= Roles UI (uses role_types) ========= */
+/* ========= Roles UI ========= */
 
-function getAvailableRoles(){
+function getAvailableRoles() {
   const used = new Set(
     $$('#rolesContainer select.role-select')
       .map(s => s.value)
@@ -87,12 +95,12 @@ function getAvailableRoles(){
   return workerTypeList.filter(r => !used.has(r));
 }
 
-function refreshRoleSelectOptions(){
-  $$('#rolesContainer select.role-select').forEach(select=>{
+function refreshRoleSelectOptions() {
+  $$('#rolesContainer select.role-select').forEach(select => {
     const current = select.value;
     const options = new Set([current, ...getAvailableRoles()]);
     select.innerHTML = '';
-    options.forEach(role=>{
+    options.forEach(role => {
       if (!role) return;
       const opt = document.createElement('option');
       opt.value = role;
@@ -102,7 +110,7 @@ function refreshRoleSelectOptions(){
   });
 }
 
-function renderRoleRow(roleName = '', spots = 0){
+function renderRoleRow(roleName = '', spots = 0) {
   const wrap = $('#rolesContainer');
   const row  = document.createElement('div');
   row.className = 'role-item';
@@ -110,7 +118,7 @@ function renderRoleRow(roleName = '', spots = 0){
   const sel = document.createElement('select');
   sel.className = 'role-select';
 
-  workerTypeList.forEach(r=>{
+  workerTypeList.forEach(r => {
     const o = document.createElement('option');
     o.value = r;
     o.textContent = r;
@@ -144,46 +152,50 @@ function renderRoleRow(roleName = '', spots = 0){
   refreshRoleSelectOptions();
 }
 
-function addRoleRow(){
+function addRoleRow() {
   const avail = getAvailableRoles();
-  if (!avail.length){
+  if (!avail.length) {
     alert('All worker types are already added.');
     return;
   }
   renderRoleRow(avail[0], 0);
 }
 
-function collectRolesFromModal(){
-  return $$('#rolesContainer .role-item').map(r=>{
-    const name  = r.querySelector('select.role-select').value;
-    const spots = Number(r.querySelector('input.role-spots').value || 0);
-    return { name, slug: slugifyRole(name), spots };
-  }).filter(x => x.spots > 0);
+function collectRolesFromModal() {
+  return $$('#rolesContainer .role-item')
+    .map(r => {
+      const name  = r.querySelector('select.role-select').value;
+      const spots = Number(r.querySelector('input.role-spots').value || 0);
+      return { name, slug: slugifyRole(name), spots };
+    })
+    .filter(x => x.spots > 0);
 }
 
 /* ========= Wizard navigation ========= */
 
 let WZ_STEP = 1;
 
-function setWizardStep(n){
+function setWizardStep(n) {
   WZ_STEP = n;
-  ['step1','step2','step3'].forEach((id,i)=>{
-    $('#'+id).classList.toggle('active', i+1 === n);
+  ['step1','step2','step3'].forEach((id, i) => {
+    $('#'+id).classList.toggle('active', i + 1 === n);
   });
-  [1,2,3].forEach(i=>{
+  [1,2,3].forEach(i => {
     $('#wz'+i).classList.toggle('active', i <= n);
   });
-  $('#btn_back').style.display    = n > 1 ? '' : 'none';
-  $('#btn_next').style.display    = n < 3 ? '' : 'none';
-  $('#btn_publish').style.display = n === 3 ? '' : 'none';
+
+  $('#btn_back').style.display       = n > 1 ? '' : 'none';
+  $('#btn_next').style.display       = n < 3 ? '' : 'none';
+  $('#btn_save_draft').style.display = n === 3 ? '' : 'none';
+  $('#btn_publish').style.display    = n === 3 ? '' : 'none';
 }
 
-function wizardBack(){
+function wizardBack() {
   setWizardStep(Math.max(1, WZ_STEP - 1));
 }
 
-async function wizardNext(){
-  if (WZ_STEP === 1){
+async function wizardNext() {
+  if (WZ_STEP === 1) {
     ensureCategoryOptions();
     const cat1 = $('#wizard_event_category').value;
     const cat3 = $('#eventCategory');
@@ -196,17 +208,19 @@ async function wizardNext(){
     return;
   }
 
-  if (WZ_STEP === 2){
-    const rows = $$('#wizard_role_capacity_rows tr').map(r=>{
-      const name = r.querySelector('td').textContent.trim();
-      const cap  = Number(r.querySelector('input.capacity').value || 0);
-      return { name, cap };
-    }).filter(x => x.cap > 0);
+  if (WZ_STEP === 2) {
+    const rows = $$('#wizard_role_capacity_rows tr')
+      .map(r => {
+        const name = r.querySelector('td').textContent.trim();
+        const cap  = Number(r.querySelector('input.capacity').value || 0);
+        return { name, cap };
+      })
+      .filter(x => x.cap > 0);
 
     $('#rolesContainer').innerHTML = '';
     rows.forEach(p => renderRoleRow(p.name, p.cap));
 
-    const total = rows.reduce((s,x)=> s + x.cap, 0);
+    const total = rows.reduce((s, x) => s + x.cap, 0);
     if (total > 0) $('#eventSpots').value = String(total);
 
     setWizardStep(3);
@@ -216,7 +230,10 @@ async function wizardNext(){
 
 /* ========= Modal ========= */
 
-function openCreateModal(){
+let editingEventId = null;    // null => create, not null => edit
+
+function openCreateModal() {
+  editingEventId = null;
   $('#modalTitle').textContent = 'Create New Event';
   $('#eventForm').reset();
   $('#rolesContainer').innerHTML = '';
@@ -226,18 +243,21 @@ function openCreateModal(){
   $('#eventModal').classList.add('active');
 }
 
-function closeModal(){
+function closeModal() {
+  editingEventId = null;
   $('#eventModal').classList.remove('active');
 }
 
-/* ========= Category options (uses event_categories) ========= */
+/* ========= Category options ========= */
 
-function ensureCategoryOptions(){
+function ensureCategoryOptions() {
   const select = $('#eventCategory');
-  if (select){
-    const existing = new Set($$('#eventCategory option').map(o => o.value));
-    categoryList.forEach(c=>{
-      if (!existing.has(c)){
+  if (select) {
+    const existing = new Set(
+      $$('#eventCategory option').map(o => o.value)
+    );
+    categoryList.forEach(c => {
+      if (!existing.has(c)) {
         const opt = document.createElement('option');
         opt.value = c;
         opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
@@ -246,7 +266,6 @@ function ensureCategoryOptions(){
     });
   }
 
-  // Step 1 dropdown:
   $('#wizard_event_category').innerHTML = categoryList
     .map(c => `<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`)
     .join('');
@@ -254,21 +273,19 @@ function ensureCategoryOptions(){
 
 /* ========= Step 2 rows ========= */
 
-function buildStep2CapacityRows(){
+function buildStep2CapacityRows() {
   const tbody = $('#wizard_role_capacity_rows');
-  tbody.innerHTML = workerTypeList.map(w=>{
-    const slug = slugifyRole(w);
-    return `
-      <tr data-worker-type="${slug}">
-        <td>${w}</td>
-        <td><input class="capacity" type="number" min="0" value="0" style="max-width:180px"></td>
-      </tr>`;
-  }).join('');
+  tbody.innerHTML = workerTypeList.map(w => `
+    <tr data-worker-type="${slugifyRole(w)}">
+      <td>${w}</td>
+      <td><input class="capacity" type="number" min="0" value="0" style="max-width:180px"></td>
+    </tr>
+  `).join('');
 }
 
 /* ========= AI staffing (optional) ========= */
 
-async function runStaffingAndFillStep2(){
+async function runStaffingAndFillStep2() {
   if (!window.ENDPOINT_AI_STAFFING) return false;
 
   const area   = Number($('#venue_area_m2').value || 0);
@@ -292,27 +309,27 @@ async function runStaffingAndFillStep2(){
 
     if (!res.ok) return false;
 
-    const ai = await res.json();   // {roles:[{name,spots}]}
+    const ai = await res.json(); // { roles:[{name,spots}] }
 
     buildStep2CapacityRows();
     const map = new Map(ai.roles.map(r => [r.name, r.spots]));
 
-    $$('#wizard_role_capacity_rows tr').forEach(tr=>{
+    $$('#wizard_role_capacity_rows tr').forEach(tr => {
       const label = tr.querySelector('td').textContent.trim();
       const inp   = tr.querySelector('input.capacity');
       inp.value = map.get(label) ?? 0;
     });
 
     return true;
-  } catch (e){
+  } catch (e) {
     console.error('AI staffing error', e);
     return false;
   }
 }
 
-/* ========= Publish (SAVE TO DB) ========= */
+/* ========= Create/Update (Publish / Draft) ========= */
 
-async function publishEvent() {
+async function submitEvent(status = 'PUBLISHED') {
   const form = $('#eventForm');
   if (!form.checkValidity()) {
     form.reportValidity();
@@ -337,35 +354,37 @@ async function publishEvent() {
     requirements: '',
     venue_area_m2: Number($('#venue_area_m2').value || 0),
     expected_attendees: Number($('#expected_attendees').value || 0),
-    roles // [{ name, slug, spots }]
+    roles,
+    status,
   };
 
+  const isEdit = !!editingEventId;
+  const url = isEdit
+    ? `${window.ENDPOINT_UPDATE_EVENT_BASE}/${editingEventId}`
+    : window.ENDPOINT_CREATE_EVENT;
+  const method = isEdit ? 'PUT' : 'POST';
+
   try {
-    const res = await fetch(window.ENDPOINT_CREATE_EVENT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
+    const res = await fetch(url, {
+      method,
+      headers:{
+        'Content-Type':'application/json',
+        'Accept':'application/json',
+        'X-Requested-With':'XMLHttpRequest',
         'X-CSRF-TOKEN': window.csrfToken,
       },
       body: JSON.stringify(payload),
     });
 
-    // Read body safely even on 422/500
     const raw = await res.text();
     let data = null;
-    try { data = raw ? JSON.parse(raw) : null; } catch (e) { /* not JSON */ }
+    try { data = raw ? JSON.parse(raw) : null; } catch (_) {}
 
-    // Helper to format error for alert
     const buildErrorMessage = () => {
       let msg = `Request failed (${res.status} ${res.statusText})`;
-
       if (data) {
         if (data.message) msg += `\nMessage: ${data.message}`;
         if (data.error)   msg += `\nError: ${data.error}`;
-
-        // Laravel validation errors: { field: [..] }
         if (data.errors) {
           msg += `\nValidation errors:`;
           Object.entries(data.errors).forEach(([field, msgs]) => {
@@ -373,53 +392,175 @@ async function publishEvent() {
           });
         }
       } else if (raw) {
-        msg += `\nRaw response: ${raw.substring(0, 400)}`;
+        msg += `\nRaw response: ${raw.substring(0,400)}`;
       }
-
-      msg += `\n\n(Check DevTools Network tab / storage/logs/laravel.log for full details.)`;
       return msg;
     };
 
-    // Handle non-2xx or backend "ok:false"
     if (!res.ok || !data || data.ok === false) {
-      console.error('Event create failed', {
-        status: res.status,
-        statusText: res.statusText,
-        data,
-        raw,
-      });
+      console.error('Event save failed', { status: res.status, data, raw });
       alert(buildErrorMessage());
       return;
     }
 
-    // Success path
     const ev = data.event;
 
-    events.unshift({
-      id: ev.id,
-      title: ev.title,
-      category: ev.category,
-      date: (ev.starts_at || '').substring(0, 10),
-      location: ev.location,
-      applicants: 0,
-      totalSpots: ev.total_spots,
-      status: ev.status || 'published',
-    });
+    if (isEdit) {
+      // update in local array
+      const idx = events.findIndex(e => String(e.id) === String(ev.id));
+      if (idx !== -1) {
+        events[idx] = {
+          id: ev.id,
+          title: ev.title,
+          category: ev.category,
+          date: (ev.starts_at || '').substring(0,10),
+          location: ev.location,
+          applicants: events[idx].applicants || 0,
+          totalSpots: ev.total_spots,
+          status: ev.status,
+        };
+      }
+      alert('Event updated successfully.');
+    } else {
+      // add new
+      events.unshift({
+        id: ev.id,
+        title: ev.title,
+        category: ev.category,
+        date: (ev.starts_at || '').substring(0,10),
+        location: ev.location,
+        applicants: 0,
+        totalSpots: ev.total_spots,
+        status: ev.status || status,
+      });
+      alert(ev.status === 'DRAFT'
+        ? 'Draft saved successfully.'
+        : 'Event created successfully.'
+      );
+    }
 
-    alert(data.message || 'Event published successfully.');
     closeModal();
     renderEvents();
 
   } catch (err) {
-    console.error('Unexpected error while creating event', err);
-    alert('Unexpected error while creating event: ' + err.message);
+    console.error('Unexpected error while saving event', err);
+    alert('Unexpected error while saving event: ' + err.message);
+  }
+}
+
+function publishEvent() {
+  submitEvent('PUBLISHED');
+}
+
+function saveDraft() {
+  submitEvent('DRAFT');
+}
+
+/* ========= Status update from table ========= */
+
+async function updateEventStatus(id, status) {
+  if (!window.ENDPOINT_UPDATE_EVENT_STATUS_BASE) {
+    console.warn('ENDPOINT_UPDATE_EVENT_STATUS_BASE is not defined.');
+    return;
+  }
+
+  try {
+    const url = `${window.ENDPOINT_UPDATE_EVENT_STATUS_BASE}/${id}/status`;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': window.csrfToken,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    // ❌ real failure => error popup
+    if (!res.ok || !data || data.ok !== true) {
+      console.error('Status update error', {res, data});
+      alert('Failed to update status. Please try again.');
+      return;
+    }
+
+    // ✅ success => update UI + success popup
+    const newStatus = data.event?.status || status;
+    const ev = events.find(e => String(e.id) === String(id));
+    if (ev) {
+      ev.status = newStatus;
+      renderEvents();
+    }
+
+    alert(`Status updated to ${newStatus}.`);
+
+  } catch (e) {
+    console.error('Status update exception', e);
+    alert('Unexpected error while updating status.');
   }
 }
 
 
+/* ========= Load event into modal for EDIT ========= */
+
+async function openEditModal(id) {
+  editingEventId = id;
+  $('#modalTitle').textContent = 'Edit Event';
+  $('#eventForm').reset();
+  $('#rolesContainer').innerHTML = '';
+  ensureCategoryOptions();
+  setWizardStep(3); // jump directly to details
+
+  try {
+    const url = `${window.ENDPOINT_UPDATE_EVENT_BASE}/${id}`;
+    const res = await fetch(url, {
+      headers: {
+        'Accept':'application/json',
+        'X-Requested-With':'XMLHttpRequest'
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data || !data.ok) {
+      console.error('Failed to load event', data);
+      alert('Failed to load event data.');
+      return;
+    }
+
+    const ev = data.event;
+
+    // fill form
+    $('#eventTitle').value       = ev.title || '';
+    $('#eventDescription').value = ev.description || '';
+    $('#eventCategory').value    = ev.category || '';
+    $('#eventLocation').value    = ev.location || '';
+    $('#eventDate').value        = ev.date || '';
+    $('#eventTime').value        = ev.time || '';
+    $('#eventDuration').value    = ev.duration_hours || 1;
+    $('#eventSpots').value       = ev.total_spots || 1;
+    $('#venue_area_m2').value    = ev.venue_area_m2 || '';
+    $('#expected_attendees').value = ev.expected_attendees || '';
+
+    // roles
+    $('#rolesContainer').innerHTML = '';
+    if (Array.isArray(ev.roles) && ev.roles.length) {
+      ev.roles.forEach(r => renderRoleRow(r.name, r.spots));
+    }
+
+    $('#eventModal').classList.add('active');
+
+  } catch (e) {
+    console.error('Error loading event for edit', e);
+    alert('Unexpected error while loading event.');
+  }
+}
+
 /* ========= Theme / Language ========= */
 
-function toggleTheme(){
+function toggleTheme() {
   const html = document.documentElement;
   const current = html.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
@@ -427,7 +568,7 @@ function toggleTheme(){
   $('#theme-icon').textContent = next === 'dark' ? '☀️' : '🌙';
 }
 
-function toggleLanguage(){
+function toggleLanguage() {
   const html = document.documentElement;
   const current = html.getAttribute('lang') || 'en';
   const next = current === 'en' ? 'ar' : 'en';
@@ -437,41 +578,32 @@ function toggleLanguage(){
   $('#lang-icon').textContent = next === 'en' ? 'AR' : 'EN';
 }
 
-/* ========= Table actions (Edit/Delete placeholders) ========= */
+/* ========= Table actions ========= */
 
-function handleTableClicks(e){
-  const editId = e.target.getAttribute('data-edit');
-  const delId  = e.target.getAttribute('data-del');
+function handleTableClicks(e) {
+  const editId   = e.target.getAttribute('data-edit');
+  const status   = e.target.getAttribute('data-status');
+  const statusId = e.target.getAttribute('data-id');
 
-  if (editId){
-    const ev = events.find(x => String(x.id) === String(editId));
-    if (ev){
-      $('#modalTitle').textContent = 'Edit Event';
-      $('#eventTitle').value = ev.title;
-      ensureCategoryOptions();
-      $('#eventCategory').value = ev.category || '';
-      $('#eventLocation').value = ev.location || '';
-      $('#eventDate').value = ev.date || '';
-      setWizardStep(3);
-      $('#eventModal').classList.add('active');
-    }
+  if (editId) {
+    openEditModal(editId);
+    return;
   }
 
-  if (delId){
-    if (confirm('This should call DELETE endpoint (to implement).')){
-      // TODO: implement DELETE /admin/events/{id}
-    }
+  if (status && statusId) {
+    updateEventStatus(statusId, status); // CANCELLED or DRAFT
   }
 }
 
 /* ========= Init ========= */
 
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', () => {
   $('#btn_open_create').addEventListener('click', openCreateModal);
   $('#btn_close_modal').addEventListener('click', closeModal);
   $('#btn_back').addEventListener('click', wizardBack);
   $('#btn_next').addEventListener('click', wizardNext);
   $('#btn_publish').addEventListener('click', publishEvent);
+  $('#btn_save_draft').addEventListener('click', saveDraft);
   $('#btn_add_role').addEventListener('click', addRoleRow);
   $('#btn_theme').addEventListener('click', toggleTheme);
   $('#btn_lang').addEventListener('click', toggleLanguage);

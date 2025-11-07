@@ -1,0 +1,204 @@
+{{-- resources/views/admin/events.blade.php --}}
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event Management • Employee Portal</title>
+
+  {{-- CSRF for AJAX --}}
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  {{-- CSS --}}
+  <link rel="stylesheet" href="{{ asset('css/admin/events.css') }}">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">V</div>
+        <span class="logo-text">VolunteerHub</span>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">Admin</div>
+        <a href="#" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+        <a href="#" class="nav-item"><span class="nav-icon">👔</span><span>Employees</span></a>
+        <a href="#" class="nav-item"><span class="nav-icon">👥</span><span>Volunteers</span></a>
+        <a href="#" class="nav-item active"><span class="nav-icon">📅</span><span>Events</span></a>
+      </nav>
+
+      <nav class="nav-section">
+        <div class="nav-label">Account</div>
+        <a href="#" class="nav-item"><span class="nav-icon">👤</span><span>Profile</span></a>
+        <a href="#" class="nav-item"><span class="nav-icon">🔧</span><span>Settings</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <div class="header">
+        <div class="header-left">
+          <h1>Event Management</h1>
+          <p>Create and manage volunteer events</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="btn_open_create"><span>➕</span>Create Event</button>
+          <button class="icon-btn" id="btn_theme" title="Toggle theme"><span id="theme-icon">☀️</span></button>
+          <button class="icon-btn" id="btn_lang" title="Toggle language"><span id="lang-icon">AR</span></button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-filter="all">All Events</button>
+        <button class="tab" data-filter="draft">Drafts</button>
+        <button class="tab" data-filter="published">Published</button>
+        <button class="tab" data-filter="closed">Closed</button>
+      </div>
+
+      <!-- Events Table -->
+      <div class="table-container">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Event Name</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Applicants</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody id="eventsTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Event Modal (Wizard) -->
+  <div class="modal" id="eventModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Create New Event</h2>
+        <button class="modal-close" id="btn_close_modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="wizard-steps">
+          <div id="wz1" class="wizard-step active"></div>
+          <div id="wz2" class="wizard-step"></div>
+          <div id="wz3" class="wizard-step"></div>
+        </div>
+
+        <form id="eventForm">
+          <!-- STEP 1 -->
+          <section id="step1" class="step active">
+            <h3 class="h3">Event Space & Auto-Staffing</h3>
+            <div class="grid2">
+              <div class="field">
+                <label>Venue Area (m²)</label>
+                <input id="venue_area_m2" type="number" min="0" placeholder="e.g., 450">
+              </div>
+              <div class="field">
+                <label>Expected Attendees</label>
+                <input id="expected_attendees" type="number" min="0" placeholder="e.g., 1200">
+              </div>
+              <div class="field full">
+                <label>Event Category</label>
+                <select id="wizard_event_category" class="form-select"></select>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 2 -->
+          <section id="step2" class="step">
+            <h3 class="h3">Role Capacities</h3>
+            <p class="muted">Set how many volunteers/employees per role.</p>
+            <div class="table-container">
+              <table class="table table-min">
+                <thead><tr><th>Role</th><th>Capacity</th></tr></thead>
+                <tbody id="wizard_role_capacity_rows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- STEP 3 -->
+          <section id="step3" class="step">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label required">Event Title</label>
+                <input type="text" class="form-input" id="eventTitle" required placeholder="Enter event title">
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label required">Description</label>
+                <textarea class="form-textarea" id="eventDescription" required placeholder="Describe the event..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Category</label>
+                <select class="form-select" id="eventCategory" required>
+                  <option value="">Select category...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Location</label>
+                <input type="text" class="form-input" id="eventLocation" required placeholder="Event location">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Date</label>
+                <input type="date" class="form-input" id="eventDate" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Time</label>
+                <input type="time" class="form-input" id="eventTime" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Duration (hours)</label>
+                <input type="number" class="form-input" id="eventDuration" required min="1" step="0.5" placeholder="4">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Total Spots</label>
+                <input type="number" class="form-input" id="eventSpots" required min="1" placeholder="20">
+              </div>
+
+              <div class="form-group full-width">
+                <div class="roles-section">
+                  <div class="roles-header">
+                    <label class="form-label required">Roles</label>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn_add_role">Add Role</button>
+                  </div>
+                  <div id="rolesContainer"></div>
+                  <small class="muted">Choose a worker type and set its spots. Leave 0 to skip.</small>
+                </div>
+              </div>
+            </div>
+          </section>
+        </form>
+      </div>
+
+      <div class="wizard-nav">
+        <button id="btn_back" class="btn btn-secondary" type="button">Back</button>
+        <button id="btn_next" class="btn btn-primary" type="button">Next</button>
+        <button id="btn_publish" class="btn btn-primary" type="button" style="display:none">Publish Event</button>
+      </div>
+    </div>
+  </div>
+
+  {{-- JS --}}
+<script>
+    window.csrfToken             = "{{ csrf_token() }}";
+    window.ENDPOINT_CREATE_EVENT = "{{ route('admin.events.store') }}";
+    window.ENDPOINT_AI_STAFFING  = "{{ url('/api/ai/staffing') }}"; // optional
+
+    // Pre-shaped arrays from controller (no map/closures here)
+    window.initialEvents     = @json($eventsPayload);
+    window.initialCategories = @json($categoriesPayload);
+    window.initialRoleTypes  = @json($roleTypesPayload);
+</script>
+
+<script src="{{ asset('js/admin/events.js') }}"></script>
+
+</body>
+</html>

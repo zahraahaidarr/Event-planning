@@ -9,10 +9,24 @@ class WorkRole extends Model
 {
     use HasFactory;
 
+    protected $table = 'work_roles';
     protected $primaryKey = 'role_id';
-    public $timestamps = false;
+    public $incrementing = true;
 
-    protected $fillable = ['event_id','role_type_id','required_spots', /* … */];
+    // you have created_at / updated_at on this table
+    public $timestamps = true;
+
+    protected $fillable = [
+        'event_id',
+        'role_type_id',
+        'role_name',
+        'required_spots',
+        'calc_source',
+        'calc_confidence',
+        'description',
+    ];
+
+    /* ---------- Relationships ---------- */
 
     public function event()
     {
@@ -30,15 +44,14 @@ class WorkRole extends Model
     }
 
     public function workers()
-{
-    return $this->hasManyThrough(
-        Worker::class,
-        WorkerReservation::class,
-        'work_role_id', // FK on WorkerReservation
-        'worker_id',    // FK on Worker
-        'role_id',      // Local key on WorkRole
-        'worker_id'     // Local key on WorkerReservation
-    );
-}
-
+    {
+        return $this->hasManyThrough(
+            Worker::class,            // final model
+            WorkerReservation::class, // through
+            'work_role_id',           // FK on WorkerReservation → WorkRole
+            'worker_id',              // FK on Worker → workers table
+            'role_id',                // local key on WorkRole
+            'worker_id'               // local key on WorkerReservation
+        );
+    }
 }

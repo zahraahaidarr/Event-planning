@@ -10,9 +10,12 @@ use App\Http\Controllers\Employee\dashboardController as EmployeeDashboardContro
 use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\TaxonomiesVenuesController;
+use App\Http\Controllers\AI\StaffingController;
+use App\Http\Controllers\Admin\EventsController;
 
-
-    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
+   
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
@@ -47,6 +50,12 @@ use App\Http\Controllers\Admin\TaxonomiesVenuesController;
         Route::get('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesIndex'])->name('taxonomies-venues.venues.index');
         Route::post('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesStore'])->name('taxonomies-venues.venues.store');
         Route::delete('/admin/taxonomies-venues/venues/{venue}',[TaxonomiesVenuesController::class,'venuesDestroy'])->name('taxonomies-venues.venues.destroy');
+        
+        // routes/web.php
+        Route::get('/admin/events', [EventsController::class, 'index'])->name('events.index');
+        Route::post('/admin/events', [EventsController::class, 'store'])->name('admin.events.store');
+
+
     });
 
 

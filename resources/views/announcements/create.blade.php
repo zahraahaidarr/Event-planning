@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Send Announcement</title>
-  <link rel="stylesheet" href="{{ asset('css/announcements.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/announcements/create.css') }}">
 </head>
 @php
     $user = auth()->user();
@@ -120,6 +120,9 @@
         <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
           <span class="nav-icon">📅</span><span>Events</span>
         </a>
+                    <a href="{{ route('taxonomies-venues.index') }}" class="nav-item active">
+                <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+            </a>
         <a href="{{ route('announcements.create') }}" class="nav-item">
           <span class="nav-icon">📢</span><span>Send Announcement</span>
         </a>
@@ -178,6 +181,6 @@
   </div>
 @endif
 
-<script src="{{ asset('js/announcements.js') }}"></script>
+<script src="{{ asset('js/announcements/reate.js') }}"></script>
 </body>
 </html>

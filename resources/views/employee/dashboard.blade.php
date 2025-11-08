@@ -44,7 +44,7 @@
                 <a href="{{ Route::has('messages.index') ? route('messages.index') : '#' }}" class="nav-item">
                     <span class="nav-icon">💬</span><span>Messages</span>
                 </a>
-                <a href="{{ Route::has('announcements.index') ? route('announcements.index') : '#' }}" class="nav-item">
+                <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}" class="nav-item">
                     <span class="nav-icon">📢</span><span>Announcements</span>
                 </a>
             </div>
@@ -55,9 +55,9 @@
                     <span class="nav-icon">👤</span><span>Profile</span>
                 </a>
 
-                <a href="{{ Route::has('events.index') ? route('Settings.index') : '#' }}" class="nav-item">
-                <span class="nav-icon">🔧</span><span>Settings</span>
-            </a>
+<a href="{{ Route::has('settings.show') ? route('settings.show') : '#' }}" class="nav-item">
+  <span class="nav-icon">🔧</span><span>Settings</span>
+</a>
             <a href="{{ route('announcements.create') }}">Send Announcement</a>
             </div>
         </nav>

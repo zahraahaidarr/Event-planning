@@ -12,6 +12,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\TaxonomiesVenuesController;
 use App\Http\Controllers\AI\StaffingController;
 use App\Http\Controllers\Admin\EventsController;
+use App\Http\Controllers\AnnouncementFeedController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -68,6 +69,8 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
     Route::middleware(['auth'])->group(function () {
         Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::get('/employee/announcements', [AnnouncementFeedController::class, 'index'])->name('employee.announcements.index');
+        Route::get('/worker/announcements', [AnnouncementFeedController::class, 'index'])->name('worker.announcements.index');
     });
 
 

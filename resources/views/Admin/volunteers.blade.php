@@ -15,7 +15,7 @@
 <div class="container">
 
     {{-- Sidebar --}}
-    <aside class="sidebar">
+      <aside class="sidebar">
         <div class="logo">
             <div class="logo-icon">V</div>
             <span class="logo-text">VolunteerHub</span>
@@ -33,15 +33,18 @@
                 <span class="nav-icon">👔</span><span>Employees</span>
             </a>
 
-            <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
-               class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
+            <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}" class="nav-item">
                 <span class="nav-icon">👥</span><span>Volunteers</span>
             </a>
 
             <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
                 <span class="nav-icon">📅</span><span>Events</span>
             </a>
-            <a href="{{ Route::has('announcements.create') ? route('announcements.create') : '#' }}" class="nav-item">
+            <a href="{{ route('taxonomies-venues.index') }}" class="nav-item active">
+                <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+            </a>
+
+            <a href="{{ route('announcements.create') }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>
         </nav>
@@ -52,10 +55,11 @@
             <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" class="nav-item">
                 <span class="nav-icon">👤</span><span>Profile</span>
             </a>
+<a href="{{ Route::has('settings.show') ? route('settings.show') : '#' }}" class="nav-item">
+  <span class="nav-icon">🔧</span><span>Settings</span>
+</a>
 
-            <a href="#" class="nav-item">
-                <span class="nav-icon">🔧</span><span>Settings</span>
-            </a>
+            
         </nav>
     </aside>
 

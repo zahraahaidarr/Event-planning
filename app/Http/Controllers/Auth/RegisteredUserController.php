@@ -41,7 +41,8 @@ class RegisteredUserController extends Controller
 
             // User: ACTIVE + role = employee
             $user = User::create([
-                'name'     => trim($validated['e_first_name'].' '.$validated['e_last_name']),
+                'first_name' => $validated['e_first_name'],
+                'last_name'  => $validated['e_last_name'],
                 'email'    => $validated['e_email'],
                 'phone'    => $validated['e_phone'],
                 'status'   => 'ACTIVE',
@@ -80,7 +81,8 @@ class RegisteredUserController extends Controller
 
         // User: PENDING + role = worker
         $user = User::create([
-            'name'     => trim($validated['first_name'].' '.$validated['last_name']),
+            'first_name' => $validated['first_name'],
+            'last_name'  => $validated['last_name'],
             'email'    => $validated['email'],
             'phone'    => $validated['phone'] ?? null,
             'status'   => 'PENDING',

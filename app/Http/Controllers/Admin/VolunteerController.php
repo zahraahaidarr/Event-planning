@@ -111,7 +111,7 @@ class VolunteerController extends Controller
     {
         return Worker::query()
             ->with([
-                'user:id,name,email,status',
+                'user:id,first_name,last_name,email,status',
                 'reservations.workRole.roleType:id,name',
             ])
             ->withCount('reservations'); // events count

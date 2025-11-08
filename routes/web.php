@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\TaxonomiesVenuesController;
 use App\Http\Controllers\AI\StaffingController;
 use App\Http\Controllers\Admin\EventsController;
 use App\Http\Controllers\AnnouncementFeedController;
+use App\Http\Controllers\ProfileController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -109,7 +110,13 @@ Route::middleware(['auth', 'role:WORKER'])
         Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
         Route::view('/post-event-submission', 'worker.post-event-submission')->name('submissions');
 
-        Route::view('/profile', 'worker.profile')->name('profile');
+        Route::get('/profile',          [ProfileController::class,'show'])->name('profile');
+        Route::get('/profile/data',     [ProfileController::class,'data'])->name('profile.data');
+        Route::put('/profile/account',  [ProfileController::class,'updateAccount'])->name('profile.account');
+        Route::put('/profile/personal', [ProfileController::class,'updatePersonal'])->name('profile.personal');
+        Route::put('/profile/password', [ProfileController::class,'updatePassword'])->name('profile.password');
+        Route::post('/profile/avatar',  [ProfileController::class,'uploadAvatar'])->name('profile.avatar');
+
         Route::view('/announcements', 'worker.announcements')->name('announcements');
         Route::view('/messages', 'worker.messages')->name('messages');
         Route::view('/settings', 'worker.settings')->name('settings');

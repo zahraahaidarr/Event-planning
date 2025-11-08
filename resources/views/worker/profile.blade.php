@@ -1,3 +1,4 @@
+{{-- resources/views/worker/profile.blade.php --}}
 <!doctype html>
 <html lang="en" dir="ltr">
 <head>
@@ -5,15 +6,42 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Profile • Volunteer</title>
 
-  {{-- CSS (public/css/worker/profile.css) --}}
+  {{-- CSRF for AJAX --}}
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
+  {{-- CSS --}}
   <link rel="stylesheet" href="{{ asset('css/worker/profile.css') }}">
 </head>
+@php
+  $first    = trim($u->first_name ?? '');
+  $last     = trim($u->last_name ?? '');
+  $full     = method_exists($u,'getFullNameAttribute') ? ($u->full_name ?? '') : trim($first.' '.$last);
+  $email    = $u->email ?? '';
+  $role     = strtoupper($u->role ?? 'USER');
+  $created  = optional($u->created_at)->format('d/m/Y, H:i') ?? '—';
+  $lastIn   = optional($u->last_login_at)->format('d/m/Y, H:i') ?? '—';
+
+  $initials = collect([$first, $last])
+                ->filter(fn($p)=>!empty($p))
+                ->map(fn($p)=>mb_strtoupper(mb_substr($p,0,1)))
+                ->implode('');
+  if (!$initials) {
+      $initials = collect(preg_split('/\s+/', trim($full ?? ''), -1, PREG_SPLIT_NO_EMPTY))
+                    ->take(2)
+                    ->map(fn($p)=>mb_strtoupper(mb_substr($p,0,1)))
+                    ->implode('') ?: 'U';
+  }
+@endphp
+
 <body data-theme="dark">
   <div class="wrap">
     <!-- Top bar -->
     <div class="topbar">
       <div class="search" role="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" stroke="currentColor" stroke-width="1.6" opacity=".55"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
+                stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        </svg>
         <input id="globalSearch" placeholder="Search..." aria-label="Search">
       </div>
       <div class="bar-actions">
@@ -25,34 +53,38 @@
     <!-- Header -->
     <header class="page-head">
       <div>
-        <div class="crumbs"><a href="{{ route('worker.dashboard') }}" class="muted" style="text-decoration:none;color:inherit">Home</a> / <strong>Profile</strong></div>
+        <div class="crumbs">
+          <a href="{{ route('worker.dashboard') }}" class="muted" style="text-decoration:none;color:inherit">Home</a> /
+          <strong>Profile</strong>
+        </div>
         <h1 class="title">My Profile</h1>
       </div>
     </header>
 
-    <!-- ROW 1: Account | Profile Photo -->
+    <!-- ROW 1: Account + Photo -->
     <section class="row">
       <article class="card" aria-labelledby="accTitle">
         <h3 id="accTitle">Account</h3>
+
         <div class="form-row">
           <div class="form-col">
-            <label for="fullName">Full name</label>
-            <input id="fullName" type="text" value="Fatima Mohammed Al-Hassan">
+            <label for="firstName">First name</label>
+            <input id="firstName" type="text" value="{{ old('first_name', $first) }}">
           </div>
           <div class="form-col">
-            <label for="userName">User name</label>
-            <input id="userName" type="text" value="fatima@email.com" disabled>
+            <label for="lastName">Last name</label>
+            <input id="lastName" type="text" value="{{ old('last_name', $last) }}">
           </div>
         </div>
 
         <div class="form-row" style="margin-top:10px">
           <div class="form-col">
             <label for="email">Email</label>
-            <input id="email" type="email" value="fatima@email.com">
+            <input id="email" type="email" value="{{ old('email', $email) }}">
           </div>
           <div class="form-col">
-            <label>Roles</label>
-            <div><span class="badge">User</span></div>
+            <label>Role</label>
+            <div><span class="badge">{{ ucfirst(strtolower($role)) }}</span></div>
           </div>
         </div>
 
@@ -64,60 +96,43 @@
 
       <article class="card" aria-labelledby="photoTitle">
         <h3 id="photoTitle">Profile Photo</h3>
+
         <div class="avatar-wrap">
-          <div class="avatar" id="avatarInitials" aria-hidden="true">FM</div>
+          <img
+            id="avatarImg"
+            src="{{ !empty($u->avatar_path) ? \Illuminate\Support\Facades\Storage::url($u->avatar_path) : '' }}"
+            alt="Avatar"
+            class="avatar"
+            style="object-fit:cover;border-radius:50%;width:96px;height:96px; {{ empty($u->avatar_path) ? 'display:none' : '' }}"
+          >
+          <div class="avatar" id="avatarInitials" aria-hidden="true" style="{{ !empty($u->avatar_path) ? 'display:none' : '' }}">
+            {{ $initials }}
+          </div>
         </div>
-        <div class="upload-row">
-          <input id="photoFile" type="file" accept="image/*">
-          <button class="btn small" id="uploadPhoto">Upload</button>
-        </div>
+
+        <form id="avatarForm" class="upload-row" enctype="multipart/form-data" method="post" action="{{ route('worker.profile.avatar') }}">
+          @csrf
+          <input id="photoFile" name="avatar" type="file" accept="image/*">
+          <button type="submit" class="btn small" id="uploadPhoto">Upload</button>
+        </form>
         <div class="muted" style="margin-top:8px">JPG/PNG, up to 2MB.</div>
       </article>
     </section>
 
-    <!-- ROW 2: Certificates (fixed height) | Account Info -->
-    <section class="row">
-      <article class="card card--cert" aria-labelledby="certsTitle">
-        <h3 id="certsTitle">Certificates & Achievements</h3>
-        <div class="scroll">
-          <div class="info-list" id="certList">
-            <div class="info-row">
-              <div>
-                <div><strong>Media Champion</strong></div>
-                <div class="muted">Completed 10+ media coverage events • Issued Dec 2024</div>
-              </div>
-              <span class="badge">Verified</span>
-            </div>
-            <div class="info-row">
-              <div>
-                <div><strong>Community Leader</strong></div>
-                <div class="muted">Led 3 community initiatives • Issued Nov 2024</div>
-              </div>
-              <span class="badge">Verified</span>
-            </div>
-            <div class="info-row">
-              <div>
-                <div><strong>First Aid Certified</strong></div>
-                <div class="muted">Red Cross Training • Issued Oct 2024</div>
-              </div>
-              <span class="badge">Verified</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="card" aria-labelledby="infoTitle">
-        <h3 id="infoTitle">Account Info</h3>
+    <!-- ROW 2: Account Info only -->
+    <section class="full">
+      <article class="card">
+        <h3>Account Info</h3>
         <div class="info-list">
-          <div class="info-row"><span class="info-label">User ID</span><span>7</span></div>
-          <div class="info-row"><span class="info-label">Email</span><span id="infoEmail">fatima@email.com</span></div>
-          <div class="info-row"><span class="info-label">Created</span><span>01/01/2024, 09:00</span></div>
-          <div class="info-row"><span class="info-label">Last login</span><span>—</span></div>
+          <div class="info-row"><span class="info-label">User ID</span><span>{{ $u->id }}</span></div>
+          <div class="info-row"><span class="info-label">Email</span><span id="infoEmail">{{ $email }}</span></div>
+          <div class="info-row"><span class="info-label">Created</span><span>{{ $created }}</span></div>
+          <div class="info-row"><span class="info-label">Last login</span><span>{{ $lastIn }}</span></div>
         </div>
       </article>
     </section>
 
-    <!-- ROW 3: Change Password (full width) -->
+    <!-- ROW 3: Password -->
     <section class="full">
       <article class="card" aria-labelledby="pwdTitle">
         <h3 id="pwdTitle">Change Password</h3>
@@ -143,28 +158,23 @@
       </article>
     </section>
 
-    <!-- ROW 4: Personal Information (full width) -->
+    <!-- ROW 4: Personal -->
     <section class="full">
       <article class="card" aria-labelledby="piTitle">
         <h3 id="piTitle">Personal Information</h3>
         <div class="form-row">
           <div class="form-col">
             <label for="phone">Phone</label>
-            <input id="phone" type="text" value="+961 70 123 456">
+            <input id="phone" type="text" value="{{ old('phone', $u->phone ?? '') }}">
           </div>
-          <div class="form-col">
-            <label for="location">Location</label>
-            <input id="location" type="text" value="Beirut, Lebanon">
-          </div>
-        </div>
-        <div class="form-row" style="margin-top:10px">
           <div class="form-col">
             <label for="dob">Date of Birth</label>
-            <input id="dob" type="text" value="March 12, 1998">
-          </div>
-          <div class="form-col">
-            <label for="memberSince">Member Since</label>
-            <input id="memberSince" type="text" value="January 2024">
+            <input
+              id="dob"
+              type="date"
+              max="{{ now()->toDateString() }}"
+              value="{{ optional($u->date_of_birth)->format('Y-m-d') }}"
+            >
           </div>
         </div>
         <div class="actions">
@@ -175,7 +185,16 @@
     </section>
   </div>
 
-  {{-- JS (public/js/worker/profile.js) --}}
+  {{-- Pass routes for AJAX --}}
+  <script>
+    window.ROUTES = {
+      account:  "{{ route('worker.profile.account') }}",
+      personal: "{{ route('worker.profile.personal') }}",
+      password: "{{ route('worker.profile.password') }}"
+    };
+  </script>
+
+  {{-- JS --}}
   <script src="{{ asset('js/worker/profile.js') }}" defer></script>
 </body>
 </html>

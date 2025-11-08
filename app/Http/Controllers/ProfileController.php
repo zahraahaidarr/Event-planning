@@ -2,59 +2,126 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
-    public function edit(Request $request): View
+    public function show()
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $u = Auth::user();
+        return view('worker.profile', compact('u'));
+    }
+
+    public function data()
+    {
+        $u = Auth::user();
+
+        return response()->json([
+            'id'             => $u->id,
+            'first_name'     => $u->first_name,
+            'last_name'      => $u->last_name,
+            'full_name'      => $u->full_name,
+            'email'          => $u->email,
+            'username'       => $u->email,
+            'role'           => $u->role,
+            'phone'          => $u->phone,
+            'date_of_birth'  => optional($u->date_of_birth)->toDateString(),
+            'created_at'     => optional($u->created_at)->toDateTimeString(),
+            'last_login_at'  => optional($u->last_login_at)->toDateTimeString(),
+            'avatar_url'     => $u->avatar_path ? Storage::url($u->avatar_path) : null,
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function updateAccount(Request $r)
     {
-        $request->user()->fill($request->validated());
+        $u = Auth::user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $data = $r->validate([
+            'first_name' => ['required','string','max:255'],
+            'last_name'  => ['nullable','string','max:255'],
+            'email'      => ['required','email','max:255', Rule::unique('users','email')->ignore($u->id)],
+        ]);
+
+        $u->first_name = $data['first_name'];
+        $u->last_name  = $data['last_name'] ?? null;
+        $u->email      = $data['email'];
+        $u->save();
+
+        return response()->json([
+            'ok'      => true,
+            'message' => 'Account updated successfully.',
+        ]);
+    }
+
+    public function updatePersonal(Request $r)
+    {
+        $u = Auth::user();
+
+        $data = $r->validate([
+            'phone'         => ['nullable','string','max:50'],
+            'date_of_birth' => ['nullable','date','before_or_equal:today'],
+        ]);
+
+        $u->phone         = $data['phone'] ?? null;
+        $u->date_of_birth = $data['date_of_birth'] ?? null;
+        $u->save();
+
+        return response()->json([
+            'ok'      => true,
+            'message' => 'Personal info updated successfully.',
+        ]);
+    }
+
+    public function updatePassword(Request $r)
+    {
+        $u = Auth::user();
+
+        $r->validate([
+            'current_password' => ['required'],
+            'password'         => ['required','confirmed', Password::min(8)],
+        ]);
+
+        if (!Hash::check($r->input('current_password'), $u->password)) {
+            return response()->json([
+                'ok'      => false,
+                'message' => 'Current password is incorrect.',
+            ], 422);
         }
 
-        $request->user()->save();
+        $u->password = Hash::make($r->input('password'));
+        $u->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return response()->json([
+            'ok'      => true,
+            'message' => 'Password updated successfully.',
+        ]);
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
+    public function uploadAvatar(Request $r)
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
+        $u = Auth::user();
+
+        $r->validate([
+            'avatar' => ['required','image','mimes:jpg,jpeg,png','max:2048'],
         ]);
 
-        $user = $request->user();
+        if ($u->avatar_path) {
+            Storage::disk('public')->delete($u->avatar_path);
+        }
 
-        Auth::logout();
+        $path = $r->file('avatar')->store('avatars', 'public');
 
-        $user->delete();
+        $u->avatar_path = $path;
+        $u->save();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        return response()->json([
+            'ok'         => true,
+            'avatar_url' => Storage::url($path),
+        ]);
     }
 }

@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 use App\Models\Event;
 use App\Models\WorkRole;
 use App\Models\RoleType;
 use App\Models\EventCategory;
 use App\Models\Employee;
+
 
 class EventsController extends Controller
 {
@@ -73,6 +75,15 @@ class EventsController extends Controller
      */
 public function store(Request $request)
 {
+
+    // If roles came as JSON string (multipart/FormData), decode to array for validation
+if ($request->has('roles') && is_string($request->input('roles'))) {
+    $decoded = json_decode($request->input('roles'), true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+        $request->merge(['roles' => $decoded]);
+    }
+}
+
     // 1) Validate incoming JSON from the wizard
     $validated = $request->validate([
         'title'              => ['required', 'string', 'max:255'],
@@ -95,7 +106,14 @@ public function store(Request $request)
 
         // NEW: optional status coming from UI buttons
         'status'             => ['nullable', 'string', 'in:DRAFT,PUBLISHED,ACTIVE,COMPLETED,CANCELLED'],
+        'image' => 'nullable|image|max:2048',
+
     ]);
+    // Handle optional event image upload
+if ($request->hasFile('image')) {
+    $path = $request->file('image')->store('events', 'public');
+    $validated['image_path'] = $path;
+}
 
     // Decide final status (keep working default)
     $status = strtoupper($validated['status'] ?? 'PUBLISHED');
@@ -157,6 +175,8 @@ public function store(Request $request)
                 'ends_at'             => $endsAt,
                 'duration_hours'      => (float) $validated['duration_hours'],
                 'created_by'          => $creatorId,
+                'image_path'          => $validated['image_path'] ?? null,
+
             ]);
 
             foreach ($validated['roles'] as $role) {
@@ -242,6 +262,15 @@ public function store(Request $request)
     /** PUT /admin/events/{event} */
     public function update(Request $request, Event $event): JsonResponse
     {
+
+        // If roles came as JSON string (multipart/FormData), decode to array for validation
+if ($request->has('roles') && is_string($request->input('roles'))) {
+    $decoded = json_decode($request->input('roles'), true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+        $request->merge(['roles' => $decoded]);
+    }
+}
+
         $validated = $request->validate([
             'title'              => ['required', 'string', 'max:255'],
             'description'        => ['required', 'string'],
@@ -262,7 +291,16 @@ public function store(Request $request)
             'expected_attendees' => ['nullable', 'integer', 'min:0'],
 
             'status'             => ['nullable', 'string', 'in:DRAFT,PUBLISHED,ACTIVE,COMPLETED,CANCELLED'],
+            'image'              => ['nullable', 'image', 'max:2048'],
+
         ]);
+        // Optional: replace event image if a new one is uploaded
+if ($request->hasFile('image')) {
+    if ($event->image_path) {
+        Storage::disk('public')->delete($event->image_path);
+    }
+    $validated['image_path'] = $request->file('image')->store('events', 'public');
+}
 
         $status = strtoupper($validated['status'] ?? $event->status ?? 'PUBLISHED');
 
@@ -306,6 +344,8 @@ public function store(Request $request)
                     'starts_at'           => $startsAt,
                     'ends_at'             => $endsAt,
                     'duration_hours'      => (float) $validated['duration_hours'],
+                    'image_path'          => $validated['image_path'] ?? $event->image_path,
+
                 ]);
 
                 // reset roles

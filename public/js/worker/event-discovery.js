@@ -1,379 +1,448 @@
-// ---- Mock Data (replace with API/Ajax later) ----
-const events = [
-  {
-    id: 1,
-    title: "Community Garden Cleanup",
-    description: "Help maintain our community garden by weeding, planting, and general maintenance.",
-    category: "environment",
-    location: "Riyadh",
-    date: "2025-01-15",
-    time: "09:00 AM",
-    duration: "4 hours",
-    spotsTotal: 20,
-    spotsRemaining: 12,
-    status: "open",
-    roles: ["Gardener", "Organizer"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 2,
-    title: "Children's Reading Program",
-    description: "Read stories to children at the local library and help foster a love of reading.",
-    category: "education",
-    location: "Jeddah",
-    date: "2025-01-18",
-    time: "02:00 PM",
-    duration: "3 hours",
-    spotsTotal: 10,
-    spotsRemaining: 3,
-    status: "limited",
-    roles: ["Reader", "Activity Leader"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 3,
-    title: "Food Bank Distribution",
-    description: "Assist with sorting and distributing food to families in need.",
-    category: "community",
-    location: "Riyadh",
-    date: "2025-01-20",
-    time: "08:00 AM",
-    duration: "5 hours",
-    spotsTotal: 30,
-    spotsRemaining: 0,
-    status: "full",
-    roles: ["Sorter", "Distributor", "Driver"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 4,
-    title: "Senior Center Activities",
-    description: "Spend time with elderly residents, play games, and provide companionship.",
-    category: "elderly",
-    location: "Dammam",
-    date: "2025-01-22",
-    time: "10:00 AM",
-    duration: "3 hours",
-    spotsTotal: 15,
-    spotsRemaining: 8,
-    status: "open",
-    roles: ["Companion", "Activity Coordinator"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 5,
-    title: "Beach Cleanup Initiative",
-    description: "Join us in cleaning up the beach and protecting marine life.",
-    category: "environment",
-    location: "Jeddah",
-    date: "2025-01-25",
-    time: "07:00 AM",
-    duration: "4 hours",
-    spotsTotal: 50,
-    spotsRemaining: 35,
-    status: "open",
-    roles: ["Cleanup Crew", "Team Leader"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 6,
-    title: "Health Awareness Campaign",
-    description: "Help distribute health information and assist with free health screenings.",
-    category: "health",
-    location: "Riyadh",
-    date: "2025-01-28",
-    time: "09:00 AM",
-    duration: "6 hours",
-    spotsTotal: 25,
-    spotsRemaining: 18,
-    status: "open",
-    roles: ["Information Desk", "Registration", "Guide"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 7,
-    title: "Youth Mentorship Program",
-    description: "Mentor young students in career development and life skills.",
-    category: "education",
-    location: "Mecca",
-    date: "2025-02-01",
-    time: "03:00 PM",
-    duration: "2 hours",
-    spotsTotal: 12,
-    spotsRemaining: 5,
-    status: "limited",
-    roles: ["Mentor", "Workshop Leader"],
-    image: "/placeholder.svg?height=180&width=340"
-  },
-  {
-    id: 8,
-    title: "Animal Shelter Support",
-    description: "Help care for animals at the local shelter, including feeding and cleaning.",
-    category: "community",
-    location: "Medina",
-    date: "2025-02-03",
-    time: "10:00 AM",
-    duration: "4 hours",
-    spotsTotal: 20,
-    spotsRemaining: 14,
-    status: "open",
-    roles: ["Animal Care", "Cleaner", "Walker"],
-    image: "/placeholder.svg?height=180&width=340"
-  }
-];
+/* ========= Bootstrapped data from backend ========= */
 
+let events = Array.isArray(window.initialEvents) ? window.initialEvents : [];
 let filteredEvents = [...events];
 
-// ---- Rendering ----
-function renderEvents(view = "grid") {
-  const grid = document.getElementById('eventsGrid');
-  if (!grid) return;
+const eventsListEndpoint = window.eventsListEndpoint || null;
 
-  grid.innerHTML = '';
+/* ========= Helpers ========= */
 
-  filteredEvents.forEach(event => {
-    const statusClass = `status-${event.status}`;
-    const statusText = event.status === 'open' ? 'Open' : event.status === 'limited' ? 'Limited Spots' : 'Full';
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-    const card = document.createElement('div');
-    card.className = 'event-card';
-    card.onclick = () => openEventModal(event);
+function getCurrentView() {
+    const gridBtn = $('#gridViewBtn');
+    return gridBtn && gridBtn.classList.contains('active') ? 'grid' : 'list';
+}
 
-    // Optionally adapt layout when in "list" view (simple modifier)
-    if (view === 'list') {
-      card.style.display = 'grid';
-      card.style.gridTemplateColumns = '180px 1fr';
-      card.style.alignItems = 'stretch';
+/* ========= Rendering ========= */
+
+function renderEvents(view = 'grid') {
+    const grid = $('#eventsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    filteredEvents.forEach(ev => {
+        const statusClass =
+            ev.status === 'open'
+                ? 'status-open'
+                : ev.status === 'limited'
+                    ? 'status-limited'
+                    : 'status-full';
+
+        const statusText =
+            ev.status === 'open'
+                ? 'Open'
+                : ev.status === 'limited'
+                    ? 'Limited Spots'
+                    : 'Full';
+
+        const card = document.createElement('div');
+        card.className = 'event-card';
+
+        if (view === 'list') {
+            card.style.display = 'grid';
+            card.style.gridTemplateColumns = '180px 1fr';
+            card.style.alignItems = 'stretch';
+        }
+
+        card.onclick = () => openEventModal(ev);
+
+        const rolesHtml = Array.isArray(ev.roles)
+            ? ev.roles.map(r => `<span class="role-badge">${r}</span>`).join('')
+            : '';
+
+        card.innerHTML = `
+            <img src="${ev.image}" alt="${ev.title}" class="event-image">
+            <div class="event-content">
+                <div class="event-header">
+                    <span class="event-category">${ev.category ?? ''}</span>
+                    <span class="event-status ${statusClass}">${statusText}</span>
+                </div>
+                <h3 class="event-title">${ev.title}</h3>
+                <p class="event-description">${ev.description ?? ''}</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <span class="meta-icon">📅</span>
+                        <span>${ev.date || ''} ${ev.time ? 'at ' + ev.time : ''}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-icon">📍</span>
+                        <span>${ev.location || ''}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-icon">⏱️</span>
+                        <span>${ev.duration || '—'}</span>
+                    </div>
+                </div>
+                <div class="event-roles">${rolesHtml}</div>
+                <div class="event-footer">
+                    <span class="spots-remaining">
+                        <strong>${ev.spotsRemaining}</strong> / ${ev.spotsTotal} spots
+                    </span>
+                    <button class="btn-apply"
+                            ${ev.status === 'full' ? 'disabled' : ''}
+                            onclick="event.stopPropagation(); openEventModal(${ev.id});">
+                        ${ev.status === 'full' ? 'Full' : 'Apply'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+
+    const countEl = $('#resultsCount');
+    if (countEl) countEl.textContent = filteredEvents.length;
+}
+
+/* ========= Filters ========= */
+
+function applyFilters(page = 1) {
+    const termInput       = $('#searchInput');
+    const categorySel     = $('#categoryFilter');
+    const locationSel     = $('#locationFilter');
+    const availabilitySel = $('#availabilityFilter');
+    const dateSel         = $('#dateFilter');
+
+    const searchTerm   = (termInput?.value || '').trim();
+    const category     = categorySel?.value || '';
+    const location     = locationSel?.value || '';
+    const availability = availabilitySel?.value || '';
+    const dateRange    = dateSel?.value || '';
+
+    // If endpoint exists -> server-side filtering
+    if (eventsListEndpoint) {
+        const params = new URLSearchParams({
+            q: searchTerm,
+            category,
+            location,
+            availability,
+            per_page: 12,
+            page
+        });
+
+        fetch(`${eventsListEndpoint}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => res.json())
+            .then(json => {
+                events = Array.isArray(json.data) ? json.data : [];
+                filteredEvents = [...events];
+                applyDateFilterInFront(dateRange);
+                renderEvents(getCurrentView());
+                updateActiveFilters({ category, location, availability });
+                updatePagination(json.current_page, json.last_page);
+            })
+            .catch(err => console.error(err));
+
+        return;
     }
 
-    card.innerHTML = `
-      <img src="${event.image}" alt="${event.title}" class="event-image">
-      <div class="event-content">
-        <div class="event-header">
-          <span class="event-category">${event.category}</span>
-          <span class="event-status ${statusClass}">${statusText}</span>
-        </div>
-        <h3 class="event-title">${event.title}</h3>
-        <p class="event-description">${event.description}</p>
-        <div class="event-meta">
-          <div class="meta-item">
-            <span class="meta-icon">📅</span>
-            <span>${event.date} at ${event.time}</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-icon">📍</span>
-            <span>${event.location}</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-icon">⏱️</span>
-            <span>${event.duration}</span>
-          </div>
-        </div>
-        <div class="event-roles">
-          ${event.roles.map(role => `<span class="role-badge">${role}</span>`).join('')}
-        </div>
-        <div class="event-footer">
-          <span class="spots-remaining">
-            <strong>${event.spotsRemaining}</strong> / ${event.spotsTotal} spots
-          </span>
-          <button class="btn-apply" ${event.status === 'full' ? 'disabled' : ''} onclick="event.stopPropagation(); openEventModal(${event.id});">
-            ${event.status === 'full' ? 'Full' : 'Apply'}
-          </button>
-        </div>
-      </div>
-    `;
+    // Fallback: pure client-side filtering on bootstrapped events
+    filteredEvents = events.filter(ev => {
 
-    grid.appendChild(card);
-  });
+        const matchesSearch =
+            !searchTerm ||
+            (ev.title && ev.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (ev.description && ev.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (ev.location && ev.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const countEl = document.getElementById('resultsCount');
-  if (countEl) countEl.textContent = filteredEvents.length;
+        const matchesCategory = !category || String(ev.category_id) === String(category);
+        const matchesLocation = !location || (ev.location || '').toLowerCase() === location.toLowerCase();
+        const matchesAvail    = !availability || ev.status === availability;
+
+        return matchesSearch && matchesCategory && matchesLocation && matchesAvail;
+    });
+
+    applyDateFilterInFront(dateRange);
+    renderEvents(getCurrentView());
+    updateActiveFilters({ category, location, availability });
+    updatePagination(1, 1);
 }
 
-// ---- Filters ----
-function applyFilters() {
-  const termInput = document.getElementById('searchInput');
-  const categorySel = document.getElementById('categoryFilter');
-  const locationSel = document.getElementById('locationFilter');
-  const availabilitySel = document.getElementById('availabilityFilter');
+function applyDateFilterInFront(dateRange) {
+    if (!dateRange) return;
 
-  const searchTerm = (termInput?.value || '').toLowerCase();
-  const category = categorySel?.value || '';
-  const location = locationSel?.value || '';
-  const availability = availabilitySel?.value || '';
+    const today = new Date();
+    const endOfWeek = new Date();
+    endOfWeek.setDate(today.getDate() + 7);
+    const endOfMonth = new Date();
+    endOfMonth.setMonth(today.getMonth() + 1);
 
-  filteredEvents = events.filter(event => {
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchTerm) ||
-      event.description.toLowerCase().includes(searchTerm) ||
-      event.location.toLowerCase().includes(searchTerm);
+    filteredEvents = filteredEvents.filter(ev => {
+        if (!ev.date) return false;
+        const d = new Date(ev.date);
 
-    const matchesCategory = !category || event.category === category;
-    const matchesLocation = !location || event.location.toLowerCase() === location;
-    const matchesAvailability = !availability || event.status === availability;
-
-    return matchesSearch && matchesCategory && matchesLocation && matchesAvailability;
-  });
-
-  renderEvents(getCurrentView());
-  updateActiveFilters();
+        if (dateRange === 'today') {
+            return (
+                d.getFullYear() === today.getFullYear() &&
+                d.getMonth() === today.getMonth() &&
+                d.getDate() === today.getDate()
+            );
+        }
+        if (dateRange === 'week') {
+            return d >= today && d <= endOfWeek;
+        }
+        if (dateRange === 'month') {
+            return d >= today && d <= endOfMonth;
+        }
+        return true;
+    });
 }
 
-function updateActiveFilters() {
-  const activeFiltersDiv = document.getElementById('activeFilters');
-  if (!activeFiltersDiv) return;
+function updateActiveFilters({ category, location, availability }) {
+    const box = $('#activeFilters');
+    if (!box) return;
 
-  const filters = [];
+    const tags = [];
 
-  const category = document.getElementById('categoryFilter')?.value;
-  const location = document.getElementById('locationFilter')?.value;
-  const availability = document.getElementById('availabilityFilter')?.value;
+    if (category) tags.push({ type: 'category', label: 'Category' });
+    if (location) tags.push({ type: 'location', label: 'Location' });
+    if (availability) tags.push({ type: 'availability', label: 'Availability' });
 
-  if (category) filters.push({ type: 'category', value: category });
-  if (location) filters.push({ type: 'location', value: location });
-  if (availability) filters.push({ type: 'availability', value: availability });
+    if (!tags.length) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+    }
 
-  if (filters.length > 0) {
-    activeFiltersDiv.style.display = 'flex';
-    activeFiltersDiv.innerHTML = filters
-      .map(f => `
+    box.style.display = 'flex';
+    box.innerHTML = tags.map(t => `
         <span class="filter-tag">
-          ${f.value}
-          <span class="filter-tag-close" onclick="removeFilter('${f.type}')">×</span>
+            ${t.label}
+            <span class="filter-tag-close" onclick="removeFilter('${t.type}')">×</span>
         </span>
-      `).join('');
-  } else {
-    activeFiltersDiv.style.display = 'none';
-    activeFiltersDiv.innerHTML = '';
-  }
+    `).join('');
 }
 
 function removeFilter(type) {
-  const el = document.getElementById(`${type}Filter`);
-  if (el) el.value = '';
-  applyFilters();
+    const el = document.getElementById(type + 'Filter');
+    if (el) el.value = '';
+    applyFilters();
 }
 
-// ---- Modal ----
+/* ========= Pagination UI (for server mode) ========= */
+
+function updatePagination(current, last) {
+    const container = $('#pagination');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!last || last <= 1) return;
+
+    const addBtn = (label, page, active = false, disabled = false) => {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (active ? ' active' : '');
+        btn.textContent = label;
+        if (!disabled) {
+            btn.onclick = () => applyFilters(page);
+        } else {
+            btn.disabled = true;
+        }
+        container.appendChild(btn);
+    };
+
+    addBtn('Prev', Math.max(1, current - 1), false, current === 1);
+
+    for (let p = 1; p <= last; p++) {
+        addBtn(String(p), p, p === current);
+    }
+
+    addBtn('Next', Math.min(last, current + 1), false, current === last);
+}
+
+/* ========= Modal ========= */
+
+let selectedEvent = null;
+
 function openEventModal(eventOrId) {
-  const event = typeof eventOrId === 'number' ? events.find(e => e.id === eventOrId) : eventOrId;
-  const modal = document.getElementById('eventModal');
-  const modalBody = document.getElementById('modalBody');
+    selectedEvent = typeof eventOrId === 'number'
+        ? filteredEvents.find(e => e.id === eventOrId)
+        : eventOrId;
 
-  if (!modal || !modalBody || !event) return;
+    const modal = $('#eventModal');
+    const body  = $('#modalBody');
 
-  modalBody.innerHTML = `
-    <img src="${event.image}" alt="${event.title}" style="width:100%;border-radius:var(--radius-md);margin-bottom:20px;">
-    <h3 style="margin-bottom:12px;">${event.title}</h3>
-    <p style="color:var(--text-secondary);margin-bottom:20px;">${event.description}</p>
+    if (!modal || !body || !selectedEvent) return;
 
-    <div style="display:grid;gap:16px;margin-bottom:20px;">
-      <div class="meta-item"><span class="meta-icon">📅</span><span><strong>Date:</strong> ${event.date} at ${event.time}</span></div>
-      <div class="meta-item"><span class="meta-icon">📍</span><span><strong>Location:</strong> ${event.location}</span></div>
-      <div class="meta-item"><span class="meta-icon">⏱️</span><span><strong>Duration:</strong> ${event.duration}</span></div>
-      <div class="meta-item"><span class="meta-icon">👥</span><span><strong>Available Spots:</strong> ${event.spotsRemaining} / ${event.spotsTotal}</span></div>
-    </div>
+    const rolesHtml = Array.isArray(selectedEvent.roles)
+        ? selectedEvent.roles.map(r => `<span class="role-badge">${r}</span>`).join('')
+        : '';
 
-    <div style="margin-bottom:20px;">
-      <strong style="display:block;margin-bottom:8px;">Available Roles:</strong>
-      <div class="event-roles">
-        ${event.roles.map(role => `<span class="role-badge">${role}</span>`).join('')}
-      </div>
-    </div>
+          const workerRoleHtml = window.workerRoleName
+        ? `<div class="meta-item"><span class="meta-icon">🧑‍💼</span>
+               <span><strong>Your Role:</strong> ${window.workerRoleName}</span>
+           </div>`
+        : '';
 
-    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);">
-      <strong>Requirements:</strong>
-      <ul style="margin-top:8px;padding-left:20px;color:var(--text-secondary);">
-        <li>Must be 18 years or older</li>
-        <li>Commitment to full event duration</li>
-        <li>Appropriate attire for the activity</li>
-      </ul>
-    </div>
-  `;
 
-  modal.classList.add('active');
+    body.innerHTML = `
+        <img src="${selectedEvent.image}" alt="${selectedEvent.title}"
+             style="width:100%;border-radius:var(--radius-md);margin-bottom:16px;">
+        <h3 style="margin-bottom:8px;">${selectedEvent.title}</h3>
+        <p style="color:var(--text-secondary);margin-bottom:16px;">${selectedEvent.description}</p>
+
+        <div class="meta-item">
+            <span class="meta-icon">📅</span>
+            <span><strong>Date:</strong> ${selectedEvent.date} ${selectedEvent.time ? 'at ' + selectedEvent.time : ''}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-icon">📍</span>
+            <span><strong>Location:</strong> ${selectedEvent.location}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-icon">🏷️</span>
+            <span><strong>Category:</strong> ${selectedEvent.category || 'General'}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-icon">⏱️</span>
+            <span><strong>Duration:</strong> ${selectedEvent.duration}</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-icon">👥</span>
+            <span><strong>Available Spots (your role):</strong> ${selectedEvent.spotsRemaining} / ${selectedEvent.spotsTotal}</span>
+        </div>
+        ${workerRoleHtml}
+
+        <div style="margin-top:16px;">
+            <strong>Roles:</strong>
+            <div class="event-roles">
+                ${rolesHtml || '<span class="role-badge">General Volunteer</span>'}
+            </div>
+        </div>
+    `;
+
+
+    modal.classList.add('active');
 }
 
 function closeModal() {
-  const modal = document.getElementById('eventModal');
-  if (modal) modal.classList.remove('active');
+    const modal = $('#eventModal');
+    if (modal) modal.classList.remove('active');
+    selectedEvent = null;
 }
 
 function applyToEvent() {
-  // Hook this to a real POST later.
-  alert('Application submitted successfully!');
-  closeModal();
+    if (!selectedEvent || !window.applyEventBase) return;
+
+    const url = `${window.applyEventBase}/${selectedEvent.id}/apply`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': window.csrfToken,
+        },
+        body: JSON.stringify({}),
+    })
+        .then(async res => {
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data || data.ok === false) {
+                alert((data && data.message) || 'Failed to apply for this event.');
+                return;
+            }
+
+            if (typeof data.spotsRemaining !== 'undefined') {
+                selectedEvent.spotsRemaining = data.spotsRemaining;
+
+                const idx = events.findIndex(e => e.id === selectedEvent.id);
+                if (idx !== -1) {
+                    events[idx].spotsRemaining = data.spotsRemaining;
+                }
+
+                renderEvents(getCurrentView());
+            }
+
+            alert('Application submitted successfully.');
+            closeModal();
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Unexpected error while applying.');
+        });
 }
 
-// ---- Theme & Language ----
+
+
+/* ========= Theme & Language ========= */
+
 function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.textContent = next === 'dark' ? '☀️' : '🌙';
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+
+    const icon = $('#theme-icon');
+    if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
 }
 
 function toggleLanguage() {
-  const html = document.documentElement;
-  const currentLang = html.getAttribute('lang') || 'en';
-  const newLang = currentLang === 'en' ? 'ar' : 'en';
-  const newDir = newLang === 'ar' ? 'rtl' : 'ltr';
-  html.setAttribute('lang', newLang);
-  html.setAttribute('dir', newDir);
-  const icon = document.getElementById('lang-icon');
-  if (icon) icon.textContent = newLang === 'en' ? 'AR' : 'EN';
+    const html = document.documentElement;
+    const current = html.getAttribute('lang') || 'en';
+    const next = current === 'en' ? 'ar' : 'en';
+    html.setAttribute('lang', next);
+    html.setAttribute('dir', next === 'ar' ? 'rtl' : 'ltr');
+
+    const icon = $('#lang-icon');
+    if (icon) icon.textContent = next === 'en' ? 'AR' : 'EN';
 }
 
-// ---- View toggle ----
-function getCurrentView(){
-  const gridBtn = document.getElementById('gridViewBtn');
-  return gridBtn && gridBtn.classList.contains('active') ? 'grid' : 'list';
+/* ========= View toggle ========= */
+
+function setView(view) {
+    const gridBtn = $('#gridViewBtn');
+    const listBtn = $('#listViewBtn');
+    if (!gridBtn || !listBtn) return;
+
+    if (view === 'grid') {
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    } else {
+        listBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+    }
+
+    renderEvents(view);
 }
 
-function setView(view){
-  const gridBtn = document.getElementById('gridViewBtn');
-  const listBtn = document.getElementById('listViewBtn');
-  if (!gridBtn || !listBtn) return;
+/* ========= Init ========= */
 
-  if (view === 'grid'){
-    gridBtn.classList.add('active');
-    listBtn.classList.remove('active');
-  } else {
-    listBtn.classList.add('active');
-    gridBtn.classList.remove('active');
-  }
-  renderEvents(view);
-}
-
-// ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
-  // initial render
-  renderEvents('grid');
+    renderEvents('grid');
+    updatePagination(1, 1);
 
-  // Listeners
-  const searchInput = document.getElementById('searchInput');
-  const categoryFilter = document.getElementById('categoryFilter');
-  const locationFilter = document.getElementById('locationFilter');
-  const availabilityFilter = document.getElementById('availabilityFilter');
-  const gridBtn = document.getElementById('gridViewBtn');
-  const listBtn = document.getElementById('listViewBtn');
+    const searchInput       = $('#searchInput');
+    const categoryFilter    = $('#categoryFilter');
+    const locationFilter    = $('#locationFilter');
+    const availabilityFilter= $('#availabilityFilter');
+    const dateFilter        = $('#dateFilter');
+    const gridBtn           = $('#gridViewBtn');
+    const listBtn           = $('#listViewBtn');
 
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
-  if (categoryFilter) categoryFilter.addEventListener('change', applyFilters);
-  if (locationFilter) locationFilter.addEventListener('change', applyFilters);
-  if (availabilityFilter) availabilityFilter.addEventListener('change', applyFilters);
+    if (searchInput)        searchInput.addEventListener('input', () => applyFilters());
+    if (categoryFilter)     categoryFilter.addEventListener('change', () => applyFilters());
+    if (locationFilter)     locationFilter.addEventListener('change', () => applyFilters());
+    if (availabilityFilter) availabilityFilter.addEventListener('change', () => applyFilters());
+    if (dateFilter)         dateFilter.addEventListener('change', () => applyFilters());
 
-  if (gridBtn) gridBtn.addEventListener('click', () => setView('grid'));
-  if (listBtn) listBtn.addEventListener('click', () => setView('list'));
+    if (gridBtn) gridBtn.addEventListener('click', () => setView('grid'));
+    if (listBtn) listBtn.addEventListener('click', () => setView('list'));
 });
 
-// Expose functions used by inline handlers in Blade
-window.applyFilters = applyFilters;
-window.removeFilter = removeFilter;
-window.openEventModal = openEventModal;
-window.closeModal = closeModal;
+/* expose for inline calls */
+window.applyFilters    = applyFilters;
+window.removeFilter    = removeFilter;
+window.openEventModal  = openEventModal;
+window.closeModal      = closeModal;
+window.applyToEvent    = applyToEvent;
+window.toggleTheme     = toggleTheme;
+window.toggleLanguage  = toggleLanguage;
 window.applyToEvent = applyToEvent;
-window.toggleTheme = toggleTheme;
-window.toggleLanguage = toggleLanguage;

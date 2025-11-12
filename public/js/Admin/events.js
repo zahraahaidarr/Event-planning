@@ -342,38 +342,50 @@ async function submitEvent(status = 'PUBLISHED') {
     return;
   }
 
-  const payload = {
-    title: $('#eventTitle').value,
-    description: $('#eventDescription').value,
-    category: $('#eventCategory').value,
-    location: $('#eventLocation').value,
-    date: $('#eventDate').value,
-    time: $('#eventTime').value,
-    duration_hours: Number($('#eventDuration').value),
-    total_spots: Number($('#eventSpots').value),
-    requirements: '',
-    venue_area_m2: Number($('#venue_area_m2').value || 0),
-    expected_attendees: Number($('#expected_attendees').value || 0),
-    roles,
-    status,
-  };
-
   const isEdit = !!editingEventId;
   const url = isEdit
     ? `${window.ENDPOINT_UPDATE_EVENT_BASE}/${editingEventId}`
     : window.ENDPOINT_CREATE_EVENT;
-  const method = isEdit ? 'PUT' : 'POST';
+  const method = isEdit ? 'POST' : 'POST'; // use POST + _method for PUT
+
+  const fd = new FormData();
+  fd.append('_token', window.csrfToken);
+  if (isEdit) {
+    fd.append('_method', 'PUT');
+  }
+
+  fd.append('title', $('#eventTitle').value);
+  fd.append('description', $('#eventDescription').value);
+  fd.append('category', $('#eventCategory').value);
+  fd.append('location', $('#eventLocation').value);
+  fd.append('date', $('#eventDate').value);
+  fd.append('time', $('#eventTime').value);
+  fd.append('duration_hours', $('#eventDuration').value);
+  fd.append('total_spots', $('#eventSpots').value);
+  fd.append('requirements', ''); // adjust if you add UI
+  fd.append('venue_area_m2', $('#venue_area_m2').value || 0);
+  fd.append('expected_attendees', $('#expected_attendees').value || 0);
+  fd.append('status', status);
+
+  // roles as JSON
+  fd.append('roles', JSON.stringify(roles));
+
+  // image file (optional)
+  const imgInput = $('#eventImage');
+  if (imgInput && imgInput.files && imgInput.files[0]) {
+    fd.append('image', imgInput.files[0]);
+  }
 
   try {
     const res = await fetch(url, {
       method,
-      headers:{
-        'Content-Type':'application/json',
-        'Accept':'application/json',
-        'X-Requested-With':'XMLHttpRequest',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': window.csrfToken,
+        // DO NOT set Content-Type; browser sets multipart boundary
       },
-      body: JSON.stringify(payload),
+      body: fd,
     });
 
     const raw = await res.text();
@@ -406,7 +418,6 @@ async function submitEvent(status = 'PUBLISHED') {
     const ev = data.event;
 
     if (isEdit) {
-      // update in local array
       const idx = events.findIndex(e => String(e.id) === String(ev.id));
       if (idx !== -1) {
         events[idx] = {
@@ -422,7 +433,6 @@ async function submitEvent(status = 'PUBLISHED') {
       }
       alert('Event updated successfully.');
     } else {
-      // add new
       events.unshift({
         id: ev.id,
         title: ev.title,
@@ -447,6 +457,7 @@ async function submitEvent(status = 'PUBLISHED') {
     alert('Unexpected error while saving event: ' + err.message);
   }
 }
+
 
 function publishEvent() {
   submitEvent('PUBLISHED');
@@ -543,6 +554,21 @@ async function openEditModal(id) {
     $('#eventSpots').value       = ev.total_spots || 1;
     $('#venue_area_m2').value    = ev.venue_area_m2 || '';
     $('#expected_attendees').value = ev.expected_attendees || '';
+        // image preview if backend returns it
+    const preview = $('#eventImagePreview');
+    const imgInput = $('#eventImage');
+    if (preview) {
+      if (ev.image_url) {
+        preview.src = ev.image_url;
+        preview.style.display = 'block';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    }
+    if (imgInput) {
+      imgInput.value = ''; // reset file input
+    }
 
     // roles
     $('#rolesContainer').innerHTML = '';
@@ -613,4 +639,22 @@ document.addEventListener('DOMContentLoaded', () => {
   buildStep2CapacityRows();
   wireTabs();
   renderEvents();
+    const imgInput = $('#eventImage');
+  if (imgInput) {
+    imgInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const preview = $('#eventImagePreview');
+      if (!preview) return;
+
+      if (file) {
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.style.display = 'block';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    });
+  }
+
 });

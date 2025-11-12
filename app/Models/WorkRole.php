@@ -12,8 +12,6 @@ class WorkRole extends Model
     protected $table = 'work_roles';
     protected $primaryKey = 'role_id';
     public $incrementing = true;
-
-    // you have created_at / updated_at on this table
     public $timestamps = true;
 
     protected $fillable = [
@@ -40,18 +38,20 @@ class WorkRole extends Model
 
     public function reservations()
     {
+        // FK on workers_reservations is work_role_id
         return $this->hasMany(WorkerReservation::class, 'work_role_id', 'role_id');
     }
 
     public function workers()
     {
+        // all workers who reserved this specific work_role
         return $this->hasManyThrough(
-            Worker::class,            // final model
-            WorkerReservation::class, // through
-            'work_role_id',           // FK on WorkerReservation → WorkRole
-            'worker_id',              // FK on Worker → workers table
-            'role_id',                // local key on WorkRole
-            'worker_id'               // local key on WorkerReservation
+            Worker::class,              // final
+            WorkerReservation::class,   // through
+            'work_role_id',             // FK on WorkerReservation → WorkRole
+            'worker_id',                // FK on Worker → workers table
+            'role_id',                  // local key on WorkRole
+            'worker_id'                 // local key on WorkerReservation
         );
     }
 }

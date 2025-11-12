@@ -152,6 +152,16 @@ body{
 .btn-remove{padding:8px 12px;background:var(--danger);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:13px}
 
 .muted{opacity:.7;font-size:13px}
+.image-upload {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.image-preview {
+  border:1px solid var(--border-color);
+  box-shadow:var(--shadow-sm);
+}
 
 /* Responsive */
 @media (max-width:768px){

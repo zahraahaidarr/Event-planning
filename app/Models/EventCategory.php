@@ -8,12 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class EventCategory extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'event_categories';
     protected $primaryKey = 'category_id';
     public $timestamps = true;
 
-    protected $fillable = ['name','description'];
+    // If your table has ONLY name + description, keep it like this.
+    // (Add 'slug' here ONLY if you actually create that column.)
+    protected $fillable = [
+        'name',
+        'description',
+    ];
 
     public function events()
     {

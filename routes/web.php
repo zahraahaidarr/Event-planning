@@ -14,6 +14,7 @@ use App\Http\Controllers\AI\StaffingController;
 use App\Http\Controllers\Admin\EventsController;
 use App\Http\Controllers\AnnouncementFeedController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Worker\EventDiscoveryController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -100,13 +101,15 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
 
 
 
-Route::middleware(['auth', 'role:WORKER'])
-    ->prefix('worker')
-    ->name('worker.')
-    ->group(function () {
+Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->group(function () {
 
         Route::view('/dashboard', 'worker.dashboard')->name('dashboard');
-        Route::view('/events/discover', 'worker.event-discovery')->name('events.discover');
+
+
+        Route::get('/events/discover', [EventDiscoveryController::class, 'index'])->name('events.discover');
+        Route::get('/events/discover/list', [EventDiscoveryController::class, 'list'])->name('events.discover.list');
+        Route::post('/events/{event}/apply', [EventDiscoveryController::class, 'apply'])->name('events.apply');
+        
         Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
         Route::view('/post-event-submission', 'worker.post-event-submission')->name('submissions');
 

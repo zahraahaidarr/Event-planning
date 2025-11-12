@@ -173,6 +173,23 @@
                 <label class="form-label required">Description</label>
                 <textarea class="form-textarea" id="eventDescription" required placeholder="Describe the event..."></textarea>
               </div>
+
+              <div class="form-group full-width">
+    <label class="form-label">Event Image</label>
+    <div class="image-upload">
+        <input type="file"
+               class="form-input"
+               id="eventImage"
+               accept="image/*">
+        <small class="muted">
+            Recommended 1200×600px, JPG or PNG, max 2MB.
+        </small>
+        <img id="eventImagePreview"
+             class="image-preview"
+             style="display:none;margin-top:8px;max-height:140px;border-radius:10px;object-fit:cover;">
+    </div>
+</div>
+
               <div class="form-group">
                 <label class="form-label required">Category</label>
                 <select class="form-select" id="eventCategory" required>
@@ -241,6 +258,7 @@
     window.initialEvents     = @json($eventsPayload);
     window.initialCategories = @json($categoriesPayload);
     window.initialRoleTypes  = @json($roleTypesPayload);
+    
 </script>
 
 

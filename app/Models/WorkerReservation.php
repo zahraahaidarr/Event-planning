@@ -11,9 +11,23 @@ class WorkerReservation extends Model
 
     protected $table = 'workers_reservations';
     protected $primaryKey = 'reservation_id';
-    public $timestamps = false;
+    public $incrementing = true;
+    public $timestamps = true; // keep as you defined
 
-    protected $fillable = ['worker_id','event_id','work_role_id','status', /* … */];
+    protected $fillable = [
+        'event_id',
+        'work_role_id',
+        'worker_id',
+        'reserved_at',
+        'status',
+        'check_in_time',
+        'check_out_time',
+        'credited_hours',      // if exists
+    ];
+
+    protected $casts = [
+        'hours' => 'decimal:2',
+    ];
 
     public function worker()
     {
@@ -29,9 +43,4 @@ class WorkerReservation extends Model
     {
         return $this->belongsTo(WorkRole::class, 'work_role_id', 'role_id');
     }
-
-    protected $casts = [
-    'hours' => 'decimal:2',
-];
-
 }

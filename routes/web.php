@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\EventsController;
 use App\Http\Controllers\AnnouncementFeedController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Worker\EventDiscoveryController;
+use App\Http\Controllers\NotificationController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -73,6 +74,18 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
         Route::get('/employee/announcements', [AnnouncementFeedController::class, 'index'])->name('employee.announcements.index');
         Route::get('/worker/announcements', [AnnouncementFeedController::class, 'index'])->name('worker.announcements.index');
+        
+           Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    // Get unread count for the bell badge (AJAX)
+    Route::get('/api/notifications/unread-count', [NotificationController::class, 'unreadCount'])
+        ->name('notifications.unreadCount');
+
+    // Mark all as read (AJAX)
+    Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.markAllRead');
+    
     });
 
 

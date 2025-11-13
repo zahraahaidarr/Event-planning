@@ -173,5 +173,9 @@
       </div>
     </aside>
   </div>
+  @include('notify.widget')
+  @include('partials.notify-bell')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

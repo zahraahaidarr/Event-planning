@@ -44,6 +44,9 @@
             <a href="{{ route('announcements.create') }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>
+            <a href="{{ route('notifications.index') }}" class="nav-item">
+                <span class="nav-icon">📢</span><span>notifications</span>
+            </a>
         </nav>
 
         <nav class="nav-section">
@@ -72,6 +75,7 @@
                 <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
                     <span id="theme-icon">☀️</span>
                 </button>
+                
 
                 <button class="icon-btn" onclick="toggleLanguage()" title="Toggle language">
                     <span id="lang-icon">{{ app()->getLocale()==='ar' ? 'EN' : 'AR' }}</span>
@@ -199,5 +203,9 @@
         </div>
     </main>
 </div>
+@include('notify.widget')
+@include('partials.notify-bell')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

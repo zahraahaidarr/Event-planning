@@ -7,6 +7,7 @@ use App\Models\Worker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\Notify;
 
 class VolunteerController extends Controller
 {
@@ -98,6 +99,13 @@ class VolunteerController extends Controller
             $worker->user->status = $request->input('status'); // ACTIVE/SUSPENDED/BANNED/PENDING
             $worker->user->save();
         });
+        Notify::to(
+    $worker->user->id,
+    'Account status updated',
+    "Your account status was changed to {$request->input('status')}.",
+    'ACCOUNT'
+);
+
 
         return response()->json([
             'ok' => true,

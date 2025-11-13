@@ -146,5 +146,8 @@
 
   {{-- Worker Settings JS --}}
   <script src="{{ asset('js/worker/settings.js') }}"></script>
+  @include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

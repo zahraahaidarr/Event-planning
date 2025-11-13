@@ -57,6 +57,9 @@
                 <span class="nav-icon">⚙️</span>
                 <span>Settings</span>
             </a>
+                        <a href="{{ route('notifications.index') }}" class="nav-item">
+                <span class="nav-icon">📢</span><span>notifications</span>
+            </a>
         </nav>
     </aside>
 
@@ -187,5 +190,8 @@
 </script>
 
 <script src="{{ asset('js/worker/event-discovery.js') }}" defer></script>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

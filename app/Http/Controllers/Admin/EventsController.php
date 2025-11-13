@@ -13,6 +13,7 @@ use App\Models\WorkRole;
 use App\Models\RoleType;
 use App\Models\EventCategory;
 use App\Models\Employee;
+use App\Services\Notify;
 
 
 class EventsController extends Controller
@@ -407,6 +408,15 @@ public function updateStatus(Request $request, Event $event): \Illuminate\Http\J
 
     $event->status = $data['status'];
     $event->save();
+        // Example after updating event status
+foreach ($event->reservations as $r) {
+    Notify::to(
+        $r->worker->user_id,
+        "Event status updated",
+        "The event '{$event->title}' is now {$event->status}.",
+        'EVENT_STATUS'
+    );
+}
 
     return response()->json([
         'ok'    => true,
@@ -415,6 +425,8 @@ public function updateStatus(Request $request, Event $event): \Illuminate\Http\J
             'status' => $event->status,
         ],
     ]);
+
+
 }
 
 

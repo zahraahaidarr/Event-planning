@@ -2,64 +2,77 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display all notifications for the logged-in user.
      */
     public function index()
     {
-        //
+        $userId = Auth::id();
+
+        // Fetch the latest 50 notifications
+        $notifications = DB::table('notifications')
+    ->where('user_id', $userId)
+    ->orderBy('created_at', 'desc')
+    ->paginate(15);   // << now it's a LengthAwarePaginator
+
+
+        return view('notifications.index', compact('notifications'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Return unread notifications count for the floating bell (AJAX).
      */
-    public function create()
+    public function unreadCount(): JsonResponse
     {
-        //
+        $userId = Auth::id();
+
+        $count = DB::table('notifications')
+            ->where('user_id', $userId)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json(['count' => $count]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Mark all notifications as read (AJAX).
      */
-    public function store(Request $request)
+    public function markAllRead(Request $request): JsonResponse
     {
-        //
+        $userId = Auth::id();
+
+        DB::table('notifications')
+            ->where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['ok' => true]);
     }
 
     /**
-     * Display the specified resource.
+     * Helper endpoint to create a test notification manually (optional).
+     * You can remove this in production.
      */
-    public function show(Notification $notification)
+    public function createTestNotification(): JsonResponse
     {
-        //
-    }
+        $userId = Auth::id();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Notification $notification)
-    {
-        //
-    }
+        DB::table('notifications')->insert([
+            'user_id'    => $userId,
+            'title'      => 'Test Notification',
+            'message'    => 'This is a test notification for your account.',
+            'type'       => 'system',
+            'is_read'    => false,
+            'created_at' => now(),
+        ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Notification $notification)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Notification $notification)
-    {
-        //
+        return response()->json(['ok' => true, 'message' => 'Notification created']);
     }
 }

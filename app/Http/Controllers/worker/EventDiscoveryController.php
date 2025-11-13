@@ -12,6 +12,9 @@ use App\Models\RoleType;
 use App\Models\WorkRole;
 use App\Models\WorkerReservation;
 use Illuminate\Http\JsonResponse;
+use App\Services\Notify;
+use App\Models\Employee; // only if you want to notify the event creator
+
 
 
 
@@ -193,6 +196,25 @@ class EventDiscoveryController extends Controller
         'created_at'   => now(),
         'updated_at'   => now(),
     ]);
+    // Notify the worker himself
+Notify::to(
+    $worker->user_id,
+    'Application submitted',
+    "You applied to '{$event->title}' successfully.",
+    'RESERVATION'
+);
+
+// Optionally, notify the event creator (Employee or Admin)
+$creatorUserId = optional(\App\Models\Employee::find($event->created_by))->user_id ?? null;
+if ($creatorUserId) {
+    Notify::to(
+        $creatorUserId,
+        'New application received',
+        "{$worker->user->first_name} {$worker->user->last_name} applied to '{$event->title}'.",
+        'RESERVATION'
+    );
+}
+
 
     $spotsRemaining = max(0, $role->required_spots - ($used + 1));
 

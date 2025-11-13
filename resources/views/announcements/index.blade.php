@@ -178,5 +178,8 @@
     window.currentRole = @json($role);
 </script>
 <script src="{{ asset('js/announcements/index.js') }}"></script>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

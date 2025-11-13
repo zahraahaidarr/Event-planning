@@ -139,5 +139,8 @@
         </div>
     </main>
 </div>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

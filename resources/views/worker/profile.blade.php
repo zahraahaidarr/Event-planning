@@ -196,5 +196,8 @@
 
   {{-- JS --}}
   <script src="{{ asset('js/worker/profile.js') }}" defer></script>
+  @include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

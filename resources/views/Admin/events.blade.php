@@ -263,5 +263,8 @@
 
 
   <script src="{{ asset('js/admin/events.js') }}"></script>
+  @include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+
 </body>
 </html>

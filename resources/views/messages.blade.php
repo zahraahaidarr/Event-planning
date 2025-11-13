@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Messages • Volunteer</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- CSS (public/css/worker/messages.css) --}}
-  <link rel="stylesheet" href="{{ asset('css/worker/messages.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/messages.css') }}">
 </head>
 <body>
   <div class="wrap">
@@ -63,6 +63,6 @@
   </div>
 
   {{-- JS (public/js/worker/messages.js) --}}
-  <script src="{{ asset('js/worker/messages.js') }}" defer></script>
+  <script src="{{ asset('js/messages.js') }}" defer></script>
 </body>
 </html>

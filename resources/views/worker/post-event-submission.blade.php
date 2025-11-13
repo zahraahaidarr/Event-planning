@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Post-Event Submissions • Volunteer</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- CSS (public/css/worker/post-event-submission.css) --}}
   <link rel="stylesheet" href="{{ asset('css/worker/post-event-submission.css') }}">
 </head>
@@ -39,19 +39,19 @@
 
       <nav class="nav-section">
         <div class="nav-label">Account</div>
-        <a href="{{ route('worker.profile') }}" class="nav-item">
+        <a href="{{ route('profile') }}" class="nav-item">
           <span class="nav-icon">👤</span>
           <span id="navProfile">Profile</span>
         </a>
-        <a href="{{ route('worker.messages') }}" class="nav-item">
+        <a href="{{ route('messages') }}" class="nav-item">
           <span class="nav-icon">💬</span>
           <span id="navChat">Chat</span>
         </a>
-        <a href="{{ route('worker.announcements') }}" class="nav-item">
+        <a href="{{ route('announcements') }}" class="nav-item">
           <span class="nav-icon">📢</span>
           <span id="navAnnouncements">Announcements</span>
         </a>
-        <a href="{{ route('worker.settings') }}" class="nav-item">
+        <a href="{{ route('settings') }}" class="nav-item">
           <span class="nav-icon">⚙️</span>
           <span id="navSettings">Settings</span>
         </a>

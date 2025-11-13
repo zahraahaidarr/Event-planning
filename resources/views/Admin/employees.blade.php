@@ -5,7 +5,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Employee Management - Admin Portal</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   <link rel="stylesheet" href="{{ asset('css/Admin/employees.css') }}">
   <script src="{{ asset('js/Admin/employees.js') }}" defer></script>
 </head>
@@ -67,14 +67,7 @@
         <h1>Employee Management</h1>
         <p>Manage employee accounts and permissions</p>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
-          <span id="theme-icon">☀️</span>
-        </button>
-        <button class="icon-btn" onclick="toggleLanguage()" title="Toggle language">
-          <span id="lang-icon">AR</span>
-        </button>
-      </div>
+
     </div>
 
     {{-- Flash / validation --}}

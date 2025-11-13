@@ -6,6 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Announcements • VolunteerHub</title>
+    <script src="{{ asset('js/preferences.js') }}" defer></script>
     <link rel="stylesheet" href="{{ asset('css/announcements/index.css') }}">
 </head>
 <body>
@@ -61,12 +62,12 @@
                 <div class="nav-section">
                     <div class="nav-label">Account</div>
 
-                    <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}"
+                    <a href="{{ Route::has('profile') ? route('profile.show') : '#' }}"
                        class="nav-item">
                         <span class="nav-icon">👤</span><span>Profile</span>
                     </a>
 
-                    <a href="{{ Route::has('settings.show') ? route('settings.show') : '#' }}"
+                    <a href="{{ Route::has('settings') ? route('settings.show') : '#' }}"
                        class="nav-item">
                         <span class="nav-icon">🔧</span><span>Settings</span>
                     </a>
@@ -112,7 +113,7 @@
             <nav class="nav-section">
                 <div class="nav-label">Account</div>
 
-                <a href="{{ route('worker.profile') }}"
+                <a href="{{ route('profile') }}"
                    class="nav-item {{ request()->routeIs('worker.profile') ? 'active' : '' }}">
                     <span class="nav-icon">👤</span>
                     <span>Profile</span>
@@ -124,13 +125,14 @@
                     <span>Chat</span>
                 </a>
 
-                <a href="{{ route('worker.announcements') }}"
-                   class="nav-item {{ request()->routeIs('worker.announcements') ? 'active' : '' }}">
+<a href="{{ route('worker.announcements.index') }}"
+   class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
+
                     <span class="nav-icon">📢</span>
                     <span>Announcements</span>
                 </a>
 
-                <a href="{{ route('worker.settings') }}"
+                <a href="{{ route('settings') }}"
                    class="nav-item {{ request()->routeIs('worker.settings') ? 'active' : '' }}">
                     <span class="nav-icon">⚙️</span>
                     <span>Settings</span>

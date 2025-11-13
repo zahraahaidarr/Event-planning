@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Worker • Dashboard</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- If you’re not using Vite, keep asset() with files under public/ --}}
   <link rel="stylesheet" href="{{ asset('css/worker/dashboard.css') }}">
   <script src="{{ asset('js/worker/dashboard.js') }}" defer></script>
@@ -39,7 +39,7 @@
           💬 <span id="navChat">Chat</span>
         </a>
 
-        <a href="{{ route('worker.settings') }}" class="nav-item">
+        <a href="{{ route('settings') }}" class="nav-item">
           <span class="nav-icon">🔧</span><span>Settings</span>
         </a>
       </nav>
@@ -174,7 +174,7 @@
     </aside>
   </div>
   @include('notify.widget')
-  @include('partials.notify-bell')
+  
 <script src="{{ asset('js/notify-poll.js') }}" defer></script>
 
 </body>

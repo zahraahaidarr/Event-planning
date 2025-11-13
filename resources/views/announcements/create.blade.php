@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Send Announcement</title>
+  <script src="{{ asset('js/preferences.js') }}" defer></script>
   <link rel="stylesheet" href="{{ asset('css/announcements/create.css') }}">
 </head>
 @php
@@ -181,7 +182,7 @@
   </div>
 @endif
 
-<script src="{{ asset('js/announcements/reate.js') }}"></script>
+<script src="{{ asset('js/announcements/create.js') }}"></script>
 @include('notify.widget')
 <script src="{{ asset('js/notify-poll.js') }}" defer></script>
 

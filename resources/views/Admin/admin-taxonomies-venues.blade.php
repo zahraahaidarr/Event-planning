@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Taxonomies & Venues - Admin</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- If you use Vite, swap to @vite(['resources/js/...','resources/css/...']) --}}
   <link rel="stylesheet" href="{{ asset('css/Admin/admin-taxonomies-venues.css') }}">
 
@@ -135,11 +135,7 @@
           <h1>Taxonomies & Venues</h1>
           <p class="muted">Keep your categories, worker types, and venues consistent across the app.</p>
         </div>
-        <div class="header-actions">
-          <button class="icon-btn" id="theme-toggle" title="Toggle theme">
-            <span id="theme-icon">☀️</span>
-          </button>
-        </div>
+
       </div>
 
       <!-- Venues -->

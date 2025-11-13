@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Dashboard - VolunteerHub</title>
+    <script src="{{ asset('js/preferences.js') }}" defer></script>
     {{-- If you’re not using Vite, keep asset() and place files under public/ as shown below --}}
     <link rel="stylesheet" href="{{ asset('css/employee/dashboard.css') }}">
     <script src="{{ asset('js/employee/dashboard.js') }}" defer></script>
@@ -51,7 +52,7 @@
 
             <div class="nav-section">
                 <div class="nav-label">Account</div>
-                <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" class="nav-item">
+                <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="nav-item">
                     <span class="nav-icon">👤</span><span>Profile</span>
                 </a>
 

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discover Events - Worker Portal</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="stylesheet" href="{{ asset('css/worker/event-discovery.css') }}">
@@ -41,7 +41,7 @@
 
         <nav class="nav-section">
             <div class="nav-label">Account</div>
-            <a href="{{ route('worker.profile') }}" class="nav-item">
+            <a href="{{ route('profile') }}" class="nav-item">
                 <span class="nav-icon">👤</span>
                 <span>Profile</span>
             </a>
@@ -49,11 +49,11 @@
                 <span class="nav-icon">💬</span>
                 <span>Chat</span>
             </a>
-            <a href="{{ route('worker.announcements') }}" class="nav-item">
+            <a href="{{ route('worker.announcements.index') }}" class="nav-item">
                 <span class="nav-icon">📢</span>
                 <span>Announcements</span>
             </a>
-            <a href="{{ route('worker.settings') }}" class="nav-item">
+            <a href="{{ route('settings') }}" class="nav-item">
                 <span class="nav-icon">⚙️</span>
                 <span>Settings</span>
             </a>

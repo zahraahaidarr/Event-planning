@@ -30,3 +30,4 @@
     if(icon) icon.textContent = next === 'en' ? 'AR' : 'EN';
   });
 })();
+

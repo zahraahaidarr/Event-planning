@@ -5,12 +5,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Profile • Volunteer</title>
-
+  <script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- CSRF for AJAX --}}
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   {{-- CSS --}}
-  <link rel="stylesheet" href="{{ asset('css/worker/profile.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
 </head>
 @php
   $first    = trim($u->first_name ?? '');
@@ -44,10 +44,7 @@
         </svg>
         <input id="globalSearch" placeholder="Search..." aria-label="Search">
       </div>
-      <div class="bar-actions">
-        <button class="btn ghost" id="langToggle" title="Switch Language">EN/AR</button>
-        <button class="btn ghost" id="themeToggle" title="Toggle Theme">🌓</button>
-      </div>
+
     </div>
 
     <!-- Header -->
@@ -110,7 +107,8 @@
           </div>
         </div>
 
-        <form id="avatarForm" class="upload-row" enctype="multipart/form-data" method="post" action="{{ route('worker.profile.avatar') }}">
+        {{-- FIXED: use route("profile.avatar") --}}
+        <form id="avatarForm" class="upload-row" enctype="multipart/form-data" method="post" action="{{ route('profile.avatar') }}">
           @csrf
           <input id="photoFile" name="avatar" type="file" accept="image/*">
           <button type="submit" class="btn small" id="uploadPhoto">Upload</button>
@@ -188,16 +186,17 @@
   {{-- Pass routes for AJAX --}}
   <script>
     window.ROUTES = {
-      account:  "{{ route('worker.profile.account') }}",
-      personal: "{{ route('worker.profile.personal') }}",
-      password: "{{ route('worker.profile.password') }}"
+      // FIXED: use the non-worker route names
+      account:  "{{ route('profile.account') }}",
+      personal: "{{ route('profile.personal') }}",
+      password: "{{ route('profile.password') }}"
     };
   </script>
 
   {{-- JS --}}
-  <script src="{{ asset('js/worker/profile.js') }}" defer></script>
+  <script src="{{ asset('js/profile.js') }}" defer></script>
   @include('notify.widget')
-<script src="{{ asset('js/notify-poll.js') }}" defer></script>
+  <script src="{{ asset('js/notify-poll.js') }}" defer></script>
 
 </body>
 </html>

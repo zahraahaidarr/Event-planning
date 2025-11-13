@@ -16,6 +16,7 @@ use App\Http\Controllers\AnnouncementFeedController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Worker\EventDiscoveryController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SystemSettingController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -75,17 +76,28 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::get('/employee/announcements', [AnnouncementFeedController::class, 'index'])->name('employee.announcements.index');
         Route::get('/worker/announcements', [AnnouncementFeedController::class, 'index'])->name('worker.announcements.index');
         
-           Route::get('/notifications', [NotificationController::class, 'index'])
-        ->name('notifications.index');
-
-    // Get unread count for the bell badge (AJAX)
-    Route::get('/api/notifications/unread-count', [NotificationController::class, 'unreadCount'])
-        ->name('notifications.unreadCount');
-
-    // Mark all as read (AJAX)
-    Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllRead'])
-        ->name('notifications.markAllRead');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/api/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+        Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     
+        Route::get('/profile',          [ProfileController::class,'show'])->name('profile');
+        Route::get('/profile/data',     [ProfileController::class,'data'])->name('profile.data');
+        Route::put('/profile/account',  [ProfileController::class,'updateAccount'])->name('profile.account');
+        Route::put('/profile/personal', [ProfileController::class,'updatePersonal'])->name('profile.personal');
+        Route::put('/profile/password', [ProfileController::class,'updatePassword'])->name('profile.password');
+        Route::post('/profile/avatar',  [ProfileController::class,'uploadAvatar'])->name('profile.avatar');
+
+         Route::get('/settings',  [SystemSettingController::class, 'edit'])
+        ->name('settings');
+
+    Route::post('/settings', [SystemSettingController::class, 'update'])
+        ->name('settings.update');
+
+    Route::post('/settings/logout-all', [SystemSettingController::class, 'logoutAll'])
+        ->name('settings.logoutAll');
+
+    Route::delete('/settings/delete-account', [SystemSettingController::class, 'destroyAccount'])
+        ->name('settings.deleteAccount');
     });
 
 
@@ -126,15 +138,8 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
         Route::view('/post-event-submission', 'worker.post-event-submission')->name('submissions');
 
-        Route::get('/profile',          [ProfileController::class,'show'])->name('profile');
-        Route::get('/profile/data',     [ProfileController::class,'data'])->name('profile.data');
-        Route::put('/profile/account',  [ProfileController::class,'updateAccount'])->name('profile.account');
-        Route::put('/profile/personal', [ProfileController::class,'updatePersonal'])->name('profile.personal');
-        Route::put('/profile/password', [ProfileController::class,'updatePassword'])->name('profile.password');
-        Route::post('/profile/avatar',  [ProfileController::class,'uploadAvatar'])->name('profile.avatar');
 
-        Route::view('/announcements', 'worker.announcements')->name('announcements');
         Route::view('/messages', 'worker.messages')->name('messages');
-        Route::view('/settings', 'worker.settings')->name('settings');
+
     });
 

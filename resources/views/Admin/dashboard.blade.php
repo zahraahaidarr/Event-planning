@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - VolunteerHub</title>
+    <script src="{{ asset('js/preferences.js') }}" defer></script>
     <link rel="stylesheet" href="{{ asset('css/Admin/dashboard.css') }}">
     <script src="{{ asset('js/Admin/dashboard.js') }}" defer></script>
 </head>
@@ -44,18 +45,15 @@
             <a href="{{ route('announcements.create') }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>
-            <a href="{{ route('notifications.index') }}" class="nav-item">
-                <span class="nav-icon">📢</span><span>notifications</span>
-            </a>
         </nav>
 
         <nav class="nav-section">
             <div class="nav-label">Account</div>
 
-            <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" class="nav-item">
+            <a href="{{ route('profile') }}" class="nav-item">
                 <span class="nav-icon">👤</span><span>Profile</span>
             </a>
-<a href="{{ Route::has('settings.show') ? route('settings.show') : '#' }}" class="nav-item">
+<a href="{{ Route::has('settings') ? route('settings') : '#' }}" class="nav-item">
   <span class="nav-icon">🔧</span><span>Settings</span>
 </a>
 
@@ -72,14 +70,7 @@
             </div>
 
             <div class="header-actions">
-                <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
-                    <span id="theme-icon">☀️</span>
-                </button>
-                
 
-                <button class="icon-btn" onclick="toggleLanguage()" title="Toggle language">
-                    <span id="lang-icon">{{ app()->getLocale()==='ar' ? 'EN' : 'AR' }}</span>
-                </button>
 
                 {{-- Header Logout (new) --}}
                 @if(Route::has('logout'))
@@ -204,7 +195,7 @@
     </main>
 </div>
 @include('notify.widget')
-@include('partials.notify-bell')
+
 <script src="{{ asset('js/notify-poll.js') }}" defer></script>
 
 </body>

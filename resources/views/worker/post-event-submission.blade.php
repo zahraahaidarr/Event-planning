@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Post-Event Submissions • Volunteer</title>
-<script src="{{ asset('js/preferences.js') }}" defer></script>
+  <script src="{{ asset('js/preferences.js') }}" defer></script>
   {{-- CSS (public/css/worker/post-event-submission.css) --}}
   <link rel="stylesheet" href="{{ asset('css/worker/post-event-submission.css') }}">
 </head>
@@ -63,32 +64,46 @@
       <!-- Top bar -->
       <div class="topbar">
         <div class="search" role="search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" stroke="currentColor" stroke-width="1.6" opacity=".55"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
+                  stroke="currentColor" stroke-width="1.6" opacity=".55" />
+          </svg>
           <input id="globalSearch" placeholder="Search submissions…" aria-label="Search submissions"/>
         </div>
-        <div class="bar-actions">
-          <button class="btn ghost" id="langToggle" title="Switch Language">EN/AR</button>
-          <button class="btn ghost" id="themeToggle" title="Toggle Theme">🌓</button>
-        </div>
+        
       </div>
 
       <!-- Page Header -->
       <section class="page-header">
         <h1 id="pageTitle">Post-Event Submissions</h1>
-        <p id="pageSubtitle">Submit your post-event reports within 24 hours of event completion. Include photos, videos, and detailed descriptions.</p>
+        <p id="pageSubtitle">
+          Submit your post-event reports within 24 hours of event completion.
+          Include photos, videos, and detailed descriptions.
+        </p>
       </section>
 
       <!-- Submission Form -->
       <section class="form-card" id="submissionForm">
         <h2 style="margin-top:0">Submit New Report</h2>
-        <form id="reportForm">
+        <form id="reportForm"
+              method="POST"
+              action="{{ route('worker.submissions.store') }}"
+              data-store-url="{{ route('worker.submissions.store') }}"
+              enctype="multipart/form-data">
           @csrf
+
           <div class="form-group">
             <label for="eventSelect">Select Event</label>
-            <select id="eventSelect" required>
+            <select id="eventSelect" name="worker_reservation_id" required>
               <option value="">Choose an event...</option>
-              <option value="1">Health Awareness Fair - Oct 8, 2025</option>
-              <option value="2">Summer Marathon - Sep 15, 2025</option>
+              @foreach($reservations as $res)
+                <option value="{{ $res->reservation_id }}">
+                  {{ $res->event->name ?? $res->event->title ?? 'Event #'.$res->event_id }}
+                  @if($res->event->start_time ?? false)
+                    - {{ $res->event->start_time->format('M d, Y') }}
+                  @endif
+                </option>
+              @endforeach
             </select>
           </div>
 
@@ -114,21 +129,24 @@
               <legend>Organizer • Crowd control, order, entry flow</legend>
               <div class="two-col">
                 <div class="form-group">
-                  <label for="org_attendees">Attendance (number of attendees)</label>
-                  <input id="org_attendees" type="number" min="0" placeholder="e.g., 1200">
-                </div>
-                <div class="form-group">
-                  <label for="org_noshows">No-shows / Absent volunteers</label>
-                  <input id="org_noshows" type="text" placeholder="Names or count (e.g., 5)">
+                  <label for="org_attendance">Mark attendance</label>
+                  <select id="org_attendance">
+                    <option value="" disabled selected>Select attendance…</option>
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="partial">Partial</option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
                 <label for="org_issues">Issues or incidents</label>
-                <textarea id="org_issues" placeholder="Fights, disorganization, entry bottlenecks..."></textarea>
+                <textarea id="org_issues"
+                          placeholder="Fights, disorganization, entry bottlenecks..."></textarea>
               </div>
               <div class="form-group">
                 <label for="org_improve">Suggestions for crowd management (optional)</label>
-                <textarea id="org_improve" placeholder="Improvements for future events…"></textarea>
+                <textarea id="org_improve"
+                          placeholder="Improvements for future events…"></textarea>
               </div>
             </fieldset>
 
@@ -139,9 +157,9 @@
                 <div class="form-group">
                   <label for="cd_check">Attendance</label>
                   <select id="cd_check">
+                    <option value="" disabled selected>Select attendance…</option>
                     <option value="checked">Checked-in & out</option>
                     <option value="in">Checked-in only</option>
-                    <option value="out">Checked-out only</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -163,7 +181,11 @@
 
               <div class="form-group">
                 <label for="cd_forms">Upload incident forms / documentation</label>
-                <input id="cd_forms" type="file" multiple accept="image/*,application/pdf">
+                <input id="cd_forms"
+                       name="cd_forms[]"
+                       type="file"
+                       multiple
+                       accept="image/*,application/pdf">
               </div>
             </fieldset>
 
@@ -172,12 +194,17 @@
               <legend>Media Staff • Photography, videography, coverage</legend>
               <div class="form-group">
                 <label for="media_files">Upload event photos/videos</label>
-                <input id="media_files" type="file" multiple accept="image/*,video/*">
+                <input id="media_files"
+                       name="media_files[]"
+                       type="file"
+                       multiple
+                       accept="image/*,video/*">
               </div>
               <div class="two-col">
                 <div class="form-group">
                   <label for="media_labels">Labels / categories</label>
-                  <input id="media_labels" type="text" placeholder='e.g., "Ashoura-Speaker", "Crowd"'>
+                  <input id="media_labels" type="text"
+                         placeholder='e.g., "Ashoura-Speaker", "Crowd"'>
                 </div>
                 <div class="form-group">
                   <label for="media_report_photos">Photos taken (count)</label>
@@ -190,8 +217,9 @@
                   <input id="media_report_videos" type="number" min="0" value="0">
                 </div>
                 <div class="form-group">
-                  <label for="media_problems">Media problems</label>
-                  <input id="media_problems" type="text" placeholder="Blurred images, camera issues…">
+                  <label for="media_problems">Media problems (optional)</label>
+                  <input id="media_problems" type="text"
+                         placeholder="Blurred images, camera issues…">
                 </div>
               </div>
               <div class="form-group">
@@ -207,6 +235,7 @@
                 <div class="form-group">
                   <label for="tech_ok">All equipment functioning?</label>
                   <select id="tech_ok">
+                    <option value="" disabled selected>Select option…</option>
                     <option value="yes">Yes, functioning</option>
                     <option value="partial">Partially</option>
                     <option value="no">No</option>
@@ -215,6 +244,7 @@
                 <div class="form-group">
                   <label for="tech_returned">Borrowed devices returned?</label>
                   <select id="tech_returned">
+                    <option value="" disabled selected>Select option…</option>
                     <option value="yes">Yes</option>
                     <option value="partial">Partially</option>
                     <option value="no">No</option>
@@ -223,15 +253,20 @@
               </div>
               <div class="form-group">
                 <label for="tech_issues">Tech issues (include timestamps)</label>
-                <textarea id="tech_issues" placeholder="e.g., Mic failed at 7:20 PM, projector reboot at 8:05 PM…"></textarea>
+                <textarea id="tech_issues"
+                          placeholder="e.g., Mic failed at 7:20 PM, projector reboot at 8:05 PM…"></textarea>
               </div>
               <div class="form-group">
                 <label for="tech_recording">Upload recorded session (if applicable)</label>
-                <input id="tech_recording" type="file" accept="video/*,audio/*">
+                <input id="tech_recording"
+                       name="tech_recording"
+                       type="file"
+                       accept="video/*,audio/*">
               </div>
               <div class="form-group">
-                <label for="tech_suggest">Technical improvements</label>
-                <textarea id="tech_suggest" placeholder='e.g., "Need backup mic", extra HDMI cable…'></textarea>
+                <label for="tech_suggest">Technical improvements (optional)</label>
+                <textarea id="tech_suggest"
+                          placeholder='e.g., "Need backup mic", extra HDMI cable…'></textarea>
               </div>
             </fieldset>
 
@@ -246,6 +281,7 @@
                 <div class="form-group">
                   <label for="clean_extra">Was extra help needed?</label>
                   <select id="clean_extra">
+                    <option value="" disabled selected>Select option…</option>
                     <option value="no">No</option>
                     <option value="yes">Yes</option>
                   </select>
@@ -253,11 +289,13 @@
               </div>
               <div class="form-group">
                 <label for="clean_notes">Trash volume / forgotten items</label>
-                <textarea id="clean_notes" placeholder="Notes on trash volume, lost & found…"></textarea>
+                <textarea id="clean_notes"
+                          placeholder="Notes on trash volume, lost & found…"></textarea>
               </div>
               <div class="form-group">
                 <label for="clean_suggest">Logistics suggestions</label>
-                <textarea id="clean_suggest" placeholder="Better placement of bins, more time between sessions…"></textarea>
+                <textarea id="clean_suggest"
+                          placeholder="Better placement of bins, more time between sessions…"></textarea>
               </div>
             </fieldset>
 
@@ -266,7 +304,11 @@
               <legend>Decorator • Setup/teardown of decorations</legend>
               <div class="form-group">
                 <label for="dec_photos">Upload photos (setup & final layout)</label>
-                <input id="dec_photos" type="file" multiple accept="image/*">
+                <input id="dec_photos"
+                       name="dec_photos[]"
+                       type="file"
+                       multiple
+                       accept="image/*">
               </div>
               <div class="two-col">
                 <div class="form-group">
@@ -293,26 +335,34 @@
               <legend>Cooking Team • Food prep, serving, hygiene</legend>
               <div class="form-group">
                 <label for="cook_meals">Meals served & quantity breakdown</label>
-                <textarea id="cook_meals" placeholder="e.g., Rice plates: 150, Sandwiches: 80…"></textarea>
+                <textarea id="cook_meals"
+                          placeholder="e.g., Rice plates: 150, Sandwiches: 80…"></textarea>
               </div>
               <div class="two-col">
                 <div class="form-group">
                   <label for="cook_ingredients">Ingredients / donations used</label>
-                  <textarea id="cook_ingredients" placeholder="Key ingredients or donated items…"></textarea>
+                  <textarea id="cook_ingredients"
+                            placeholder="Key ingredients or donated items…"></textarea>
                 </div>
                 <div class="form-group">
                   <label for="cook_leftovers">Leftovers / shortages</label>
-                  <textarea id="cook_leftovers" placeholder="What remained or ran out…"></textarea>
+                  <textarea id="cook_leftovers"
+                            placeholder="What remained or ran out…"></textarea>
                 </div>
               </div>
               <div class="two-col">
                 <div class="form-group">
                   <label for="cook_hygiene">Cleaning / hygiene issues</label>
-                  <textarea id="cook_hygiene" placeholder="Sanitation notes, issues observed…"></textarea>
+                  <textarea id="cook_hygiene"
+                            placeholder="Sanitation notes, issues observed…"></textarea>
                 </div>
                 <div class="form-group">
                   <label for="cook_photos">Upload photos (serving area)</label>
-                  <input id="cook_photos" type="file" multiple accept="image/*">
+                  <input id="cook_photos"
+                         name="cook_photos[]"
+                         type="file"
+                         multiple
+                         accept="image/*">
                 </div>
               </div>
             </fieldset>
@@ -324,6 +374,7 @@
                 <div class="form-group">
                   <label for="wait_attendance">Mark attendance</label>
                   <select id="wait_attendance">
+                    <option value="" disabled selected>Select attendance…</option>
                     <option value="present">Present</option>
                     <option value="absent">Absent</option>
                     <option value="partial">Partial</option>
@@ -331,16 +382,19 @@
                 </div>
                 <div class="form-group">
                   <label for="wait_leftovers">Leftovers / Waste (optional)</label>
-                  <textarea id="wait_leftovers" placeholder="Notes on leftovers or waste…"></textarea>
+                  <textarea id="wait_leftovers"
+                            placeholder="Notes on leftovers or waste…"></textarea>
                 </div>
               </div>
               <div class="form-group">
                 <label for="wait_items">List of items served</label>
-                <textarea id="wait_items" placeholder="e.g., Water 200, Juice 120, Plates 180…"></textarea>
+                <textarea id="wait_items"
+                          placeholder="e.g., Water 200, Juice 120, Plates 180…"></textarea>
               </div>
               <div class="form-group">
                 <label for="wait_issues">Service issues</label>
-                <textarea id="wait_issues" placeholder="Delays, missing tools, queue issues…"></textarea>
+                <textarea id="wait_issues"
+                          placeholder="Delays, missing tools, queue issues…"></textarea>
               </div>
             </fieldset>
           </div>
@@ -355,8 +409,58 @@
       <!-- Previous Submissions -->
       <section>
         <h2>Previous Submissions</h2>
-        <div class="list" id="submissionsList"></div>
+        <div class="list" id="submissionsList">
+          @forelse ($submissions as $sub)
+            @php
+              $eventName = $sub->event->name
+                ?? $sub->event->title
+                ?? ('Event #'.$sub->event_id);
+
+              $submittedAt = ($sub->submitted_at ?? $sub->created_at)
+                ? ($sub->submitted_at ?? $sub->created_at)->format('d M Y, H:i')
+                : '—';
+
+              // Map DB status to label + chip class
+              switch ($sub->status) {
+                  case 'submitted':
+                  case 'reviewed':
+                      $statusLabel = 'Submitted';
+                      $chipClass   = 'chip-submitted';
+                      break;
+                  default:
+                      $statusLabel = 'Pending Review';
+                      $chipClass   = 'chip-pending';
+              }
+            @endphp
+
+            <article class="card">
+              <div class="card-header">
+                <div class="card-title">{{ $eventName }}</div>
+                <span class="chip-status {{ $chipClass }}">{{ $statusLabel }}</span>
+              </div>
+
+              <div class="meta">
+                <span>📅 Submitted: {{ $submittedAt }}</span>
+              </div>
+
+              <div>
+                {{-- still using JS toast on click --}}
+                <button class="btn small ghost"
+                        type="button"
+                        data-act="view"
+                        data-id="{{ $sub->id }}">
+                  View Report
+                </button>
+              </div>
+            </article>
+          @empty
+            <div style="text-align:center;padding:40px;color:var(--muted)">
+              No submissions yet.
+            </div>
+          @endforelse
+        </div>
       </section>
+
     </main>
   </div>
 

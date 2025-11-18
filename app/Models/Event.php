@@ -20,7 +20,7 @@ class Event extends Model
         'starts_at' => 'datetime',
         'ends_at'   => 'datetime',
     ];
-
+    protected $dates = ['starts_at'];
     protected $fillable = [
         'title',
         'description',

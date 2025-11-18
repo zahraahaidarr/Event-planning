@@ -1,4 +1,6 @@
+// =========================
 // i18n strings
+// =========================
 const STRINGS = {
   en: {
     brand:"Volunteer", dashboard:"Dashboard", discover:"Discover Events",
@@ -8,7 +10,13 @@ const STRINGS = {
     pageSubtitle:"Submit your post-event reports within 24 hours of event completion. Include photos, videos, and detailed descriptions.",
     search:"Search submissions…",
     submitted:"Submitted", pending:"Pending Review",
-    viewReport:"View Report"
+    viewReport:"View Report",
+    noResults:"No submissions found.",
+    noSubmissions:"No submissions yet.",
+    chooseEventRole:"Please choose event and role.",
+    submitOk:"Report submitted successfully!",
+    submitFail:(st)=>`Failed to submit report (status ${st}).`,
+    submitError:"Error submitting report."
   },
   ar: {
     brand:"متطوّع", dashboard:"لوحة التحكم", discover:"استكشف الفعاليات",
@@ -18,90 +26,118 @@ const STRINGS = {
     pageSubtitle:"قدّم تقاريرك بعد الفعالية خلال 24 ساعة من انتهائها. أضف الصور والفيديوهات والوصف التفصيلي.",
     search:"ابحث في التقارير…",
     submitted:"تم التقديم", pending:"قيد المراجعة",
-    viewReport:"عرض التقرير"
+    viewReport:"عرض التقرير",
+    noResults:"لا توجد تقارير مطابقة.",
+    noSubmissions:"لا توجد تقارير حتى الآن.",
+    chooseEventRole:"الرجاء اختيار الفعالية والدور.",
+    submitOk:"تم إرسال التقرير بنجاح!",
+    submitFail:(st)=>`فشل إرسال التقرير (رمز ${st}).`,
+    submitError:"حدث خطأ أثناء إرسال التقرير."
   }
 };
-let lang = 'en';
 
-const $ = (sel) => document.querySelector(sel);
+let lang = 'en';
+const $  = sel => document.querySelector(sel);
 const list = $('#submissionsList');
 
-const submissions = [
-  { id:1, event:"Summer Marathon", date:"2025-09-16T10:00:00", status:"submitted" },
-  { id:2, event:"Neighborhood Reading Day", date:"2025-09-05T14:00:00", status:"pending" },
-];
-
+// =========================
+// i18n on static elements
+// =========================
 function i18nApply(){
   const s = STRINGS[lang];
   document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
-  $('#brandName').textContent = s.brand;
-  $('#navDashboard').textContent = s.dashboard;
-  $('#navDiscover').textContent = s.discover;
-  $('#navMyRes').textContent = s.myRes;
-  $('#navSubmissions').textContent = s.submissions;
-  $('#navAnnouncements').textContent = s.announcements;
-  $('#navChat').textContent = s.chat;
-  $('#navProfile').textContent = s.profile;
-  $('#navSettings').textContent = s.settings;
-  $('#pageTitle').textContent = s.pageTitle;
-  $('#pageSubtitle').textContent = s.pageSubtitle;
-  $('#globalSearch').placeholder = s.search;
+
+  $('#brandName')        && ($('#brandName').textContent        = s.brand);
+  $('#navDashboard')     && ($('#navDashboard').textContent     = s.dashboard);
+  $('#navDiscover')      && ($('#navDiscover').textContent      = s.discover);
+  $('#navMyRes')         && ($('#navMyRes').textContent         = s.myRes);
+  $('#navSubmissions')   && ($('#navSubmissions').textContent   = s.submissions);
+  $('#navAnnouncements') && ($('#navAnnouncements').textContent = s.announcements);
+  $('#navChat')          && ($('#navChat').textContent          = s.chat);
+  $('#navProfile')       && ($('#navProfile').textContent       = s.profile);
+  $('#navSettings')      && ($('#navSettings').textContent      = s.settings);
+  $('#pageTitle')        && ($('#pageTitle').textContent        = s.pageTitle);
+  $('#pageSubtitle')     && ($('#pageSubtitle').textContent     = s.pageSubtitle);
+  $('#globalSearch')     && ($('#globalSearch').placeholder     = s.search);
+
+  // If you later add data-i18n attributes on chips/buttons you can translate them here.
 }
 
-function renderSubmissions(){
-  list.innerHTML = '';
-  if(submissions.length === 0){
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No submissions yet.</div>';
-    return;
-  }
-  submissions.forEach(sub=>{
-    const s = STRINGS[lang];
-    const chip = sub.status==='submitted' ? {cls:'chip-submitted', label:s.submitted} : {cls:'chip-pending', label:s.pending};
-    const card = document.createElement('article');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="card-title">${sub.event}</div>
-        <span class="chip-status ${chip.cls}">${chip.label}</span>
-      </div>
-      <div class="meta">
-        <span>📅 Submitted: ${new Date(sub.date).toLocaleString([], {dateStyle:'medium', timeStyle:'short'})}</span>
-      </div>
-      <div>
-        <button class="btn small ghost" data-act="view" data-id="${sub.id}">${s.viewReport}</button>
-      </div>
-    `;
-    list.appendChild(card);
+// =========================
+// Search over existing cards (DB-rendered)
+// =========================
+function bindSearch(){
+  const input = $('#globalSearch');
+  if (!input || !list) return;
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    const cards = list.querySelectorAll('.card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const txt = card.textContent.toLowerCase();
+      const show = !q || txt.includes(q);
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    const msgId = 'submissionsEmptyMsg';
+    let msg = document.getElementById(msgId);
+    if (visible === 0) {
+      if (!msg) {
+        msg = document.createElement('div');
+        msg.id = msgId;
+        msg.style.textAlign = 'center';
+        msg.style.padding = '40px';
+        msg.style.color = 'var(--muted)';
+        list.appendChild(msg);
+      }
+      msg.textContent = STRINGS[lang].noResults;
+    } else if (msg) {
+      msg.remove();
+    }
   });
 }
 
-/* ---------- Role form logic ---------- */
+// =========================
+// Role form logic
+// =========================
 const roleSelect = document.getElementById('roleSelect');
-const roleForms = document.getElementById('roleForms');
+const roleForms  = document.getElementById('roleForms');
 
 function showRoleForm(role){
+  if (!roleForms) return;
   roleForms.querySelectorAll('.role-set').forEach(fs => {
     fs.style.display = (fs.getAttribute('data-role') === role) ? 'block' : 'none';
   });
 }
-roleSelect.addEventListener('change', e => showRoleForm(e.target.value));
+if (roleSelect) {
+  roleSelect.addEventListener('change', e => showRoleForm(e.target.value));
+}
 
-/* Civil Defense cases dynamic rows */
+// =========================
+// Civil Defense dynamic cases
+// =========================
 const cdCasesList = document.getElementById('cd_cases_list');
-const cdAddBtn = document.getElementById('cd_add_case');
+const cdAddBtn    = document.getElementById('cd_add_case');
+
 function addCivilCaseRow(){
+  if (!cdCasesList) return;
+
   const wrap = document.createElement('div');
   wrap.className = 'two-col';
-  wrap.style.alignItems = 'end';
-  wrap.style.border = '1px solid var(--border-color)';
+  wrap.style.alignItems   = 'end';
+  wrap.style.border       = '1px solid var(--border-color)';
   wrap.style.borderRadius = '10px';
-  wrap.style.padding = '10px';
+  wrap.style.padding      = '10px';
   wrap.style.marginBottom = '8px';
 
   wrap.innerHTML = `
     <div class="form-group">
       <label>Type of case</label>
       <select data-cd="type">
+      <option value="" disabled selected>Select type…</option>
         <option value="injury">Injury</option>
         <option value="fainting">Fainting</option>
         <option value="panic">Panic attack</option>
@@ -109,22 +145,21 @@ function addCivilCaseRow(){
       </select>
     </div>
     <div class="form-group">
-      <label>Age (optional)</label>
+      <label>Age </label>
       <input type="number" min="0" data-cd="age" placeholder="e.g., 27">
     </div>
     <div class="form-group">
-      <label>Gender (optional)</label>
+      <label>Gender</label>
       <select data-cd="gender">
-        <option value="">—</option>
+        <option value="" disabled selected>Gender…</option>
         <option>Male</option>
         <option>Female</option>
-        <option>Other</option>
       </select>
     </div>
     <div class="form-group">
       <label>Action taken</label>
       <select data-cd="action">
-        <option value="bandage">Bandage</option>
+      <option value="" disabled selected>Action taken…</option>
         <option value="on-site-care">On-site care</option>
         <option value="hospital-referral">Hospital referral</option>
         <option value="other">Other</option>
@@ -143,161 +178,247 @@ function addCivilCaseRow(){
 }
 if (cdAddBtn) cdAddBtn.addEventListener('click', addCivilCaseRow);
 
-/* ---------- Helpers ---------- */
 function getCivilCases(){
+  if (!cdCasesList) return [];
   const rows = [...cdCasesList.querySelectorAll('.two-col')];
   return rows.map(r => ({
-    type: r.querySelector('[data-cd="type"]')?.value || '',
-    age: r.querySelector('[data-cd="age"]')?.value || '',
+    type:   r.querySelector('[data-cd="type"]')?.value   || '',
+    age:    r.querySelector('[data-cd="age"]')?.value    || '',
     gender: r.querySelector('[data-cd="gender"]')?.value || '',
     action: r.querySelector('[data-cd="action"]')?.value || '',
-    notes: r.querySelector('[data-cd="notes"]')?.value || ''
+    notes:  r.querySelector('[data-cd="notes"]')?.value  || ''
   }));
 }
-function filesToList(input){
-  if (!input) return [];
-  return [...(input.files || [])].map(f => ({ name:f.name, size:f.size, type:f.type }));
-}
 
-/* ---------- Submit ---------- */
+// =========================
+// Submit logic (AJAX + files)
+// =========================
 function bindForm(){
-  document.getElementById('reportForm').addEventListener('submit', (e)=>{
+  const form = document.getElementById('reportForm');
+  if (!form) return;
+
+  const storeUrl = form.dataset.storeUrl || form.action;
+  console.log('storeUrl =', storeUrl);
+
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  const csrf = meta ? meta.getAttribute('content')
+                    : (form.querySelector('input[name="_token"]')?.value || '');
+
+  form.addEventListener('submit', async (e)=>{
     e.preventDefault();
 
-    const eventSel = document.getElementById('eventSelect');
-    const role = document.getElementById('roleSelect').value;
+    const s = STRINGS[lang];
 
+    const eventSel = document.getElementById('eventSelect');
+    const role     = document.getElementById('roleSelect')?.value;
+
+    if (!eventSel?.value || !role) {
+      toast(s.chooseEventRole);
+      return;
+    }
+
+    // Build structured payload
     const payload = {
-      // If you wire to Laravel later, include the CSRF token (meta or hidden input)
-      eventId: eventSel.value,
-      eventName: eventSel.options[eventSel.selectedIndex]?.text || '',
-      role,
-      generalNotes: document.getElementById('reportText')?.value?.trim?.() || '',
-      additionalMedia: filesToList(document.getElementById('mediaUpload')),
-      data: {}
+      worker_reservation_id: eventSel.value,
+      role_slug: role,
+      general_notes: document.getElementById('reportText')?.value?.trim?.() || '',
+      data: {},
+      civil_cases: [],
     };
 
     switch(role){
       case 'organizer':
         payload.data = {
-          attendees: +document.getElementById('org_attendees').value || 0,
-          noShows: document.getElementById('org_noshows').value.trim(),
-          issues: document.getElementById('org_issues').value.trim(),
-          improvements: document.getElementById('org_improve').value.trim()
+    attendance: document.getElementById('org_attendance').value,
+    issues: document.getElementById('org_issues').value.trim(),
+    improvements: document.getElementById('org_improve').value.trim()
         };
         break;
+
       case 'civil':
         payload.data = {
           attendanceState: document.getElementById('cd_check').value,
-          totalCases: +document.getElementById('cd_total_cases').value || 0,
-          cases: getCivilCases(),
-          concerns: document.getElementById('cd_concerns').value.trim(),
-          forms: filesToList(document.getElementById('cd_forms'))
+          totalCases:      +document.getElementById('cd_total_cases').value || 0,
+          concerns:        document.getElementById('cd_concerns').value.trim(),
         };
+        payload.civil_cases = getCivilCases();
         break;
+
       case 'media':
         payload.data = {
-          files: filesToList(document.getElementById('media_files')),
-          labels: document.getElementById('media_labels').value.trim(),
+          labels:      document.getElementById('media_labels').value.trim(),
           photosCount: +document.getElementById('media_report_photos').value || 0,
           videosCount: +document.getElementById('media_report_videos').value || 0,
-          problems: document.getElementById('media_problems').value.trim(),
-          captions: document.getElementById('media_captions').value.trim()
+          problems:    document.getElementById('media_problems').value.trim(),
+          captions:    document.getElementById('media_captions').value.trim()
         };
         break;
+
       case 'tech':
         payload.data = {
-          allOk: document.getElementById('tech_ok').value,
-          returned: document.getElementById('tech_returned').value,
-          issues: document.getElementById('tech_issues').value.trim(),
-          recording: filesToList(document.getElementById('tech_recording')),
-          improvements: document.getElementById('tech_suggest').value.trim()
+          allOk:       document.getElementById('tech_ok').value,
+          returned:    document.getElementById('tech_returned').value,
+          issues:      document.getElementById('tech_issues').value.trim(),
+          improvements:document.getElementById('tech_suggest').value.trim()
         };
         break;
+
       case 'cleaner':
         payload.data = {
-          zones: +document.getElementById('clean_zones').value || 0,
-          extraHelp: document.getElementById('clean_extra').value,
-          notes: document.getElementById('clean_notes').value.trim(),
+          zones:       +document.getElementById('clean_zones').value || 0,
+          extraHelp:   document.getElementById('clean_extra').value,
+          notes:       document.getElementById('clean_notes').value.trim(),
           suggestions: document.getElementById('clean_suggest').value.trim()
         };
         break;
+
       case 'decorator':
         payload.data = {
-          photos: filesToList(document.getElementById('dec_photos')),
-          used: document.getElementById('dec_used').value.trim(),
-          damaged: document.getElementById('dec_damaged').value.trim(),
-          replace: document.getElementById('dec_replace').value.trim(),
+          used:     document.getElementById('dec_used').value.trim(),
+          damaged:  document.getElementById('dec_damaged').value.trim(),
+          replace:  document.getElementById('dec_replace').value.trim(),
           feedback: document.getElementById('dec_feedback').value.trim()
         };
         break;
+
       case 'cooking':
         payload.data = {
-          meals: document.getElementById('cook_meals').value.trim(),
+          meals:       document.getElementById('cook_meals').value.trim(),
           ingredients: document.getElementById('cook_ingredients').value.trim(),
-          leftovers: document.getElementById('cook_leftovers').value.trim(),
-          hygiene: document.getElementById('cook_hygiene').value.trim(),
-          photos: filesToList(document.getElementById('cook_photos'))
+          leftovers:   document.getElementById('cook_leftovers').value.trim(),
+          hygiene:     document.getElementById('cook_hygiene').value.trim()
         };
         break;
+
       case 'waiter':
         payload.data = {
-          attendance: document.getElementById('wait_attendance').value,
-          itemsServed: document.getElementById('wait_items').value.trim(),
-          serviceIssues: document.getElementById('wait_issues').value.trim(),
-          leftovers: document.getElementById('wait_leftovers').value.trim()
+          attendance:   document.getElementById('wait_attendance').value,
+          itemsServed:  document.getElementById('wait_items').value.trim(),
+          serviceIssues:document.getElementById('wait_issues').value.trim(),
+          leftovers:    document.getElementById('wait_leftovers').value.trim()
         };
         break;
     }
 
-    // TODO: POST to your Laravel controller/route if needed
-    console.log('Post-event submission payload:', payload);
+    // Build FormData with JSON + files
+    const fd = new FormData();
+    fd.append('_token', csrf);
+    fd.append('worker_reservation_id', payload.worker_reservation_id);
+    fd.append('role_slug', payload.role_slug);
+    fd.append('general_notes', payload.general_notes);
+    fd.append('data', JSON.stringify(payload.data));
+    fd.append('civil_cases', JSON.stringify(payload.civil_cases));
 
-    submissions.unshift({
-      id: Date.now(),
-      event: payload.eventName,
-      date: new Date().toISOString(),
-      status: 'pending'
-    });
+    // Attach role-specific files
+    if (role === 'civil') {
+      const cdForms = document.getElementById('cd_forms');
+      if (cdForms) [...cdForms.files].forEach(f => fd.append('cd_forms[]', f));
+    }
+    if (role === 'media') {
+      const media = document.getElementById('media_files');
+      if (media) [...media.files].forEach(f => fd.append('media_files[]', f));
+    }
+    if (role === 'tech') {
+      const rec = document.getElementById('tech_recording');
+      if (rec?.files[0]) fd.append('tech_recording', rec.files[0]);
+    }
+    if (role === 'decorator') {
+      const dec = document.getElementById('dec_photos');
+      if (dec) [...dec.files].forEach(f => fd.append('dec_photos[]', f));
+    }
+    if (role === 'cooking') {
+      const cook = document.getElementById('cook_photos');
+      if (cook) [...cook.files].forEach(f => fd.append('cook_photos[]', f));
+    }
 
-    toast('Report submitted successfully!');
-    e.target.reset();
-    showRoleForm(''); // hide role forms
-    renderSubmissions();
+    try {
+      const res = await fetch(storeUrl, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrf,
+          'Accept': 'application/json',
+          // DO NOT set Content-Type; browser sets multipart boundary
+        },
+        body: fd,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Backend error (status ' + res.status + '):', text);
+        toast(s.submitFail(res.status));
+        return;
+      }
+
+      const data = await res.json();
+      console.log('Saved submission:', data);
+
+      toast(s.submitOk);
+
+      // Reload so Blade pulls updated submissions list from DB
+      setTimeout(() => window.location.reload(), 600);
+
+    } catch (err) {
+      console.error('Fetch error:', err);
+      toast(STRINGS[lang].submitError);
+    }
   });
 }
 
+// =========================
+// Actions on "View Report"
+// =========================
 function bindActions(){
+  if (!list) return;
   list.addEventListener('click', (e)=>{
-    const b = e.target.closest('button[data-act]');
+    const b = e.target.closest('button[data-act="view"]');
     if(!b) return;
-    toast('Report details would open here.');
+    const id = b.getAttribute('data-id');
+    // Later you can open a modal and fetch /worker/submissions/{id}
+    toast('Report #' + id + ' details would open here.');
   });
 }
 
+// =========================
+// Small toast helper
+// =========================
 function toast(msg){
   let box = document.getElementById('toastContainer');
-  if(!box){ box = document.createElement('div'); box.id='toastContainer'; document.body.appendChild(box); Object.assign(box.style,{
-    position:'fixed', left:'50%', transform:'translateX(-50%)', bottom:'24px', zIndex:9999
-  }); }
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'toastContainer';
+    document.body.appendChild(box);
+    Object.assign(box.style,{
+      position:'fixed', left:'50%', transform:'translateX(-50%)',
+      bottom:'24px', zIndex:9999
+    });
+  }
   const t = document.createElement('div');
-  Object.assign(t.style,{ background:'rgba(0,0,0,.7)', color:'#fff', padding:'10px 14px', borderRadius:'10px', marginTop:'8px' });
-  t.textContent = msg; box.appendChild(t);
-  setTimeout(()=>{ t.remove(); }, 2200);
+  Object.assign(t.style,{
+    background:'rgba(0,0,0,.7)', color:'#fff',
+    padding:'10px 14px', borderRadius:'10px', marginTop:'8px'
+  });
+  t.textContent = msg;
+  box.appendChild(t);
+  setTimeout(()=> t.remove(), 2200);
 }
 
-// Theme / Language
-document.getElementById('themeToggle').addEventListener('click', ()=>{
+// =========================
+// Theme / Language toggles
+// =========================
+document.getElementById('themeToggle')?.addEventListener('click', ()=>{
   const isLight = document.body.getAttribute('data-theme')==='light';
   document.body.setAttribute('data-theme', isLight? 'dark':'light');
 });
-document.getElementById('langToggle').addEventListener('click', ()=>{
+
+document.getElementById('langToggle')?.addEventListener('click', ()=>{
   lang = (lang==='en') ? 'ar' : 'en';
-  i18nApply(); renderSubmissions();
+  i18nApply();
 });
 
+// =========================
 // Init
+// =========================
 i18nApply();
-renderSubmissions();
 bindForm();
 bindActions();
+bindSearch();

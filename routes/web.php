@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Worker\EventDiscoveryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\Worker\PostEventSubmissionController;
 
 Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -136,8 +137,9 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::post('/events/{event}/apply', [EventDiscoveryController::class, 'apply'])->name('events.apply');
         
         Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
-        Route::view('/post-event-submission', 'worker.post-event-submission')->name('submissions');
 
+        Route::get('/submissions', [PostEventSubmissionController::class, 'index'])->name('submissions'); // used by your Blade
+        Route::post('/submissions', [PostEventSubmissionController::class, 'store'])->name('submissions.store');
 
         Route::view('/messages', 'worker.messages')->name('messages');
 

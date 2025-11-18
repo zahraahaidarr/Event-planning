@@ -12,6 +12,7 @@ class WorkerReservation extends Model
     protected $table = 'workers_reservations';
     protected $primaryKey = 'reservation_id';
     public $incrementing = true;
+    protected $keyType = 'int';
     public $timestamps = true; // keep as you defined
 
     protected $fillable = [
@@ -43,4 +44,13 @@ class WorkerReservation extends Model
     {
         return $this->belongsTo(WorkRole::class, 'work_role_id', 'role_id');
     }
+    public function role()
+    {
+        return $this->belongsTo(WorkRole::class, 'work_role_id');
+    }
+    public function postEventSubmissions()
+{
+    return $this->hasMany(PostEventSubmission::class, 'worker_reservation_id');
+}
+
 }

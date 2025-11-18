@@ -62,12 +62,12 @@
                 <div class="nav-section">
                     <div class="nav-label">Account</div>
 
-                    <a href="{{ Route::has('profile') ? route('profile.show') : '#' }}"
+                    <a href="{{ Route::has('profile') ? route('profile') : '#' }}"
                        class="nav-item">
                         <span class="nav-icon">👤</span><span>Profile</span>
                     </a>
 
-                    <a href="{{ Route::has('settings') ? route('settings.show') : '#' }}"
+                    <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
                        class="nav-item">
                         <span class="nav-icon">🔧</span><span>Settings</span>
                     </a>
@@ -114,7 +114,7 @@
                 <div class="nav-label">Account</div>
 
                 <a href="{{ route('profile') }}"
-                   class="nav-item {{ request()->routeIs('worker.profile') ? 'active' : '' }}">
+                   class="nav-item {{ request()->routeIs('profile') ? 'active' : '' }}">
                     <span class="nav-icon">👤</span>
                     <span>Profile</span>
                 </a>

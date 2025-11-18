@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Services\Notify;
+use App\Models\User;
+use App\Models\Worker;
+use App\Models\Employee;
+
 
 class AnnouncementController extends Controller
 {
@@ -39,7 +44,7 @@ class AnnouncementController extends Controller
         $posterId = $user->user_id ?? $user->id;
 
         try {
-            Announcement::create([
+           $announcement = Announcement::create([
                 'title'      => $data['title'],
                 'body'       => $data['body'],
                 'audience'   => $data['audience'],
@@ -47,6 +52,29 @@ class AnnouncementController extends Controller
                 'posted_by'  => $posterId,
                 'created_at' => now(),
             ]);
+                    // 🔔 Determine who to notify
+if ($data['audience'] === 'workers') {
+    $targets = User::where('role', 'WORKER')->pluck('id');
+}
+elseif ($data['audience'] === 'employees') {
+    $targets = User::where('role', 'EMPLOYEE')->pluck('id');
+}
+elseif ($data['audience'] === 'both') {
+    $targets = User::whereIn('role', ['WORKER', 'EMPLOYEE'])->pluck('id');
+}
+else {
+    $targets = collect(); // fallback, shouldn't happen
+}
+
+// 🔔 Send notifications
+foreach ($targets as $uid) {
+    Notify::to(
+        $uid,
+        "New announcement: {$announcement->title}",
+        $announcement->body,
+        'ANNOUNCEMENT'
+    );
+}
         } catch (\Throwable $e) {
             // Log details so we know exactly which constraint failed
             Log::error('ANNOUNCEMENT INSERT FAILED', [
@@ -56,6 +84,8 @@ class AnnouncementController extends Controller
             ]);
             return back()->withErrors('Save failed: '.$e->getMessage())->withInput();
         }
+
+
 
         return redirect()->route('announcements.create')->with('success','Announcement sent.');
     }

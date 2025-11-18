@@ -6,6 +6,10 @@ use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Worker;
+use App\Models\WorkerReservation;
+use App\Models\Notification;
+
 
 class SystemSettingController extends Controller
 {
@@ -99,18 +103,52 @@ class SystemSettingController extends Controller
     /**
      * Delete the current user's account.
      */
-    public function destroyAccount(Request $request)
-    {
-        $user = $request->user();
+   public function destroyAccount(Request $request)
+{
+    $user = $request->user();
 
-        Auth::logout();
+    DB::transaction(function () use ($user) {
 
-        // If you have relationships (worker, reservations, etc.) you can clean them here.
-        $user->delete();
+        // 1) If user is a WORKER, cancel only FUTURE reservations
+        if (method_exists($user, 'worker') && $user->worker) {
+            $worker = $user->worker;
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            \App\Models\WorkerReservation::where('worker_id', $worker->worker_id)
+                ->whereHas('event', function ($q) {
+                    $q->where('starts_at', '>', now());
+                })
+                ->update(['status' => 'CANCELLED']);
+            // We DO NOT delete the worker row – we keep history
+        }
 
-        return redirect('/')->with('status', 'Account deleted.');
-    }
+        // 2) If user is an EMPLOYEE or ADMIN: we also keep their
+        //    employee row + events + announcements for history.
+        //    (No extra deletes here.)
+
+        // 3) Delete in-app notifications & per-user settings (optional)
+        \App\Models\Notification::where('user_id', $user->id)->delete();
+        \App\Models\SystemSetting::where('key', 'like', "worker:{$user->id}:%")->delete();
+
+        // 4) Finally: mark account as "dead"
+        $user->status = 'BANNED';  // or 'INACTIVE' if you add that
+        $user->save();
+    });
+$admins = \App\Models\User::where('role', 'ADMIN')->pluck('id');
+
+foreach ($admins as $adminId) {
+    \App\Services\Notify::to(
+        $adminId,
+        "User Account Closed",
+        "{$user->first_name} {$user->last_name} ({$user->role}) has closed their account.",
+        'ACCOUNT'
+    );
+}
+    // Logout + invalidate session
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('login')->with('status', 'Your account has been closed.');
+}
+
 }

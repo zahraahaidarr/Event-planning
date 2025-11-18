@@ -44,6 +44,9 @@
           <a href="{{ url('messages') }}" class="nav-item">
             <span class="nav-icon">💬</span><span>Messages</span>
           </a>
+                      <a href="{{ route('announcements.create') }}" class="nav-item">
+                <span class="nav-icon">📢</span><span>Send Announcement</span>
+            </a>
           <a href="{{ url('announcements') }}" class="nav-item active">
             <span class="nav-icon">📢</span><span>Announcements</span>
           </a>

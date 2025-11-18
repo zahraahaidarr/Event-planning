@@ -31,7 +31,7 @@
           📝 <span id="navSubmissions">Post-Event Submissions</span>
         </a>
 
-        <a href="{{ route('worker.announcements') }}" id="navAnnouncementsLink">
+        <a href="{{ route('worker.announcements.index') }}" id="navAnnouncementsLink">
           📣 <span id="navAnnouncements">Announcements</span>
         </a>
 
@@ -76,7 +76,7 @@
           <p id="heroSubtitle">Browse events that match your role and location, track your reservations, and submit post-event reports on time.</p>
           <div class="cta">
             <button class="btn" id="ctaDiscover" onclick="window.location='{{ route('worker.events.discover') }}'">Discover Events</button>
-            <button class="btn secondary" id="ctaAnnouncements" onclick="window.location='{{ route('worker.announcements') }}'">View Announcements</button>
+            <button class="btn secondary" id="ctaAnnouncements" onclick="window.location='{{ route('worker.announcements.index') }}'">View Announcements</button>
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true"></div>

@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\Notify;
+use Symfony\Component\HttpFoundation\Response;
+use App\Models\Event;
+
 
 class EmployeesController extends Controller
 {
@@ -144,24 +148,44 @@ public function index()
             // $employee->save();
         });
 
+         Notify::to(
+        $employee->user->id,
+        'Account status updated',
+        "Your employee account status was changed to {$request->input('status')}.",
+        'ACCOUNT'
+    );
+
+
         return response()->json(['ok' => true, 'message' => 'Status updated.']);
     }
 
     // DELETE /admin/employees/{id}
- public function destroy($id)
+public function destroy($id)
 {
-    $employee = Employee::with('user:id')->findOrFail($id);
+    $employee = Employee::with('user')->findOrFail($id);
 
     // (optional) prevent deleting yourself
     if ($employee->user && $employee->user->id === auth()->id()) {
-        return response()->json(['ok' => false, 'message' => 'You cannot delete your own account.'], 422);
+        return response()->json([
+            'ok'      => false,
+            'message' => 'You cannot delete your own account.',
+        ], 422);
     }
 
+    // 🔍 Check if this employee owns/created any events
+    $eventCount = Event::where('created_by', $employee->employee_id)->count();
+
+    if ($eventCount > 0) {
+        return response()->json([
+            'ok'      => false,
+            'message' => "This employee is linked to {$eventCount} event(s). Please cancel or reassign those events before deleting this employee.",
+        ], 422);
+    }
+
+    // ✅ Safe to delete
     DB::transaction(function () use ($employee) {
-        // If you have FK cascade (employees.user_id -> users.id ON DELETE CASCADE):
-        // Deleting the user will automatically delete the employee row.
         if ($employee->user) {
-            // HARD delete:
+            // HARD delete user (FK cascade will remove employees row)
             $employee->user()->forceDelete();
         } else {
             $employee->forceDelete();
@@ -170,5 +194,6 @@ public function index()
 
     return response()->json(['ok' => true], 200);
 }
+
 
 }

@@ -44,7 +44,7 @@
         <a href="{{ route('worker.messages') }}" class="nav-item">
           <span class="nav-icon">💬</span><span>Chat</span>
         </a>
-        <a href="{{ route('worker.announcements') }}" class="nav-item">
+        <a href="{{ route('worker.announcements.index') }}" class="nav-item">
           <span class="nav-icon">📢</span><span>Announcements</span>
         </a>
         <a href="{{ route('settings') }}" class="nav-item">

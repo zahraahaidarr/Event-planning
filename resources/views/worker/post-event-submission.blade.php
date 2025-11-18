@@ -43,11 +43,11 @@
           <span class="nav-icon">👤</span>
           <span id="navProfile">Profile</span>
         </a>
-        <a href="{{ route('messages') }}" class="nav-item">
+        <a href="{{ route('worker.messages') }}" class="nav-item">
           <span class="nav-icon">💬</span>
           <span id="navChat">Chat</span>
         </a>
-        <a href="{{ route('announcements') }}" class="nav-item">
+        <a href="{{ route('worker.announcements.index') }}" class="nav-item">
           <span class="nav-icon">📢</span>
           <span id="navAnnouncements">Announcements</span>
         </a>

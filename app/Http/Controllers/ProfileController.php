@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
+use App\Services\Notify;
+
 
 class ProfileController extends Controller
 {
@@ -52,6 +54,14 @@ class ProfileController extends Controller
         $u->email      = $data['email'];
         $u->save();
 
+        if ($oldEmail !== $u->email) {
+        Notify::to(
+            $u->id,
+            'Email changed',
+            'Your account email address was just changed. If this was not you, please contact support immediately.',
+            'SECURITY'
+        );
+    }
         return response()->json([
             'ok'      => true,
             'message' => 'Account updated successfully.',
@@ -95,6 +105,12 @@ class ProfileController extends Controller
 
         $u->password = Hash::make($r->input('password'));
         $u->save();
+         Notify::to(
+        $u->id,
+        'Password changed',
+        'Your account password was just changed. If this was not you, please contact support immediately.',
+        'SECURITY'
+    );
 
         return response()->json([
             'ok'      => true,

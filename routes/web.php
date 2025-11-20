@@ -10,7 +10,7 @@ use App\Http\Controllers\Employee\dashboardController as EmployeeDashboardContro
 use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\TaxonomiesVenuesController;
-use App\Http\Controllers\AI\StaffingController;
+//use App\Http\Controllers\AI\StaffingController;
 use App\Http\Controllers\Admin\EventsController;
 use App\Http\Controllers\AnnouncementFeedController;
 use App\Http\Controllers\ProfileController;
@@ -18,8 +18,9 @@ use App\Http\Controllers\Worker\EventDiscoveryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\Worker\PostEventSubmissionController;
+use App\Http\Controllers\Employee\VolunteerAssignmentController;
 
-Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
+//Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
@@ -55,20 +56,30 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::post('/admin/taxonomies-venues/venues',[TaxonomiesVenuesController::class,'venuesStore'])->name('taxonomies-venues.venues.store');
         Route::delete('/admin/taxonomies-venues/venues/{venue}',[TaxonomiesVenuesController::class,'venuesDestroy'])->name('taxonomies-venues.venues.destroy');
         
-        // events routes
-        Route::get('/admin/events', [EventsController::class, 'index'])->name('events.index');
-        Route::post('/admin/events', [EventsController::class, 'store'])->name('admin.events.store');
-        Route::get   ('/admin/events/{event}',        [EventsController::class, 'show'])->name('admin.events.show'); // JSON for edit
-        Route::put   ('/admin/events/{event}',        [EventsController::class, 'update'])->name('admin.events.update');
-        Route::patch ('/admin/events/{event}/status', [EventsController::class, 'updateStatus'])->name('admin.events.update-status');
-
     });
 
 
     Route::middleware(['auth', 'role:EMPLOYEE'])->group(function () {
         Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
+            Route::get('/employee/volunteer-assignment', 
+        [VolunteerAssignmentController::class, 'index']
+    )->name('employee.volunteer.assignment');
+
+    // 2️⃣ AJAX route to get applications for a specific event
+    Route::get(
+        '/employee/volunteer-assignment/events/{event}/applications',
+        [VolunteerAssignmentController::class, 'applications']
+    )->name('volunteers.assign.applications');
+    
     });
 
+    Route::middleware(['auth', 'role:ADMIN|EMPLOYEE'])->group(function () {
+    Route::get('/events', [EventsController::class, 'index'])->name('events.index');
+    Route::post('/events', [EventsController::class, 'store'])->name('events.store');
+    Route::get   ('/events/{event}',        [EventsController::class, 'show'])->name('events.show');
+    Route::put   ('/events/{event}',        [EventsController::class, 'update'])->name('events.update');
+    Route::patch ('/events/{event}/status', [EventsController::class, 'updateStatus'])->name('events.update-status');
+});
 
 
     Route::middleware(['auth'])->group(function () {

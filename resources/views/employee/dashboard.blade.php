@@ -31,9 +31,10 @@
                     <span class="nav-icon">📅</span><span>Event Management</span>
                 </a>
 
-                <a href="{{ Route::has('volunteers.assign') ? route('volunteers.assign') : '#' }}" class="nav-item">
-                    <span class="nav-icon">👥</span><span>Volunteer Assignment</span>
-                </a>
+<a href="{{ route('employee.volunteer.assignment') }}" class="nav-item">
+    <span class="nav-icon">👥</span>
+    <span>Volunteer Assignment</span>
+</a>
 
                 <a href="{{ Route::has('employee.reports') ? route('employee.reports') : '#' }}" class="nav-item">
                     <span class="nav-icon">📝</span><span>Post-Event Reports</span>

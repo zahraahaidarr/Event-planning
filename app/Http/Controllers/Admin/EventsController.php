@@ -21,19 +21,37 @@ class EventsController extends Controller
     /**
      * GET /admin/events
      */
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::orderByDesc('created_at')
-            ->get([
-                'event_id',
-                'title',
-                'category_id',
-                'location',
-                'status',
-                'total_spots',
-                'starts_at',
-                'created_at',
-            ]);
+        $user = $request->user();
+
+        // Base query
+        $eventsQuery = Event::orderByDesc('created_at');
+
+        // If user is EMPLOYEE, limit to events he created
+        if ($user && $user->role === 'EMPLOYEE') {
+            $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
+
+            // If for some reason the employee row doesn't exist, just show nothing
+            if ($employeeId) {
+                $eventsQuery->where('created_by', $employeeId);
+            } else {
+                // no matching employee → force empty result
+                $eventsQuery->whereRaw('1 = 0');
+            }
+        }
+        // If user is ADMIN → no extra where → all events
+
+        $events = $eventsQuery->get([
+            'event_id',
+            'title',
+            'category_id',
+            'location',
+            'status',
+            'total_spots',
+            'starts_at',
+            'created_at',
+        ]);
 
         $categories = EventCategory::orderBy('name')
             ->get(['category_id', 'name']);

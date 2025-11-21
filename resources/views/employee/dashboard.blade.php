@@ -43,9 +43,11 @@
 
             <div class="nav-section">
                 <div class="nav-label">Communication</div>
-                <a href="{{ Route::has('messages.index') ? route('messages.index') : '#' }}" class="nav-item">
-                    <span class="nav-icon">💬</span><span>Messages</span>
-                </a>
+                <a href="{{ route('employee.messages') }}" class="nav-item">
+    <span class="nav-icon">💬</span>
+    <span>Messages</span>
+</a>
+
                             <a href="{{ route('announcements.create') }}" class="nav-item">
                 <span class="nav-icon">📢</span><span>Send Announcement</span>
             </a>

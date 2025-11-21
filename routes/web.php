@@ -20,6 +20,8 @@ use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\Worker\PostEventSubmissionController;
 use App\Http\Controllers\Employee\VolunteerAssignmentController;
 use App\Http\Controllers\Worker\ReservationController;
+use App\Http\Controllers\Employee\MessageController as EmployeeMessageController;
+use App\Http\Controllers\Worker\MessageController as WorkerMessageController;
 
 //Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -62,16 +64,22 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
 
     Route::middleware(['auth', 'role:EMPLOYEE'])->group(function () {
         Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
-            Route::get('/employee/volunteer-assignment', 
-        [VolunteerAssignmentController::class, 'index']
-    )->name('employee.volunteer.assignment');
+       
+        Route::get('/employee/volunteer-assignment', [VolunteerAssignmentController::class, 'index'])->name('employee.volunteer.assignment');
+        Route::get('/employee/volunteer-assignment/events/{event}/applications',[VolunteerAssignmentController::class, 'applications'])->name('volunteers.assign.applications');
 
-    // 2️⃣ AJAX route to get applications for a specific event
-    Route::get(
-        '/employee/volunteer-assignment/events/{event}/applications',
-        [VolunteerAssignmentController::class, 'applications']
-    )->name('volunteers.assign.applications');
-    
+           Route::get('/employee/messages', [EmployeeMessageController::class, 'index'])
+        ->name('employee.messages');
+
+    Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])
+        ->name('employee.messages.contacts');
+
+    Route::get('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'thread'])
+        ->name('employee.messages.thread');
+
+    Route::post('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'send'])
+        ->name('employee.messages.send');
+
     });
 
     Route::middleware(['auth', 'role:ADMIN|EMPLOYEE'])->group(function () {
@@ -156,7 +164,10 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::get('/submissions', [PostEventSubmissionController::class, 'index'])->name('submissions'); // used by your Blade
         Route::post('/submissions', [PostEventSubmissionController::class, 'store'])->name('submissions.store');
 
-        Route::view('/messages', 'worker.messages')->name('messages');
+        Route::get('/messages', [WorkerMessageController::class, 'index'])->name('messages');
+        Route::get('/messages/contacts', [WorkerMessageController::class, 'contacts'])->name('messages.contacts');
+        Route::get('/messages/thread/{user}', [WorkerMessageController::class, 'thread'])->name('messages.thread');
+        Route::post('/messages/thread/{user}', [WorkerMessageController::class, 'send'])->name('messages.send');
 
     });
 

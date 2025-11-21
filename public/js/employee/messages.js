@@ -51,7 +51,7 @@ const csrf = document
 
 // State
 let contacts = [];          // full list
-let filteredContacts = [];  // after search
+let filteredContacts = [];  // filtered by search
 let currentContactId = null;
 let searchQuery = "";
 
@@ -62,6 +62,7 @@ function i18nApply() {
   const s = STRINGS[lang];
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
 
+  // Only some of these IDs exist in the employee layout, the rest are harmless
   const map = {
     "#brandName": s.brand,
     "#navDashboard": s.dashboard,
@@ -80,12 +81,12 @@ function i18nApply() {
     if (el) el.textContent = text;
   });
 
-  const globalSearch = $("#globalSearch");
-  if (globalSearch) globalSearch.placeholder = s.search;
+  const search = $("#globalSearch");
+  if (search) search.placeholder = s.search;
 }
 
 // =======================
-// Contacts
+// Contacts loading / filtering
 // =======================
 async function loadContacts() {
   try {
@@ -126,8 +127,8 @@ function renderConversations() {
   }
 
   filteredContacts.forEach((c) => {
-    const div = document.createElement("div");
     const isActive = Number(c.id) === Number(currentContactId);
+    const div = document.createElement("div");
     div.className = "conv-item" + (isActive ? " active" : "");
     div.dataset.id = c.id;
 
@@ -143,33 +144,26 @@ function renderConversations() {
         </div>
         <div class="conv-row">
           <div class="conv-preview">${c.lastMessage || ""}</div>
-          ${
-            c.unread > 0
-              ? `<div class="unread">${c.unread}</div>`
-              : ""
-          }
+          ${c.unread > 0 ? `<div class="unread">${c.unread}</div>` : ""}
         </div>
       </div>
     `;
-
     div.addEventListener("click", () => openChat(c.id));
     convList.appendChild(div);
   });
 }
 
 // =======================
-// Thread open / send
+// Open chat / thread
 // =======================
 async function openChat(contactId) {
   currentContactId = contactId;
 
-  // 1) Clear unread count locally so badge disappears immediately
+  // clear unread immediately
   contacts = contacts.map((c) =>
     Number(c.id) === Number(contactId) ? { ...c, unread: 0 } : c
   );
-
-  // Reapply search & re-render (keeps active state)
-  applyContactFilter();
+  applyContactFilter(); // re-renders list + active state
 
   try {
     const res = await fetch(`${threadBaseUrl}/${contactId}`, {
@@ -220,7 +214,7 @@ function renderChatPanel(contact, messages) {
 
   const area = $("#messagesArea");
   if (area) {
-    area.scrollTop = area.scrollHeight; // scroll chat, not page
+    area.scrollTop = area.scrollHeight; // only chat scrolls
   }
 
   $("#sendBtn").addEventListener("click", sendCurrentMessage);
@@ -232,10 +226,12 @@ function renderChatPanel(contact, messages) {
   });
 }
 
+// =======================
+// Send message
+// =======================
 async function sendCurrentMessage() {
   const input = $("#msgInput");
   if (!input || !currentContactId) return;
-
   const text = input.value.trim();
   if (!text) return;
 
@@ -256,7 +252,7 @@ async function sendCurrentMessage() {
     appendMessageToUI(data.message);
     input.value = "";
 
-    // Update lastMessage text for this contact in list
+    // update last message in list
     contacts = contacts.map((c) =>
       Number(c.id) === Number(currentContactId)
         ? { ...c, lastMessage: data.message.text, time: data.message.time }
@@ -287,7 +283,7 @@ function appendMessageToUI(m) {
 }
 
 // =======================
-// Search + theme + lang
+// Theme, language, search
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
   i18nApply();

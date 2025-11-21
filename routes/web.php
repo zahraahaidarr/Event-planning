@@ -19,6 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\Worker\PostEventSubmissionController;
 use App\Http\Controllers\Employee\VolunteerAssignmentController;
+use App\Http\Controllers\Worker\ReservationController;
 
 //Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -147,7 +148,10 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::get('/events/discover/list', [EventDiscoveryController::class, 'list'])->name('events.discover.list');
         Route::post('/events/{event}/apply', [EventDiscoveryController::class, 'apply'])->name('events.apply');
         
-        Route::view('/my-reservations', 'worker.my-reservations')->name('reservations');
+        Route::get('/my-reservations', [ReservationController::class, 'index'])->name('reservations');
+        Route::delete('/reservation/{reservation}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
+        Route::patch('/reservation/{reservation}/complete', [ReservationController::class, 'markCompleted'])->name('reservation.complete');
+
 
         Route::get('/submissions', [PostEventSubmissionController::class, 'index'])->name('submissions'); // used by your Blade
         Route::post('/submissions', [PostEventSubmissionController::class, 'store'])->name('submissions.store');

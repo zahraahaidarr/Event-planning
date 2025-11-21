@@ -1,3 +1,4 @@
+/* public/css/worker/my-reservations.css */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ===== Theme tokens ===== */
@@ -140,9 +141,16 @@ body {
 .reservation-role { font-size: 14px; color: var(--text-secondary); }
 
 /* Status badges */
-.status-badge { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
+.status-badge {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .status-pending   { background: rgba(244,191,80,.18); color: var(--warning); }
 .status-accepted  { background: rgba(54,211,153,.18); color: var(--success); }
+.status-reserved  { background: rgba(54,211,153,.18); color: var(--success); } /* optional, same as accepted */
 .status-rejected  { background: rgba(255,107,107,.18); color: var(--danger); }
 .status-completed { background: rgba(13,202,240,.18); color: #0dcaf0; }
 
@@ -156,13 +164,26 @@ body {
 .reservation-actions {
   display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-color);
 }
-.btn { padding: 8px 16px; border-radius: var(--radius-sm); border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s ease; }
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+}
 .btn-primary { background: var(--accent-primary); color: #fff; }
 .btn-primary:hover { opacity: .9; }
 .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
 .btn-secondary:hover { background: var(--border-color); }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-danger:hover { opacity: .9; }
+/* NEW */
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { opacity: .9; }
 
 /* ===== Empty state ===== */
 .empty-state {

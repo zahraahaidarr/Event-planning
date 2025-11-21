@@ -1,36 +1,47 @@
-// ---- Mock reservations data (pending exists but stays hidden in view) ----
-const reservations = [
-  { id: 1, eventTitle: "Community Garden Cleanup", role: "Gardener",        status: "accepted",  date: "2025-01-15", time: "09:00 AM", location: "Riyadh", appliedDate: "2025-01-05", duration: "4 hours" },
-  { id: 2, eventTitle: "Children's Reading Program", role: "Reader",        status: "pending",   date: "2025-01-18", time: "02:00 PM", location: "Jeddah", appliedDate: "2025-01-08", duration: "3 hours" },
-  { id: 3, eventTitle: "Beach Cleanup Initiative",   role: "Cleanup Crew",  status: "accepted",  date: "2025-01-25", time: "07:00 AM", location: "Jeddah", appliedDate: "2025-01-10", duration: "4 hours" },
-  { id: 4, eventTitle: "Senior Center Activities",   role: "Companion",     status: "completed", date: "2025-01-10", time: "10:00 AM", location: "Dammam", appliedDate: "2024-12-28", duration: "3 hours" },
-  { id: 5, eventTitle: "Food Bank Distribution",     role: "Sorter",        status: "rejected",  date: "2025-01-20", time: "08:00 AM", location: "Riyadh", appliedDate: "2025-01-07", duration: "5 hours", rejectionReason: "Event reached maximum capacity" },
-  { id: 6, eventTitle: "Health Awareness Campaign",  role: "Information Desk", status: "pending", date: "2025-01-28", time: "09:00 AM", location: "Riyadh", appliedDate: "2025-01-09", duration: "6 hours" },
-  { id: 7, eventTitle: "Youth Mentorship Program",   role: "Mentor",        status: "accepted",  date: "2025-02-01", time: "03:00 PM", location: "Mecca", appliedDate: "2025-01-11", duration: "2 hours" },
-  { id: 8, eventTitle: "Animal Shelter Support",     role: "Animal Care",   status: "completed", date: "2025-01-08", time: "10:00 AM", location: "Medina", appliedDate: "2024-12-30", duration: "4 hours" }
-];
+// public/js/worker/my-reservations.js
 
-// Default: show All (but exclude "pending")
-let currentFilter = 'all';
+// ---- Config ----
+let currentFilter = 'all'; // Default tab
+const discoverUrl = document.body.getAttribute('data-discover-url') || '#';
+
+// Laravel routes:
+// DELETE  /worker/reservation/{reservation}
+// PATCH   /worker/reservation/{reservation}/complete
+const cancelBaseUrl   = '/worker/reservation';
+const completeBaseUrl = '/worker/reservation';
+
+// ---- Data from backend (see Blade script) ----
+let reservations = Array.isArray(window.initialReservations)
+  ? window.initialReservations
+  : [];
 
 // Helpers
-const discoverUrl = document.body.getAttribute('data-discover-url') || '#';
+function normalizeStatus(status) {
+  return (status || '').toString().toLowerCase();
+}
 
 function renderReservations() {
   const list = document.getElementById('reservationsList');
   if (!list) return;
 
   const filterMap = {
-    all:       r => (r.status === 'accepted' || r.status === 'completed' || r.status === 'rejected'),
-    reserved:  r => r.status === 'accepted',
-    completed: r => r.status === 'completed',
-    rejected:  r => r.status === 'rejected'
+    // "All" => reserved + completed + rejected (hide pending)
+    all: (r) => {
+      const st = normalizeStatus(r.status);
+      return st === 'reserved' || st === 'completed' || st === 'rejected';
+    },
+    reserved: (r) => normalizeStatus(r.status) === 'reserved',
+    completed: (r) => normalizeStatus(r.status) === 'completed',
+    rejected: (r) => normalizeStatus(r.status) === 'rejected',
   };
 
-  const filtered = reservations.filter(filterMap[currentFilter]);
+  const filterFn = filterMap[currentFilter] || filterMap.all;
+  const filtered = reservations.filter(filterFn);
 
   if (filtered.length === 0) {
-    const label = currentFilter === 'all' ? 'reservations' : currentFilter;
+    const label =
+      currentFilter === 'all' ? 'reservations' : currentFilter.toLowerCase();
+
     list.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">📭</div>
@@ -42,71 +53,188 @@ function renderReservations() {
     return;
   }
 
-  list.innerHTML = filtered.map(r => {
-    const statusText = r.status === 'accepted'
-      ? 'Reserved'
-      : r.status.charAt(0).toUpperCase() + r.status.slice(1);
+  list.innerHTML = filtered
+    .map((r) => {
+      const statusKey = normalizeStatus(r.status);
 
-    const statusClass = `status-${r.status}`;
+      const statusLabelMap = {
+        reserved: 'Reserved',
+        completed: 'Completed',
+        rejected: 'Rejected',
+        pending: 'Pending',
+        cancelled: 'Cancelled',
+      };
 
-    let actions = '';
-    if (r.status === 'accepted') {
-      actions = `
-        <button class="btn btn-primary" data-act="view" data-id="${r.id}">View Details</button>
-        <button class="btn btn-danger"  data-act="cancel" data-id="${r.id}">Cancel</button>
-      `;
-    } else if (r.status === 'completed') {
-      actions = `
-        <a class="btn btn-primary" href="#">Submit Report</a>
-        <button class="btn btn-secondary" data-act="certificate" data-id="${r.id}">View Certificate</button>
-      `;
-    } else if (r.status === 'rejected') {
-      actions = `<button class="btn btn-secondary" data-act="reason" data-id="${r.id}">View Reason</button>`;
-    }
+      const statusText =
+        statusLabelMap[statusKey] ||
+        (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
 
-    return `
-      <div class="reservation-card">
-        <div class="reservation-header">
-          <div>
-            <h3 class="reservation-title">${r.eventTitle}</h3>
-            <p class="reservation-role">Role: ${r.role}</p>
+      // Use green "accepted" style for reserved
+      const cssStatusKey = statusKey === 'reserved' ? 'accepted' : statusKey;
+      const statusClass = `status-${cssStatusKey}`;
+
+      let actions = '';
+      if (statusKey === 'reserved') {
+        actions = `
+          <button class="btn btn-primary" data-act="view" data-id="${r.id}">View Details</button>
+          <button class="btn btn-success" data-act="complete" data-id="${r.id}">Mark as Completed</button>
+          <button class="btn btn-danger"  data-act="cancel" data-id="${r.id}">Cancel</button>
+        `;
+      } else if (statusKey === 'completed') {
+        actions = `
+          <a class="btn btn-primary" href="${window.submissionsUrl}">Submit Report</a>
+          <button class="btn btn-secondary" data-act="certificate" data-id="${r.id}">View Certificate</button>
+        `;
+      } else if (statusKey === 'rejected') {
+        actions = `
+          <button class="btn btn-secondary" data-act="reason" data-id="${r.id}">View Reason</button>
+        `;
+      }
+
+      const dateText = r.date || 'N/A';
+      const timeText = r.time || 'N/A';
+      const locationText = r.location || '—';
+      const durationText = r.duration || 'N/A';
+      const appliedText = r.appliedDate || '—';
+
+      return `
+        <div class="reservation-card">
+          <div class="reservation-header">
+            <div>
+              <h3 class="reservation-title">${r.eventTitle || 'Untitled Event'}</h3>
+              <p class="reservation-role">Role: ${r.role || 'Volunteer'}</p>
+            </div>
+            <span class="status-badge ${statusClass}">${statusText}</span>
           </div>
-          <span class="status-badge ${statusClass}">${statusText}</span>
+          <div class="reservation-meta">
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <span>${dateText} ${timeText ? 'at ' + timeText : ''}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📍</span>
+              <span>${locationText}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">⏱️</span>
+              <span>${durationText}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📝</span>
+              <span>Applied: ${appliedText}</span>
+            </div>
+          </div>
+          ${
+            actions
+              ? `<div class="reservation-actions">${actions}</div>`
+              : ''
+          }
         </div>
-        <div class="reservation-meta">
-          <div class="meta-item"><span class="meta-icon">📅</span><span>${r.date} at ${r.time}</span></div>
-          <div class="meta-item"><span class="meta-icon">📍</span><span>${r.location}</span></div>
-          <div class="meta-item"><span class="meta-icon">⏱️</span><span>${r.duration}</span></div>
-          <div class="meta-item"><span class="meta-icon">📝</span><span>Applied: ${r.appliedDate}</span></div>
-        </div>
-        ${actions ? `<div class="reservation-actions">${actions}</div>` : ''}
-      </div>
-    `;
-  }).join('');
+      `;
+    })
+    .join('');
 }
 
-function switchTab(filter, btn){
+function switchTab(filter, btn) {
   currentFilter = filter;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
   renderReservations();
 }
 
-// Actions (basic demo handlers)
-function handleActionClick(e){
+// ---- AJAX Cancel ----
+async function cancelReservation(id) {
+  const csrf = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute('content');
+
+  try {
+    const response = await fetch(`${cancelBaseUrl}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-TOKEN': csrf,
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.ok) {
+      // remove from local array & re-render
+      reservations = reservations.filter((r) => Number(r.id) !== Number(id));
+      renderReservations();
+      alert(data.message || 'Reservation cancelled successfully');
+    } else {
+      alert(data.message || 'Failed to cancel reservation.');
+    }
+  } catch (err) {
+    console.error('Cancel error:', err);
+    alert('Something went wrong while cancelling. Please try again.');
+  }
+}
+
+// ---- AJAX Mark Completed ----
+async function completeReservation(id) {
+  const csrf = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute('content');
+
+  try {
+    const response = await fetch(`${completeBaseUrl}/${id}/complete`, {
+      method: 'PATCH',
+      headers: {
+        'X-CSRF-TOKEN': csrf,
+        'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.ok) {
+      // update local status & re-render
+      reservations = reservations.map((r) =>
+        Number(r.id) === Number(id) ? { ...r, status: 'completed' } : r
+      );
+      renderReservations();
+      alert(data.message || 'Reservation marked as completed');
+    } else {
+      alert(data.message || 'Failed to mark as completed.');
+    }
+  } catch (err) {
+    console.error('Complete error:', err);
+    alert('Something went wrong while marking as completed. Please try again.');
+  }
+}
+
+// ---- Actions ----
+function handleActionClick(e) {
   const t = e.target;
   const act = t.getAttribute('data-act');
-  const id  = Number(t.getAttribute('data-id'));
+  const id = Number(t.getAttribute('data-id'));
   if (!act || !id) return;
 
-  const r = reservations.find(x => x.id === id);
+  const r = reservations.find((x) => Number(x.id) === id);
   if (!r) return;
 
   if (act === 'view') {
     alert('Viewing event details...');
   } else if (act === 'cancel') {
     if (confirm('Are you sure you want to cancel this reservation?')) {
-      alert('Reservation cancelled successfully');
+      cancelReservation(id);
+    }
+  } else if (act === 'complete') {
+    if (confirm('Mark this reservation as completed?')) {
+      completeReservation(id);
     }
   } else if (act === 'certificate') {
     alert('Opening certificate...');
@@ -115,39 +243,40 @@ function handleActionClick(e){
   }
 }
 
-// Theme & language
-function toggleTheme(){
+// ---- Theme & language ----
+function toggleTheme() {
   const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
+  const current = html.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
+
   const icon = document.getElementById('theme-icon');
   if (icon) icon.textContent = next === 'dark' ? '☀️' : '🌙';
 }
-function toggleLanguage(){
+
+function toggleLanguage() {
   const html = document.documentElement;
   const curr = html.getAttribute('lang') || 'en';
   const next = curr === 'en' ? 'ar' : 'en';
   html.setAttribute('lang', next);
   html.setAttribute('dir', next === 'ar' ? 'rtl' : 'ltr');
+
   const icon = document.getElementById('lang-icon');
   if (icon) icon.textContent = next === 'en' ? 'AR' : 'EN';
 }
 
-// Init
+// ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
   renderReservations();
 
-  // Tabs
-  document.querySelectorAll('.tab').forEach(btn => {
+  document.querySelectorAll('.tab').forEach((btn) => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn));
   });
 
-  // Delegate action buttons
   const list = document.getElementById('reservationsList');
   if (list) list.addEventListener('click', handleActionClick);
 });
 
-// Expose for inline buttons in Blade header
+// Expose so Blade can use onclick
 window.toggleTheme = toggleTheme;
 window.toggleLanguage = toggleLanguage;

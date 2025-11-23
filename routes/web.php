@@ -68,17 +68,10 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::get('/employee/volunteer-assignment', [VolunteerAssignmentController::class, 'index'])->name('employee.volunteer.assignment');
         Route::get('/employee/volunteer-assignment/events/{event}/applications',[VolunteerAssignmentController::class, 'applications'])->name('volunteers.assign.applications');
 
-           Route::get('/employee/messages', [EmployeeMessageController::class, 'index'])
-        ->name('employee.messages');
-
-    Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])
-        ->name('employee.messages.contacts');
-
-    Route::get('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'thread'])
-        ->name('employee.messages.thread');
-
-    Route::post('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'send'])
-        ->name('employee.messages.send');
+        Route::get('/employee/messages', [EmployeeMessageController::class, 'index'])->name('employee.messages');
+        Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])->name('employee.messages.contacts');
+        Route::get('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'thread'])->name('employee.messages.thread');
+        Route::post('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'send'])->name('employee.messages.send');
 
     });
 
@@ -108,17 +101,10 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::put('/profile/password', [ProfileController::class,'updatePassword'])->name('profile.password');
         Route::post('/profile/avatar',  [ProfileController::class,'uploadAvatar'])->name('profile.avatar');
 
-         Route::get('/settings',  [SystemSettingController::class, 'edit'])
-        ->name('settings');
-
-    Route::post('/settings', [SystemSettingController::class, 'update'])
-        ->name('settings.update');
-
-    Route::post('/settings/logout-all', [SystemSettingController::class, 'logoutAll'])
-        ->name('settings.logoutAll');
-
-    Route::delete('/settings/delete-account', [SystemSettingController::class, 'destroyAccount'])
-        ->name('settings.deleteAccount');
+        Route::get('/settings',  [SystemSettingController::class, 'edit'])->name('settings');
+        Route::post('/settings', [SystemSettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/logout-all', [SystemSettingController::class, 'logoutAll'])->name('settings.logoutAll');
+        Route::delete('/settings/delete-account', [SystemSettingController::class, 'destroyAccount'])->name('settings.deleteAccount');
     });
 
 

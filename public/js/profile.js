@@ -27,19 +27,25 @@ function toast(msg){
 }
 
 // ========== Theme toggle ==========
-document.getElementById('themeToggle').addEventListener('click', ()=>{
-  const isLight = document.body.getAttribute('data-theme') === 'light';
-  document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
-});
+const themeToggle = document.getElementById('themeToggle');
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  });
+}
 
 // ========== Lang toggle ==========
-document.getElementById('langToggle').addEventListener('click', ()=>{
-  const html = document.documentElement;
-  const next = html.getAttribute('lang') === 'ar' ? 'en' : 'ar';
-  html.setAttribute('lang', next);
-  html.setAttribute('dir', next === 'ar' ? 'rtl' : 'ltr');
-  document.getElementById('langToggle').textContent = next === 'ar' ? 'AR/EN' : 'EN/AR';
-});
+const langToggle = document.getElementById('langToggle');
+if (langToggle) {
+  langToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const next = html.getAttribute('lang') === 'ar' ? 'en' : 'ar';
+    html.setAttribute('lang', next);
+    html.setAttribute('dir', next === 'ar' ? 'rtl' : 'ltr');
+    langToggle.textContent = next === 'ar' ? 'AR/EN' : 'EN/AR';
+  });
+}
 
 // ========== Avatar initials live update ==========
 function updateInitials(){
@@ -56,7 +62,8 @@ document.getElementById('firstName').addEventListener('input', updateInitials);
 document.getElementById('lastName').addEventListener('input', updateInitials);
 
 // ========== CSRF ==========
-const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+const CSRF = csrfMeta ? csrfMeta.content : '';
 
 // ================== REAL SAVE HANDLERS ==================
 

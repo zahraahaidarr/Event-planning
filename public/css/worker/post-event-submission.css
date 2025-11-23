@@ -174,9 +174,30 @@ main.content {
 .chip-pending{ background:rgba(244,191,80,.18); color:var(--warning) }
 .meta{ color:var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap }
 
+.hint-editable{
+  font-size:11px;
+  color:var(--success);
+  align-self:center;
+}
+.hint-locked{
+  font-size:11px;
+  color:var(--muted);
+  align-self:center;
+}
+
 /* Role fieldsets */
-fieldset.role-set { border:1px dashed var(--border-color); border-radius:12px; padding:16px; margin:14px 0 0; }
-fieldset.role-set legend { padding:0 6px; color:var(--muted); font-weight:700; font-size:13px }
+fieldset.role-set {
+  border:1px dashed var(--border-color);
+  border-radius:12px;
+  padding:16px;
+  margin:14px 0 0;
+}
+fieldset.role-set legend {
+  padding:0 6px;
+  color:var(--muted);
+  font-weight:700;
+  font-size:13px;
+}
 .two-col { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
 
 /* Responsive */
@@ -186,3 +207,41 @@ fieldset.role-set legend { padding:0 6px; color:var(--muted); font-weight:700; f
 }
 
 [dir="rtl"] .container{ direction:rtl }
+
+/* Simple confirm modal */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10000;
+}
+
+.modal-dialog{
+  background:var(--surface);
+  padding:20px 22px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-lg);
+  max-width:380px;
+  width:90%;
+}
+
+.modal-dialog h3{
+  margin:0 0 8px;
+  font-size:18px;
+}
+
+.modal-dialog p{
+  margin:0;
+  color:var(--text-secondary);
+  font-size:14px;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
+}

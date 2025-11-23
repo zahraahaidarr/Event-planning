@@ -70,7 +70,6 @@
           </svg>
           <input id="globalSearch" placeholder="Search submissions…" aria-label="Search submissions"/>
         </div>
-        
       </div>
 
       <!-- Page Header -->
@@ -84,42 +83,54 @@
 
       <!-- Submission Form -->
       <section class="form-card" id="submissionForm">
-        <h2 style="margin-top:0">Submit New Report</h2>
+        <h2 id="formTitle" style="margin-top:0">Submit New Report</h2>
+
         <form id="reportForm"
               method="POST"
               action="{{ route('worker.submissions.store') }}"
               data-store-url="{{ route('worker.submissions.store') }}"
               enctype="multipart/form-data">
           @csrf
+          <input type="hidden" id="submissionId" name="submission_id" value="">
 
+          {{-- EVENT is chosen by worker --}}
           <div class="form-group">
             <label for="eventSelect">Select Event</label>
             <select id="eventSelect" name="worker_reservation_id" required>
               <option value="">Choose an event...</option>
               @foreach($reservations as $res)
-                <option value="{{ $res->reservation_id }}">
-                  {{ $res->event->name ?? $res->event->title ?? 'Event #'.$res->event_id }}
-                  @if($res->event->start_time ?? false)
-                    - {{ $res->event->start_time->format('M d, Y') }}
-                  @endif
+                @php
+                  $eventName = $res->event->name
+                      ?? $res->event->title
+                      ?? 'Event #'.$res->event_id;
+
+                  $date = $res->event->start_time
+                      ? $res->event->start_time->format('M d, Y')
+                      : '';
+
+                  $roleType   = optional(optional($res->workRole)->roleType);
+                  $roleLabel  = $roleType->name ?? 'Unknown role';
+                  $roleSlugDb = \Illuminate\Support\Str::slug($roleLabel, '_');
+                @endphp
+
+                <option value="{{ $res->reservation_id }}"
+                        data-role-slug="{{ $roleSlugDb }}"
+                        data-role-name="{{ $roleLabel }}">
+                  {{ $eventName }}
+                  @if($date) - {{ $date }} @endif
+                  • Role: {{ $roleLabel }}
                 </option>
               @endforeach
             </select>
           </div>
 
+          {{-- ROLE is derived from the reservation; worker cannot change it --}}
           <div class="form-group">
-            <label for="roleSelect">Your Role</label>
-            <select id="roleSelect" required>
-              <option value="">Choose your role…</option>
-              <option value="organizer">Organizer</option>
-              <option value="civil">Civil Defense</option>
-              <option value="media">Media Staff</option>
-              <option value="tech">Tech Support</option>
-              <option value="cleaner">Cleaner</option>
-              <option value="decorator">Decorator</option>
-              <option value="cooking">Cooking Team</option>
-              <option value="waiter">Waiter</option>
-            </select>
+            <label>Your Role</label>
+            <input id="roleLabel"
+                   type="text"
+                   readonly
+                   placeholder="Choose an event first…">
           </div>
 
           <!-- ROLE-SPECIFIC FORMS -->
@@ -400,8 +411,8 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn">Submit Report</button>
-            <button type="reset" class="btn ghost">Clear Form</button>
+            <button type="submit" class="btn" id="submitBtn">Submit Report</button>
+            <button type="reset" class="btn ghost" id="resetBtn">Clear Form</button>
           </div>
         </form>
       </section>
@@ -420,7 +431,6 @@
                 ? ($sub->submitted_at ?? $sub->created_at)->format('d M Y, H:i')
                 : '—';
 
-              // Map DB status to label + chip class
               switch ($sub->status) {
                   case 'submitted':
                   case 'reviewed':
@@ -431,9 +441,30 @@
                       $statusLabel = 'Pending Review';
                       $chipClass   = 'chip-pending';
               }
+
+              // Editable for 24h while pending
+              $canEdit = $sub->submitted_at &&
+                         $sub->submitted_at->gt(now()->subDay()) &&
+                         $sub->status === 'pending';
+
+              $civilCasesData = $sub->civilCases->map(function ($c) {
+                return [
+                    'type'   => $c->case_type,
+                    'age'    => $c->age,
+                    'gender' => $c->gender,
+                    'action' => $c->action_taken,
+                    'notes'  => $c->notes,
+                ];
+              });
             @endphp
 
-            <article class="card">
+            <article class="card"
+                     data-sub-id="{{ $sub->id }}"
+                     data-res-id="{{ $sub->worker_reservation_id }}"
+                     data-role-slug="{{ $sub->role_slug }}"
+                     data-can-edit="{{ $canEdit ? '1' : '0' }}"
+                     data-data='@json($sub->data ?? [])'
+                     data-civil='@json($civilCasesData)'>
               <div class="card-header">
                 <div class="card-title">{{ $eventName }}</div>
                 <span class="chip-status {{ $chipClass }}">{{ $statusLabel }}</span>
@@ -441,16 +472,23 @@
 
               <div class="meta">
                 <span>📅 Submitted: {{ $submittedAt }}</span>
+                @if($canEdit)
+                  <span>🕒 Editable for 24h</span>
+                @endif
               </div>
 
-              <div>
-                {{-- still using JS toast on click --}}
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn small ghost"
                         type="button"
                         data-act="view"
                         data-id="{{ $sub->id }}">
                   View Report
                 </button>
+                @if($canEdit)
+                  <span class="hint-editable">You can still edit this report.</span>
+                @else
+                  <span class="hint-locked">View only (locked).</span>
+                @endif
               </div>
             </article>
           @empty
@@ -462,6 +500,21 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- Confirm submit modal -->
+  <div id="confirmModal" class="modal-backdrop" style="display:none">
+    <div class="modal-dialog">
+      <h3>Submit report?</h3>
+      <p>
+        Once you submit this report, you can edit it for the next 24 hours while it is still pending.
+        Are you sure you want to continue?
+      </p>
+      <div class="modal-actions">
+        <button type="button" id="confirmSubmit" class="btn">Yes, submit</button>
+        <button type="button" id="cancelSubmit" class="btn ghost">Cancel</button>
+      </div>
+    </div>
   </div>
 
   {{-- JS (public/js/worker/post-event-submission.js) --}}

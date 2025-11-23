@@ -10,12 +10,13 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
 use App\Services\Notify;
 
-
 class ProfileController extends Controller
 {
     public function show()
     {
         $u = Auth::user();
+
+        // Blade file is resources/views/worker/profile.blade.php
         return view('profile', compact('u'));
     }
 
@@ -43,10 +44,18 @@ class ProfileController extends Controller
     {
         $u = Auth::user();
 
+        // store old email BEFORE updating
+        $oldEmail = $u->email;
+
         $data = $r->validate([
             'first_name' => ['required','string','max:255'],
             'last_name'  => ['nullable','string','max:255'],
-            'email'      => ['required','email','max:255', Rule::unique('users','email')->ignore($u->id)],
+            'email'      => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users','email')->ignore($u->id),
+            ],
         ]);
 
         $u->first_name = $data['first_name'];
@@ -54,14 +63,16 @@ class ProfileController extends Controller
         $u->email      = $data['email'];
         $u->save();
 
+        // notify only if email actually changed
         if ($oldEmail !== $u->email) {
-        Notify::to(
-            $u->id,
-            'Email changed',
-            'Your account email address was just changed. If this was not you, please contact support immediately.',
-            'SECURITY'
-        );
-    }
+            Notify::to(
+                $u->id,
+                'Email changed',
+                'Your account email address was just changed. If this was not you, please contact support immediately.',
+                'SECURITY'
+            );
+        }
+
         return response()->json([
             'ok'      => true,
             'message' => 'Account updated successfully.',
@@ -105,12 +116,13 @@ class ProfileController extends Controller
 
         $u->password = Hash::make($r->input('password'));
         $u->save();
-         Notify::to(
-        $u->id,
-        'Password changed',
-        'Your account password was just changed. If this was not you, please contact support immediately.',
-        'SECURITY'
-    );
+
+        Notify::to(
+            $u->id,
+            'Password changed',
+            'Your account password was just changed. If this was not you, please contact support immediately.',
+            'SECURITY'
+        );
 
         return response()->json([
             'ok'      => true,
@@ -126,10 +138,12 @@ class ProfileController extends Controller
             'avatar' => ['required','image','mimes:jpg,jpeg,png','max:2048'],
         ]);
 
+        // delete old avatar if exists
         if ($u->avatar_path) {
             Storage::disk('public')->delete($u->avatar_path);
         }
 
+        // store new avatar in storage/app/public/avatars
         $path = $r->file('avatar')->store('avatars', 'public');
 
         $u->avatar_path = $path;

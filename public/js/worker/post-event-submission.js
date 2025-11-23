@@ -13,7 +13,7 @@ const STRINGS = {
     viewReport:"View Report",
     noResults:"No submissions found.",
     noSubmissions:"No submissions yet.",
-    chooseEventRole:"Please choose event and role.",
+    chooseEventRole:"Please choose an event first.",
     submitOk:"Report submitted successfully!",
     submitFail:(st)=>`Failed to submit report (status ${st}).`,
     submitError:"Error submitting report."
@@ -29,16 +29,50 @@ const STRINGS = {
     viewReport:"عرض التقرير",
     noResults:"لا توجد تقارير مطابقة.",
     noSubmissions:"لا توجد تقارير حتى الآن.",
-    chooseEventRole:"الرجاء اختيار الفعالية والدور.",
+    chooseEventRole:"الرجاء اختيار الفعالية أولاً.",
     submitOk:"تم إرسال التقرير بنجاح!",
     submitFail:(st)=>`فشل إرسال التقرير (رمز ${st}).`,
     submitError:"حدث خطأ أثناء إرسال التقرير."
   }
 };
 
+// =========================
+// Role slug mapping
+// =========================
+// DB slugs come from role_types.name via Str::slug(name, '_')
+// DOM slugs are the values in data-role on each <fieldset>
+const ROLE_SLUG_MAP = {
+  // DB slug         // DOM slug
+  'organizer':      'organizer',
+  'civil_defense':  'civil',
+  'media_staff':    'media',
+  'tech_support':   'tech',
+  'cleaner':        'cleaner',
+  'decorator':      'decorator',
+  'cooking_team':   'cooking',
+  'waiter':         'waiter',
+};
+
+// =========================
+// DOM helpers / globals
+// =========================
 let lang = 'en';
-const $  = sel => document.querySelector(sel);
-const list = $('#submissionsList');
+const $   = sel => document.querySelector(sel);
+
+const list            = $('#submissionsList');
+const eventSelect     = document.getElementById('eventSelect');
+const roleLabelInput  = document.getElementById('roleLabel');
+const roleForms       = document.getElementById('roleForms');
+const submissionIdInp = document.getElementById('submissionId');
+const formTitle       = document.getElementById('formTitle');
+const submitBtn       = document.getElementById('submitBtn');
+const resetBtn        = document.getElementById('resetBtn');
+
+const cdCasesList    = document.getElementById('cd_cases_list');
+const cdAddBtn       = document.getElementById('cd_add_case');
+
+let currentRoleSlugDb = null;   // from DB, e.g. "civil_defense"
+let currentEditable   = true;   // track if current loaded submission is editable
 
 // =========================
 // i18n on static elements
@@ -59,12 +93,10 @@ function i18nApply(){
   $('#pageTitle')        && ($('#pageTitle').textContent        = s.pageTitle);
   $('#pageSubtitle')     && ($('#pageSubtitle').textContent     = s.pageSubtitle);
   $('#globalSearch')     && ($('#globalSearch').placeholder     = s.search);
-
-  // If you later add data-i18n attributes on chips/buttons you can translate them here.
 }
 
 // =========================
-// Search over existing cards (DB-rendered)
+// Search over existing cards
 // =========================
 function bindSearch(){
   const input = $('#globalSearch');
@@ -76,7 +108,7 @@ function bindSearch(){
     let visible = 0;
 
     cards.forEach(card => {
-      const txt = card.textContent.toLowerCase();
+      const txt  = card.textContent.toLowerCase();
       const show = !q || txt.includes(q);
       card.style.display = show ? '' : 'none';
       if (show) visible++;
@@ -89,8 +121,8 @@ function bindSearch(){
         msg = document.createElement('div');
         msg.id = msgId;
         msg.style.textAlign = 'center';
-        msg.style.padding = '40px';
-        msg.style.color = 'var(--muted)';
+        msg.style.padding   = '40px';
+        msg.style.color     = 'var(--muted)';
         list.appendChild(msg);
       }
       msg.textContent = STRINGS[lang].noResults;
@@ -101,28 +133,56 @@ function bindSearch(){
 }
 
 // =========================
-// Role form logic
+// Role form logic (auto from reservation)
 // =========================
-const roleSelect = document.getElementById('roleSelect');
-const roleForms  = document.getElementById('roleForms');
-
-function showRoleForm(role){
+function showRoleForm(roleSlugDb){
   if (!roleForms) return;
+
+  const domRole = ROLE_SLUG_MAP[roleSlugDb] || roleSlugDb || null;
+
   roleForms.querySelectorAll('.role-set').forEach(fs => {
-    fs.style.display = (fs.getAttribute('data-role') === role) ? 'block' : 'none';
+    const fsRole = fs.getAttribute('data-role');
+    fs.style.display = (domRole && fsRole === domRole) ? 'block' : 'none';
   });
 }
-if (roleSelect) {
-  roleSelect.addEventListener('change', e => showRoleForm(e.target.value));
+
+function applyRoleFromEvent(){
+  if (!eventSelect) return;
+
+  const opt = eventSelect.options[eventSelect.selectedIndex];
+
+  if (!opt || !opt.dataset.roleSlug) {
+    currentRoleSlugDb = null;
+    if (roleLabelInput) roleLabelInput.value = '';
+    showRoleForm(null);
+    return;
+  }
+
+  currentRoleSlugDb = opt.dataset.roleSlug;   // e.g. "decorator"
+  const label = opt.dataset.roleName || currentRoleSlugDb;
+
+  if (roleLabelInput) roleLabelInput.value = label;
+  showRoleForm(currentRoleSlugDb);
+}
+
+if (eventSelect) {
+  eventSelect.addEventListener('change', () => {
+    // New event picked => treat as new submission
+    if (submissionIdInp) submissionIdInp.value = '';
+    currentEditable = true;
+    setFormEditable(true);
+    if (formTitle) formTitle.textContent = 'Submit New Report';
+    if (submitBtn) submitBtn.textContent = 'Submit Report';
+
+    applyRoleFromEvent();
+  });
+  applyRoleFromEvent();
 }
 
 // =========================
 // Civil Defense dynamic cases
 // =========================
-const cdCasesList = document.getElementById('cd_cases_list');
-const cdAddBtn    = document.getElementById('cd_add_case');
-
-function addCivilCaseRow(){
+function addCivilCaseRow(initial){
   if (!cdCasesList) return;
 
   const wrap = document.createElement('div');
@@ -137,7 +197,7 @@ function addCivilCaseRow(){
     <div class="form-group">
       <label>Type of case</label>
       <select data-cd="type">
-      <option value="" disabled selected>Select type…</option>
+        <option value="" disabled>Select type…</option>
         <option value="injury">Injury</option>
         <option value="fainting">Fainting</option>
         <option value="panic">Panic attack</option>
@@ -151,7 +211,7 @@ function addCivilCaseRow(){
     <div class="form-group">
       <label>Gender</label>
       <select data-cd="gender">
-        <option value="" disabled selected>Gender…</option>
+        <option value="" disabled>Gender…</option>
         <option>Male</option>
         <option>Female</option>
       </select>
@@ -159,7 +219,7 @@ function addCivilCaseRow(){
     <div class="form-group">
       <label>Action taken</label>
       <select data-cd="action">
-      <option value="" disabled selected>Action taken…</option>
+        <option value="" disabled>Action taken…</option>
         <option value="on-site-care">On-site care</option>
         <option value="hospital-referral">Hospital referral</option>
         <option value="other">Other</option>
@@ -173,10 +233,21 @@ function addCivilCaseRow(){
       <button type="button" class="btn small ghost" data-remove>Remove</button>
     </div>
   `;
-  wrap.querySelector('[data-remove]').addEventListener('click', ()=> wrap.remove());
+
+  wrap.querySelector('[data-remove]').addEventListener('click', () => wrap.remove());
   cdCasesList.appendChild(wrap);
+
+  if (initial) {
+    const { type, age, gender, action, notes } = initial;
+    if (type)   wrap.querySelector('[data-cd="type"]').value   = type;
+    if (age)    wrap.querySelector('[data-cd="age"]').value    = age;
+    if (gender) wrap.querySelector('[data-cd="gender"]').value = gender;
+    if (action) wrap.querySelector('[data-cd="action"]').value = action;
+    if (notes)  wrap.querySelector('[data-cd="notes"]').value  = notes;
+  }
 }
-if (cdAddBtn) cdAddBtn.addEventListener('click', addCivilCaseRow);
+
+if (cdAddBtn) cdAddBtn.addEventListener('click', () => addCivilCaseRow(null));
 
 function getCivilCases(){
   if (!cdCasesList) return [];
@@ -191,47 +262,91 @@ function getCivilCases(){
 }
 
 // =========================
-// Submit logic (AJAX + files)
+// Enable/disable form (read-only vs editable)
 // =========================
+function setFormEditable(editable){
+  currentEditable = editable;
+  const form = document.getElementById('reportForm');
+  if (!form) return;
+
+  const controls = form.querySelectorAll('input, textarea, select, button[type="submit"]');
+  controls.forEach(el => {
+    if (el === submissionIdInp) return; // keep hidden
+    if (el === resetBtn) {
+      el.disabled = !editable;
+      return;
+    }
+    // role label is always read-only
+    if (el === roleLabelInput) {
+      el.readOnly = true;
+      el.disabled = false;
+      return;
+    }
+    el.disabled = !editable;
+  });
+
+  if (submitBtn) submitBtn.textContent = editable ? 'Submit Report' : 'View Only';
+  if (formTitle) formTitle.textContent = editable ? 'Submit / Edit Report' : 'View Report';
+}
+
+// =========================
+// Submit logic (AJAX + files + confirm popup)
+// =========================
+const confirmModal  = document.getElementById('confirmModal');
+const confirmButton = document.getElementById('confirmSubmit');
+const cancelButton  = document.getElementById('cancelSubmit');
+
+function openConfirmModal(){
+  if (confirmModal) confirmModal.style.display = 'flex';
+}
+function closeConfirmModal(){
+  if (confirmModal) confirmModal.style.display = 'none';
+}
+
 function bindForm(){
   const form = document.getElementById('reportForm');
   if (!form) return;
 
   const storeUrl = form.dataset.storeUrl || form.action;
-  console.log('storeUrl =', storeUrl);
+  const meta     = document.querySelector('meta[name="csrf-token"]');
+  const csrf     = meta ? meta.getAttribute('content')
+                        : (form.querySelector('input[name="_token"]')?.value || '');
 
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  const csrf = meta ? meta.getAttribute('content')
-                    : (form.querySelector('input[name="_token"]')?.value || '');
+  let isSubmitting = false;
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
+  const doSubmit = async () => {
+    if (isSubmitting) return;
+    if (!currentEditable) {
+      toast('This report is view-only and can no longer be edited.');
+      return;
+    }
+    isSubmitting = true;
 
     const s = STRINGS[lang];
+    const eventSel   = document.getElementById('eventSelect');
+    const roleSlugDb = currentRoleSlugDb;
+    const domRole    = ROLE_SLUG_MAP[roleSlugDb] || roleSlugDb;
 
-    const eventSel = document.getElementById('eventSelect');
-    const role     = document.getElementById('roleSelect')?.value;
-
-    if (!eventSel?.value || !role) {
+    if (!eventSel?.value || !roleSlugDb) {
       toast(s.chooseEventRole);
+      isSubmitting = false;
       return;
     }
 
-    // Build structured payload
     const payload = {
       worker_reservation_id: eventSel.value,
-      role_slug: role,
-      general_notes: document.getElementById('reportText')?.value?.trim?.() || '',
+      role_slug: roleSlugDb,
+      general_notes: '', // reserved if you add a generic notes textarea later
       data: {},
       civil_cases: [],
     };
 
-    switch(role){
+    switch (domRole) {
       case 'organizer':
         payload.data = {
-    attendance: document.getElementById('org_attendance').value,
-    issues: document.getElementById('org_issues').value.trim(),
-    improvements: document.getElementById('org_improve').value.trim()
+          attendance:  document.getElementById('org_attendance').value,
+          issues:      document.getElementById('org_issues').value.trim(),
+          improvements:document.getElementById('org_improve').value.trim()
         };
         break;
 
@@ -256,10 +371,10 @@ function bindForm(){
 
       case 'tech':
         payload.data = {
-          allOk:       document.getElementById('tech_ok').value,
-          returned:    document.getElementById('tech_returned').value,
-          issues:      document.getElementById('tech_issues').value.trim(),
-          improvements:document.getElementById('tech_suggest').value.trim()
+          allOk:        document.getElementById('tech_ok').value,
+          returned:     document.getElementById('tech_returned').value,
+          issues:       document.getElementById('tech_issues').value.trim(),
+          improvements: document.getElementById('tech_suggest').value.trim()
         };
         break;
 
@@ -292,15 +407,14 @@ function bindForm(){
 
       case 'waiter':
         payload.data = {
-          attendance:   document.getElementById('wait_attendance').value,
-          itemsServed:  document.getElementById('wait_items').value.trim(),
-          serviceIssues:document.getElementById('wait_issues').value.trim(),
-          leftovers:    document.getElementById('wait_leftovers').value.trim()
+          attendance:    document.getElementById('wait_attendance').value,
+          itemsServed:   document.getElementById('wait_items').value.trim(),
+          serviceIssues: document.getElementById('wait_issues').value.trim(),
+          leftovers:     document.getElementById('wait_leftovers').value.trim()
         };
         break;
     }
 
-    // Build FormData with JSON + files
     const fd = new FormData();
     fd.append('_token', csrf);
     fd.append('worker_reservation_id', payload.worker_reservation_id);
@@ -309,24 +423,27 @@ function bindForm(){
     fd.append('data', JSON.stringify(payload.data));
     fd.append('civil_cases', JSON.stringify(payload.civil_cases));
 
-    // Attach role-specific files
-    if (role === 'civil') {
+    if (submissionIdInp && submissionIdInp.value) {
+      fd.append('submission_id', submissionIdInp.value);
+    }
+
+    if (domRole === 'civil') {
       const cdForms = document.getElementById('cd_forms');
       if (cdForms) [...cdForms.files].forEach(f => fd.append('cd_forms[]', f));
     }
-    if (role === 'media') {
+    if (domRole === 'media') {
       const media = document.getElementById('media_files');
       if (media) [...media.files].forEach(f => fd.append('media_files[]', f));
     }
-    if (role === 'tech') {
+    if (domRole === 'tech') {
       const rec = document.getElementById('tech_recording');
       if (rec?.files[0]) fd.append('tech_recording', rec.files[0]);
     }
-    if (role === 'decorator') {
+    if (domRole === 'decorator') {
       const dec = document.getElementById('dec_photos');
       if (dec) [...dec.files].forEach(f => fd.append('dec_photos[]', f));
     }
-    if (role === 'cooking') {
+    if (domRole === 'cooking') {
       const cook = document.getElementById('cook_photos');
       if (cook) [...cook.files].forEach(f => fd.append('cook_photos[]', f));
     }
@@ -337,7 +454,6 @@ function bindForm(){
         headers: {
           'X-CSRF-TOKEN': csrf,
           'Accept': 'application/json',
-          // DO NOT set Content-Type; browser sets multipart boundary
         },
         body: fd,
       });
@@ -346,6 +462,7 @@ function bindForm(){
         const text = await res.text();
         console.error('Backend error (status ' + res.status + '):', text);
         toast(s.submitFail(res.status));
+        isSubmitting = false;
         return;
       }
 
@@ -353,28 +470,180 @@ function bindForm(){
       console.log('Saved submission:', data);
 
       toast(s.submitOk);
-
-      // Reload so Blade pulls updated submissions list from DB
       setTimeout(() => window.location.reload(), 600);
 
     } catch (err) {
       console.error('Fetch error:', err);
       toast(STRINGS[lang].submitError);
+      isSubmitting = false;
     }
+  };
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (confirmModal) {
+      openConfirmModal();
+    } else {
+      doSubmit();
+    }
+  });
+
+  confirmButton?.addEventListener('click', async () => {
+    closeConfirmModal();
+    await doSubmit();
+  });
+
+  cancelButton?.addEventListener('click', () => {
+    closeConfirmModal();
+  });
+
+  form.addEventListener('reset', () => {
+    if (submissionIdInp) submissionIdInp.value = '';
+    currentEditable = true;
+    setFormEditable(true);
+    if (formTitle) formTitle.textContent = 'Submit New Report';
+    if (submitBtn) submitBtn.textContent = 'Submit Report';
   });
 }
 
 // =========================
-// Actions on "View Report"
+// Fill form from existing submission when "View Report"
 // =========================
+function clearRoleForms(){
+  if (!roleForms) return;
+  roleForms.querySelectorAll('input, textarea, select').forEach(el => {
+    if (el.type === 'file') return;
+    if (el.tagName === 'SELECT') {
+      if (el.options.length) el.selectedIndex = 0;
+    } else {
+      el.value = '';
+    }
+  });
+  if (cdCasesList) cdCasesList.innerHTML = '';
+}
+
+function fillFormFromSubmission(domRole, data, civilCases){
+  clearRoleForms();
+
+  switch(domRole){
+    case 'organizer':
+      document.getElementById('org_attendance').value = data.attendance || '';
+      document.getElementById('org_issues').value     = data.issues || '';
+      document.getElementById('org_improve').value    = data.improvements || '';
+      break;
+
+    case 'civil':
+      document.getElementById('cd_check').value        = data.attendanceState || '';
+      document.getElementById('cd_total_cases').value  = data.totalCases ?? 0;
+      document.getElementById('cd_concerns').value     = data.concerns || '';
+      if (Array.isArray(civilCases)) {
+        civilCases.forEach(c => addCivilCaseRow(c));
+      }
+      break;
+
+    case 'media':
+      document.getElementById('media_labels').value           = data.labels || '';
+      document.getElementById('media_report_photos').value    = data.photosCount ?? 0;
+      document.getElementById('media_report_videos').value    = data.videosCount ?? 0;
+      document.getElementById('media_problems').value         = data.problems || '';
+      document.getElementById('media_captions').value         = data.captions || '';
+      break;
+
+    case 'tech':
+      document.getElementById('tech_ok').value        = data.allOk || '';
+      document.getElementById('tech_returned').value  = data.returned || '';
+      document.getElementById('tech_issues').value    = data.issues || '';
+      document.getElementById('tech_suggest').value   = data.improvements || '';
+      break;
+
+    case 'cleaner':
+      document.getElementById('clean_zones').value    = data.zones ?? '';
+      document.getElementById('clean_extra').value    = data.extraHelp || '';
+      document.getElementById('clean_notes').value    = data.notes || '';
+      document.getElementById('clean_suggest').value  = data.suggestions || '';
+      break;
+
+    case 'decorator':
+      document.getElementById('dec_used').value       = data.used || '';
+      document.getElementById('dec_damaged').value    = data.damaged || '';
+      document.getElementById('dec_replace').value    = data.replace || '';
+      document.getElementById('dec_feedback').value   = data.feedback || '';
+      break;
+
+    case 'cooking':
+      document.getElementById('cook_meals').value       = data.meals || '';
+      document.getElementById('cook_ingredients').value = data.ingredients || '';
+      document.getElementById('cook_leftovers').value   = data.leftovers || '';
+      document.getElementById('cook_hygiene').value     = data.hygiene || '';
+      break;
+
+    case 'waiter':
+      document.getElementById('wait_attendance').value = data.attendance || '';
+      document.getElementById('wait_items').value      = data.itemsServed || '';
+      document.getElementById('wait_issues').value     = data.serviceIssues || '';
+      document.getElementById('wait_leftovers').value  = data.leftovers || '';
+      break;
+  }
+}
+
 function bindActions(){
   if (!list) return;
-  list.addEventListener('click', (e)=>{
-    const b = e.target.closest('button[data-act="view"]');
-    if(!b) return;
-    const id = b.getAttribute('data-id');
-    // Later you can open a modal and fetch /worker/submissions/{id}
-    toast('Report #' + id + ' details would open here.');
+
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act="view"]');
+    if (!btn) return;
+
+    const card = btn.closest('.card');
+    if (!card) return;
+
+    const subId   = card.dataset.subId;
+    const resId   = card.dataset.resId;
+    const roleSlugDb = card.dataset.roleSlug;
+    const canEdit = card.dataset.canEdit === '1';
+    let data = {};
+    let civil = [];
+
+    try {
+      data = card.dataset.data ? JSON.parse(card.dataset.data) : {};
+    } catch (err) {
+      console.warn('Failed to parse data JSON', err);
+    }
+    try {
+      civil = card.dataset.civil ? JSON.parse(card.dataset.civil) : [];
+    } catch (err) {
+      console.warn('Failed to parse civil JSON', err);
+    }
+
+    // Set hidden submission id
+    if (submissionIdInp) submissionIdInp.value = subId || '';
+
+    // Select event & role
+    if (eventSelect && resId) {
+      eventSelect.value = resId;
+    }
+
+    currentRoleSlugDb = roleSlugDb || null;
+    const domRole = ROLE_SLUG_MAP[currentRoleSlugDb] || currentRoleSlugDb;
+
+    if (roleLabelInput && domRole) {
+      // role label is already from reservation; keep as is
+    }
+
+    showRoleForm(currentRoleSlugDb);
+    fillFormFromSubmission(domRole, data || {}, civil || []);
+    setFormEditable(canEdit);
+
+    if (formTitle) formTitle.textContent = canEdit ? 'Edit Report' : 'View Report';
+    if (submitBtn) submitBtn.textContent = canEdit ? 'Save Changes' : 'View Only';
+
+    const formCard = document.getElementById('submissionForm');
+    if (formCard) formCard.scrollIntoView({ behavior:'smooth', block:'start' });
+
+    if (!canEdit) {
+      toast('This report is locked (older than 24 hours or already processed).');
+    } else {
+      toast('You are editing an existing report.');
+    }
   });
 }
 
@@ -383,7 +652,7 @@ function bindActions(){
 // =========================
 function toast(msg){
   let box = document.getElementById('toastContainer');
-  if(!box){
+  if (!box){
     box = document.createElement('div');
     box.id = 'toastContainer';
     document.body.appendChild(box);
@@ -401,19 +670,6 @@ function toast(msg){
   box.appendChild(t);
   setTimeout(()=> t.remove(), 2200);
 }
-
-// =========================
-// Theme / Language toggles
-// =========================
-document.getElementById('themeToggle')?.addEventListener('click', ()=>{
-  const isLight = document.body.getAttribute('data-theme')==='light';
-  document.body.setAttribute('data-theme', isLight? 'dark':'light');
-});
-
-document.getElementById('langToggle')?.addEventListener('click', ()=>{
-  lang = (lang==='en') ? 'ar' : 'en';
-  i18nApply();
-});
 
 // =========================
 // Init

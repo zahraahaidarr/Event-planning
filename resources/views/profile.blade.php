@@ -15,7 +15,9 @@
 @php
   $first    = trim($u->first_name ?? '');
   $last     = trim($u->last_name ?? '');
-  $full     = method_exists($u,'getFullNameAttribute') ? ($u->full_name ?? '') : trim($first.' '.$last);
+  $full     = method_exists($u,'getFullNameAttribute')
+                ? ($u->full_name ?? '')
+                : trim($first.' '.$last);
   $email    = $u->email ?? '';
   $role     = strtoupper($u->role ?? 'USER');
   $created  = optional($u->created_at)->format('d/m/Y, H:i') ?? '—';
@@ -44,14 +46,18 @@
         </svg>
         <input id="globalSearch" placeholder="Search..." aria-label="Search">
       </div>
-
+      {{-- optional theme/lang toggles; only if you add buttons with these IDs --}}
+      {{-- <button id="themeToggle" class="btn small ghost">Theme</button>
+      <button id="langToggle" class="btn small ghost">EN/AR</button> --}}
     </div>
 
     <!-- Header -->
     <header class="page-head">
       <div>
         <div class="crumbs">
-          <a href="{{ route('worker.dashboard') }}" class="muted" style="text-decoration:none;color:inherit">Home</a> /
+          <a href="{{ route('worker.dashboard') }}"
+             class="muted"
+             style="text-decoration:none;color:inherit">Home</a> /
           <strong>Profile</strong>
         </div>
         <h1 class="title">My Profile</h1>
@@ -102,13 +108,19 @@
             class="avatar"
             style="object-fit:cover;border-radius:50%;width:96px;height:96px; {{ empty($u->avatar_path) ? 'display:none' : '' }}"
           >
-          <div class="avatar" id="avatarInitials" aria-hidden="true" style="{{ !empty($u->avatar_path) ? 'display:none' : '' }}">
+          <div class="avatar"
+               id="avatarInitials"
+               aria-hidden="true"
+               style="{{ !empty($u->avatar_path) ? 'display:none' : '' }}">
             {{ $initials }}
           </div>
         </div>
 
-        {{-- FIXED: use route("profile.avatar") --}}
-        <form id="avatarForm" class="upload-row" enctype="multipart/form-data" method="post" action="{{ route('profile.avatar') }}">
+        <form id="avatarForm"
+              class="upload-row"
+              enctype="multipart/form-data"
+              method="post"
+              action="{{ route('profile.avatar') }}">
           @csrf
           <input id="photoFile" name="avatar" type="file" accept="image/*">
           <button type="submit" class="btn small" id="uploadPhoto">Upload</button>
@@ -122,10 +134,19 @@
       <article class="card">
         <h3>Account Info</h3>
         <div class="info-list">
-          <div class="info-row"><span class="info-label">User ID</span><span>{{ $u->id }}</span></div>
-          <div class="info-row"><span class="info-label">Email</span><span id="infoEmail">{{ $email }}</span></div>
-          <div class="info-row"><span class="info-label">Created</span><span>{{ $created }}</span></div>
-          <div class="info-row"><span class="info-label">Last login</span><span>{{ $lastIn }}</span></div>
+          <div class="info-row">
+            <span class="info-label">User ID</span><span>{{ $u->id }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span id="infoEmail">{{ $email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Created</span><span>{{ $created }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Last login</span><span>{{ $lastIn }}</span>
+          </div>
         </div>
       </article>
     </section>
@@ -186,7 +207,6 @@
   {{-- Pass routes for AJAX --}}
   <script>
     window.ROUTES = {
-      // FIXED: use the non-worker route names
       account:  "{{ route('profile.account') }}",
       personal: "{{ route('profile.personal') }}",
       password: "{{ route('profile.password') }}"

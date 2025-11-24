@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Event;
 use App\Models\Employee;
 use App\Models\WorkerReservation;
 
-
 class VolunteerAssignmentController extends Controller
 {
-   
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
 
@@ -31,79 +30,118 @@ class VolunteerAssignmentController extends Controller
     }
 
     /**
-     * AJAX: GET /employee/volunteer-assignment/events/{event}/applications
+     * AJAX:
+     * GET /employee/volunteer-assignment/events/{event}/applications
+     *
      * Returns reservations for the selected event (only if created by this employee).
      */
-public function applications(Request $request, Event $event)
-{
-    $user = $request->user();
+    public function applications(Request $request, $eventId)
+    {
+        $user = $request->user();
 
-    $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
-    if (! $employeeId) {
-        abort(403, 'Employee profile not found.');
-    }
-
-    // security: only events created by this employee
-    if ((int) $event->created_by !== (int) $employeeId) {
-        abort(403, 'You are not allowed to view applications for this event.');
-    }
-
-    $reservations = WorkerReservation::with(['worker.user', 'workRole'])
-        ->where('event_id', $event->event_id)   // event_id from table
-        ->orderByDesc('reserved_at')
-        ->get();
-
-    $apps = $reservations->map(function (WorkerReservation $r) {
-        $worker = $r->worker;
-        $user   = $worker?->user;
-        $role   = $r->workRole;
-
-        $rawStatus = strtoupper($r->status ?? 'RESERVED');
-        switch ($rawStatus) {
-            case 'RESERVED':
-                $status = 'pending';
-                break;
-            case 'CANCELLED':
-                $status = 'rejected';
-                break;
-            default:
-                $status = strtolower($rawStatus);
+        // --------- which employee is logged in? ----------
+        $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
+        if (! $employeeId) {
+            abort(403, 'Employee profile not found.');
         }
 
-        $date = $r->reserved_at ?? $r->created_at;
-        $dateStr = $date ? \Illuminate\Support\Carbon::parse($date)->format('Y-m-d') : null;
+        // --------- make sure this event belongs to this employee ----------
+        $event = Event::where('event_id', $eventId)
+            ->where('created_by', $employeeId)
+            ->firstOrFail();
 
-        return [
-            'id'             => $r->reservation_id,
-            'volunteerId'    => $worker?->worker_id,
-            'name'           => $user?->name ?? 'Unknown',
-            'email'          => $user?->email ?? null,
-            'phone'          => $worker?->phone ?? null,
-            'role'           => $role?->role_name ?? null,
-            'appliedDate'    => $dateStr,
-            'status'         => $status,
-            'experience'     => $worker?->experience ?? '',
-            'skills'         => $worker?->skills ?? '',
-            'availability'   => $worker?->availability ?? '',
-            'previousEvents' => (int) ($worker?->previous_events_count ?? 0),
-        ];
-    });
+        // --------- load all reservations for this event ----------
+        $reservations = WorkerReservation::with(['worker.user', 'workRole'])
+            ->where('event_id', $event->event_id)
+            ->orderByDesc('reserved_at')
+            ->get();
 
-    $total    = $apps->count();
-    $pending  = $apps->where('status', 'pending')->count();
-    $rejected = $apps->where('status', 'rejected')->count();
+        // If no reservations, just return empty list (prevents JS errors)
+        if ($reservations->isEmpty()) {
+            return response()->json([
+                'ok'           => true,
+                'stats'        => [
+                    'total'    => 0,
+                    'pending'  => 0,
+                    'rejected' => 0,
+                ],
+                'applications' => [],
+            ]);
+        }
 
-    return response()->json([
-        'ok'           => true,
-        'stats'        => [
-            'total'    => $total,
-            'pending'  => $pending,
-            'rejected' => $rejected,
-        ],
-        'applications' => $apps->values(),
-    ]);
-}
+        // --------- pre-calculate "previous events" per worker ----------
+        $workerIds = $reservations->pluck('worker_id')->filter()->unique();
 
+        $completedCounts = WorkerReservation::select('worker_id', DB::raw('COUNT(*) as cnt'))
+            ->whereIn('worker_id', $workerIds)
+            ->where('status', 'COMPLETED')
+            ->groupBy('worker_id')
+            ->pluck('cnt', 'worker_id');     // [worker_id => completed_count]
 
+        // --------- map DB rows -> JSON structure expected by JS ----------
+        $apps = $reservations->map(function (WorkerReservation $r) use ($completedCounts) {
+            $worker = $r->worker;
+            $user   = $worker?->user;
+            $role   = $r->workRole;
 
+            // map DB status -> UI status
+            $rawStatus = strtoupper($r->status ?? 'RESERVED');
+            $statusMap = [
+                'RESERVED'  => 'pending',
+                'CANCELLED' => 'rejected',
+                'COMPLETED' => 'accepted',
+            ];
+            $status = $statusMap[$rawStatus] ?? strtolower($rawStatus);
+
+            // date of application
+            $date = $r->reserved_at ?? $r->created_at;
+            $dateStr = $date ? $date->format('Y-m-d') : null;
+
+            // experience: derive from joined_at in workers table if it exists
+            $joinedAt        = $worker?->joined_at;
+            $experienceYears = $joinedAt ? $joinedAt->diffInYears(now()) : null;
+            $experienceLabel = $experienceYears ? $experienceYears . ' years' : null;
+
+            // how many completed events this worker already has
+            $previousEvents = 0;
+            if ($worker && $completedCounts->has($worker->worker_id)) {
+                $previousEvents = (int) $completedCounts[$worker->worker_id];
+            }
+
+            // skills + availability: if you don't have them in DB yet, they will be null
+            // you can later replace null with real queries when you add those tables/columns
+            $skills       = null;
+            $availability = null;
+
+            return [
+                'id'             => $r->reservation_id,
+                'volunteerId'    => $worker?->worker_id,
+                'name'           => $user?->name ?? 'Unknown',
+                'email'          => $user?->email ?? null,
+                'phone'          => $user->phone ?? null,  // if column does not exist => null
+                'role'           => $role?->role_name ?? null,
+                'appliedDate'    => $dateStr,
+                'status'         => $status,
+
+                'experience'     => $experienceLabel,
+                'skills'         => $skills,
+                'availability'   => $availability,
+                'previousEvents' => $previousEvents,
+            ];
+        });
+
+        $total    = $apps->count();
+        $pending  = $apps->where('status', 'pending')->count();
+        $rejected = $apps->where('status', 'rejected')->count();
+
+        return response()->json([
+            'ok'           => true,
+            'stats'        => [
+                'total'    => $total,
+                'pending'  => $pending,
+                'rejected' => $rejected,
+            ],
+            'applications' => $apps->values(),
+        ]);
+    }
 }

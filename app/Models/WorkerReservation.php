@@ -13,7 +13,7 @@ class WorkerReservation extends Model
     protected $primaryKey = 'reservation_id';
     public $incrementing = true;
     protected $keyType = 'int';
-    public $timestamps = true; // keep as you defined
+    public $timestamps = true;
 
     protected $fillable = [
         'event_id',
@@ -23,11 +23,14 @@ class WorkerReservation extends Model
         'status',
         'check_in_time',
         'check_out_time',
-        'credited_hours',      // if exists
+        'credited_hours',
     ];
 
     protected $casts = [
-        'hours' => 'decimal:2',
+        'reserved_at'    => 'datetime',
+        'check_in_time'  => 'datetime',
+        'check_out_time' => 'datetime',
+        'credited_hours' => 'decimal:2',
     ];
 
     public function worker()
@@ -44,13 +47,15 @@ class WorkerReservation extends Model
     {
         return $this->belongsTo(WorkRole::class, 'work_role_id', 'role_id');
     }
+
+    // (optional) alias if you ever used $reservation->role before
     public function role()
     {
-        return $this->belongsTo(WorkRole::class, 'work_role_id');
+        return $this->belongsTo(WorkRole::class, 'work_role_id', 'role_id');
     }
-    public function postEventSubmissions()
-{
-    return $this->hasMany(PostEventSubmission::class, 'worker_reservation_id');
-}
 
+    public function postEventSubmissions()
+    {
+        return $this->hasMany(PostEventSubmission::class, 'worker_reservation_id');
+    }
 }

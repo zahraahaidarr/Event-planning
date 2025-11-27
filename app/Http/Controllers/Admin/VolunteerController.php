@@ -172,18 +172,15 @@ private function baseQuery()
 {
     return Worker::query()
         ->with([
-            'user:id,first_name,last_name,email,status',
+            // add phone + avatar_path so we can show them if needed
+            'user:id,first_name,last_name,email,status,phone,avatar_path',
             'reservations.workRole.roleType:role_type_id,name',
         ])
-
-        // Count ONLY reservations that are NOT cancelled
         ->withCount([
             'reservations as reservations_count' => function ($q) {
                 $q->where('status', '!=', 'CANCELLED');
             },
         ])
-
-        // SUM credited_hours ONLY for completed reservations
         ->withSum([
             'reservations as total_hours' => function ($q) {
                 $q->where('status', 'COMPLETED');
@@ -193,30 +190,50 @@ private function baseQuery()
 
 
 
-    private function normalize($collection)
-    {
-        return $collection->map(function ($w) {
-            $roleName   = $w->reservations->first()?->workRole?->roleType?->name ?? '';
-            $userStatus = strtoupper((string) ($w->user->status ?? 'PENDING'));
 
-            $statusForUi = match ($userStatus) {
-                'ACTIVE'    => 'active',
-                'SUSPENDED' => 'suspended',
-                'BANNED'    => 'banned',
-                'PENDING'   => 'pending',
-                default     => 'pending',
-            };
+private function normalize($collection)
+{
+    return $collection->map(function ($w) {
+        $user       = $w->user;
+        $firstName  = $user->first_name ?? '';
+        $lastName   = $user->last_name ?? '';
+        $fullName   = trim($firstName . ' ' . $lastName);
+        $userStatus = strtoupper((string) ($user->status ?? 'PENDING'));
 
-            return [
-                'id'        => $w->worker_id,
-                'name'      => $w->user->name ?? '',
-                'email'     => $w->user->email ?? '',
-                'role'      => $roleName,
-                'location'  => $w->location ?? '',
-                'events'    => (int) ($w->reservations_count ?? 0),
-                'hours'     => (float) ($w->total_hours ?? 0),
-                'status'    => $statusForUi, // active|suspended|banned|pending
-            ];
-        });
-    }
+        $statusForUi = match ($userStatus) {
+            'ACTIVE'    => 'active',
+            'SUSPENDED' => 'suspended',
+            'BANNED'    => 'banned',
+            'PENDING'   => 'pending',
+            default     => 'pending',
+        };
+
+        $roleName = $w->reservations->first()?->workRole?->roleType?->name ?? '';
+
+        return [
+            'id'                  => $w->worker_id,
+            'name'                => $fullName,
+            'first_name'          => $firstName,
+            'last_name'           => $lastName,
+            'email'               => $user->email ?? '',
+            'phone'               => $user->phone ?? '',
+            'role'                => $roleName,
+            'location'            => $w->location ?? '',
+            'engagement_kind'     => $w->engagement_kind ?? '',
+            'is_volunteer'        => (bool) $w->is_volunteer,
+            'verification_status' => $w->verification_status ?? '',
+            'joined_at'           => optional($w->joined_at)->toDateString(),
+            'events'              => (int) ($w->reservations_count ?? 0),
+            'hours'               => (float) ($w->total_hours ?? 0),
+            'status'              => $statusForUi, // active|suspended|banned|pending
+
+            // file paths / URLs
+            'certificate_path'    => $w->certificate_path,
+            'certificate_url'     => $w->certificate_path
+                ? asset('storage/' . ltrim($w->certificate_path, '/'))
+                : null,
+        ];
+    });
+}
+
 }

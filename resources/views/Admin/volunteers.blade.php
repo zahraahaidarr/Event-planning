@@ -129,6 +129,83 @@
         </div>
     </main>
 </div>
+
+{{-- View Volunteer Modal --}}
+<div id="volunteerModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeVolunteerModal()"></div>
+
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <div class="modal-title-group">
+                <h2 id="vm-name">Volunteer details</h2>
+                <p id="vm-email" class="modal-subtitle"></p>
+            </div>
+            <button type="button" class="icon-btn modal-close-btn" onclick="closeVolunteerModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <form class="modal-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First name</label>
+                        <input id="vm-first_name" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Last name</label>
+                        <input id="vm-last_name" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input id="vm-phone" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <input id="vm-role" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input id="vm-location" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Engagement kind</label>
+                        <input id="vm-engagement_kind" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Volunteer type</label>
+                        <input id="vm-is_volunteer" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Account status</label>
+                        <input id="vm-status" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Verification status</label>
+                        <input id="vm-verification_status" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Total events</label>
+                        <input id="vm-events" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Total hours</label>
+                        <input id="vm-hours" type="text" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Joined at</label>
+                        <input id="vm-joined_at" type="text" disabled>
+                    </div>
+                </div>
+
+                <div class="certificate-row">
+                    <span>Certificate:</span>
+                    <a id="vm-certificate_link" href="#" target="_blank" class="certificate-link">
+                        No certificate uploaded
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @include('notify.widget')
 <script src="{{ asset('js/notify-poll.js') }}" defer></script>
 

@@ -119,7 +119,62 @@
     finally { if (btn) { btn.disabled = false; btn.textContent = 'Ban'; } }
   };
 
-  window.viewVolunteer = function(id){ alert(`View volunteer ${id}`); };
+    function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? '';
+  }
+
+  function setInput(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+  }
+
+  window.viewVolunteer = function(id) {
+    const vol = VOLUNTEERS.find(v => Number(v.id) === Number(id));
+    if (!vol) {
+      alert('Volunteer not found.');
+      return;
+    }
+
+    // Top header
+    setText('vm-name', vol.name || 'Volunteer details');
+    setText('vm-email', vol.email || '');
+
+    // Form fields
+    setInput('vm-first_name', vol.first_name || '');
+    setInput('vm-last_name',  vol.last_name || '');
+    setInput('vm-phone',      vol.phone || '');
+    setInput('vm-role',       vol.role || '');
+    setInput('vm-location',   vol.location || '');
+    setInput('vm-engagement_kind', vol.engagement_kind || '');
+    setInput('vm-is_volunteer', vol.is_volunteer ? 'Volunteer' : 'Worker');
+    setInput('vm-status',     vol.status || '');
+    setInput('vm-verification_status', vol.verification_status || '');
+    setInput('vm-events',     vol.events ?? 0);
+    setInput('vm-hours',      (vol.hours ?? 0) + ' h');
+    setInput('vm-joined_at',  vol.joined_at || '');
+
+    // Certificate link
+    const certLink = document.getElementById('vm-certificate_link');
+    if (certLink) {
+      if (vol.certificate_url) {
+        certLink.href = vol.certificate_url;
+        certLink.textContent = 'View certificate';
+      } else {
+        certLink.href = '#';
+        certLink.textContent = 'No certificate uploaded';
+      }
+    }
+
+    const modal = document.getElementById('volunteerModal');
+    if (modal) modal.classList.remove('hidden');
+  };
+
+  window.closeVolunteerModal = function() {
+    const modal = document.getElementById('volunteerModal');
+    if (modal) modal.classList.add('hidden');
+  };
+
 
   // UI toggles
   window.toggleTheme = function() {

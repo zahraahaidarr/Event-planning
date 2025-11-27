@@ -116,45 +116,46 @@
 
 
 
+                <nav class="nav-section">
+    <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
+       class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+    </a>
+
+    <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
+       class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
+        <span class="nav-icon">👔</span><span>Employees</span>
+    </a>
+
+    <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
+       class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
+        <span class="nav-icon">👥</span><span>Volunteers</span>
+    </a>
+
+    <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
+       class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
+        <span class="nav-icon">📅</span><span>Events</span>
+    </a>
+
+    <a href="{{ route('taxonomies-venues.index') }}"
+       class="nav-item {{ request()->routeIs('taxonomies-venues.index') ? 'active' : '' }}">
+        <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+    </a>
+
+    <a href="{{ route('announcements.create') }}"
+       class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
+        <span class="nav-icon">📢</span><span>Send Announcement</span>
+    </a>
+</nav>
+
         <nav class="nav-section">
-          
-            <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
-               class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <span class="nav-icon">📊</span><span>Dashboard</span>
-            </a>
+    <div class="nav-label">Account</div>
 
-            <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}" class="nav-item">
-                <span class="nav-icon">👔</span><span>Employees</span>
-            </a>
-
-            <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}" class="nav-item">
-                <span class="nav-icon">👥</span><span>Volunteers</span>
-            </a>
-
-            <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
-                <span class="nav-icon">📅</span><span>Events</span>
-            </a>
-            <a href="{{ route('taxonomies-venues.index') }}" class="nav-item active">
-                <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
-            </a>
-
-            <a href="{{ route('announcements.create') }}" class="nav-item">
-                <span class="nav-icon">📢</span><span>Send Announcement</span>
-            </a>
-        </nav>
-
-        <nav class="nav-section">
-            <div class="nav-label">Account</div>
-
-            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="nav-item">
-                <span class="nav-icon">👤</span><span>Profile</span>
-            </a>
-<a href="{{ Route::has('settings') ? route('settings') : '#' }}" class="nav-item">
-  <span class="nav-icon">🔧</span><span>Settings</span>
-</a>
-
-            
-        </nav>
+    <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
+       class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+        <span class="nav-icon">🔧</span><span>Settings</span>
+    </a>
+</nav>
     </aside>
 
     <!-- Main -->

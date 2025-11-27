@@ -18,7 +18,7 @@
       --text-secondary:var(--muted); --text-tertiary:#7a84b0; --border-color:rgba(255,255,255,.08);
       --accent-primary:var(--primary); --accent-secondary:var(--accent); --shadow-sm:0 4px 12px rgba(0,0,0,.15);
       --shadow-md:0 8px 20px rgba(0,0,0,.2); --shadow-lg:var(--shadow); --radius-sm:10px; --radius-md:14px }
-    [data-theme="light"]{ --bg:#f6f7fb; --surface:#fff; --surface-2:#f2f5ff; --card:#fff; --text:#12152b; --muted:#5a6387;
+    [data-theme="light"]{ --bg:#f6f7fb; --surface:#fff; --surface-2:#0e1330; --card:#fff; --text:#12152b; --muted:#5a6387;
       --primary:#3a66ff; --primary-2:#6f90ff; --accent:#7b5cff; --success:#16a34a; --warning:#d97706; --danger:#ef4444;
       --ring:rgba(58,102,255,.35); --shadow:0 10px 24px rgba(13,24,61,.10); --bg-primary:var(--surface); --bg-secondary:var(--surface-2);
       --bg-tertiary:var(--card); --text-primary:var(--text); --text-secondary:var(--muted); --text-tertiary:#7a84b0; --border-color:#e0e5f5 }
@@ -73,8 +73,8 @@
         <div class="brand">
           <div class="logo">V</div>
           <div>
-            <div style="font-weight:800">{{ config('app.name','VolunteerHub') }}</div>
-            <div class="muted" id="regDesc">@lang('Create your volunteer account')</div>
+            <div style="font-weight:758">CrewConnect</div>
+            <div class="muted" id="regDesc">@lang('Create your account')</div>
           </div>
         </div>
         <div class="row">
@@ -96,7 +96,7 @@
           @lang('Worker')
         </button>
         <button id="tab-employee" role="tab" aria-selected="{{ old('account_type')==='employee' ? 'true' : 'false' }}" aria-controls="panel-employee" type="button">
-          @lang('Employee')
+          @lang('Client')
         </button>
       </div>
 
@@ -111,19 +111,19 @@
           <div class="grid">
             <div class="field">
               <label for="first">@lang('First Name')</label>
-              <input class="input" id="first" name="first_name" value="{{ old('first_name') }}" required placeholder="Fatima"/>
+              <input class="input" id="first" name="first_name" value="{{ old('first_name') }}" required placeholder="First Name"/>
               @error('first_name') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
               <label for="last">@lang('Last Name')</label>
-              <input class="input" id="last" name="last_name" value="{{ old('last_name') }}" required placeholder="Hassan"/>
+              <input class="input" id="last" name="last_name" value="{{ old('last_name') }}" required placeholder="Last Name"/>
               @error('last_name') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
               <label for="email">@lang('Email')</label>
-              <input class="input" id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="you@example.com" autocomplete="username"/>
+              <input class="input" id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="you@gmail.com" autocomplete="username"/>
               @error('email') <div class="error">{{ $message }}</div> @enderror
             </div>
 
@@ -135,8 +135,22 @@
 
             <div class="field">
               <label for="city">@lang('City')</label>
-              <input class="input" id="city" name="city" value="{{ old('city') }}" placeholder="Beirut"/>
+              <input class="input" id="city" name="city" value="{{ old('city') }}" placeholder="City"/>
               @error('city') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            {{-- NEW: Date of Birth (worker) --}}
+            <div class="field">
+              <label for="dob">@lang('Date of Birth')</label>
+              <input
+                  class="input"
+                  id="dob"
+                  type="date"
+                  name="date_of_birth"
+                  value="{{ old('date_of_birth') }}"
+                  required
+              />
+              @error('date_of_birth') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
@@ -197,28 +211,42 @@
           <div class="grid">
             <div class="field">
               <label for="e_first">@lang('First Name')</label>
-              <input class="input" id="e_first" name="e_first_name" value="{{ old('e_first_name') }}" placeholder="e.g., Lina"/>
+              <input class="input" id="e_first" name="e_first_name" value="{{ old('e_first_name') }}" placeholder="First Name"/>
               @error('e_first_name') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
               <label for="e_last">@lang('Last Name')</label>
-              <input class="input" id="e_last" name="e_last_name" value="{{ old('e_last_name') }}" placeholder="e.g., Khoury"/>
+              <input class="input" id="e_last" name="e_last_name" value="{{ old('e_last_name') }}" placeholder="Last Name"/>
               @error('e_last_name') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <div class="field">
               <label for="e_email">@lang('Email')</label>
-              <input class="input" id="e_email" type="email" name="e_email" value="{{ old('e_email') }}" placeholder="name@volunteerhub.com" autocomplete="username"/>
+              <input class="input" id="e_email" type="email" name="e_email" value="{{ old('e_email') }}" placeholder="name@gmail.com" autocomplete="username"/>
               @error('e_email') <div class="error">{{ $message }}</div> @enderror
             </div>
-            <div class="field">
-  <label for="e_phone">@lang('Phone')</label>
-  <input class="input" id="e_phone" type="tel" name="e_phone"
-         value="{{ old('e_phone') }}" placeholder="+961 xx xxx xxx"/>
-  @error('e_phone') <div class="error">{{ $message }}</div> @enderror
-</div>
 
+            <div class="field">
+              <label for="e_phone">@lang('Phone')</label>
+              <input class="input" id="e_phone" type="tel" name="e_phone"
+                     value="{{ old('e_phone') }}" placeholder="+961 xx xxx xxx"/>
+              @error('e_phone') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            {{-- NEW: Date of Birth (employee) --}}
+            <div class="field">
+              <label for="e_dob">@lang('Date of Birth')</label>
+              <input
+                  class="input"
+                  id="e_dob"
+                  type="date"
+                  name="e_date_of_birth"
+                  value="{{ old('e_date_of_birth') }}"
+                  required
+              />
+              @error('e_date_of_birth') <div class="error">{{ $message }}</div> @enderror
+            </div>
 
             <div class="field">
               <label for="e_pass">@lang('Password')</label>
@@ -231,8 +259,6 @@
               <input class="input" id="e_confirm" type="password" name="e_password_confirmation" minlength="6" placeholder="••••••••" autocomplete="new-password"/>
             </div>
           </div>
-
-          {{-- Note: Terms/certificates removed for employee as requested --}}
         </section>
 
         <button class="btn full" type="submit" id="regBtn" style="margin-top:12px">@lang('Create Account')</button>
@@ -246,15 +272,41 @@
   <script>
   @verbatim
     const STR = {
-      en:{ title:'Register', desc:'Create your volunteer account', first:'First Name', last:'Last Name',
-        email:'Email', phone:'Phone', city:'City', role:'Preferred Role', pass:'Password', confirm:'Confirm Password',
-        tos:'I agree to the Terms', have:'Have an account? Login', create:'Create Account',
-        worker:'Worker', employee:'Employee'
+      en:{
+        title:'Register',
+        desc:'Create your account',
+        first:'First Name',
+        last:'Last Name',
+        email:'Email',
+        phone:'Phone',
+        city:'City',
+        role:'Preferred Role',
+        pass:'Password',
+        confirm:'Confirm Password',
+        tos:'I agree to the Terms',
+        have:'Have an account? Login',
+        create:'Create Account',
+        worker:'Worker',
+        employee:'Client',
+        dob:'Date of Birth'
       },
-      ar:{ title:'إنشاء حساب', desc:'أنشئ حسابك كمتطوّع', first:'الاسم الأول', last:'اسم العائلة',
-        email:'البريد الإلكتروني', phone:'الهاتف', city:'المدينة', role:'الدور المفضّل', pass:'كلمة المرور', confirm:'تأكيد كلمة المرور',
-        tos:'أوافق على الشروط', have:'لديك حساب؟ تسجيل الدخول', create:'إنشاء الحساب',
-        worker:'متطوّع', employee:'موظّف'
+      ar:{
+        title:'إنشاء حساب',
+        desc:'أنشئ حسابك',
+        first:'الاسم الأول',
+        last:'اسم العائلة',
+        email:'البريد الإلكتروني',
+        phone:'الهاتف',
+        city:'المدينة',
+        role:'الدور المفضّل',
+        pass:'كلمة المرور',
+        confirm:'تأكيد كلمة المرور',
+        tos:'أوافق على الشروط',
+        have:'لديك حساب؟ تسجيل الدخول',
+        create:'إنشاء الحساب',
+        worker:'متطوّع',
+        employee:'عميل',
+        dob:'تاريخ الميلاد'
       }
     };
     let lang = document.documentElement.getAttribute('dir') === 'rtl' ? 'ar' : 'en';
@@ -273,6 +325,7 @@
       document.querySelector('label[for="role"]').textContent=s.role;
       document.querySelector('label[for="pass"]').textContent=s.pass;
       document.querySelector('label[for="confirm"]').textContent=s.confirm;
+      document.querySelector('label[for="dob"]').textContent = s.dob;
       document.getElementById('tosText') && (document.getElementById('tosText').textContent=s.tos);
       document.getElementById('toLogin') && (document.getElementById('toLogin').textContent=s.have);
       document.getElementById('regBtn').textContent=s.create;
@@ -284,6 +337,7 @@
       document.querySelector('label[for="e_phone"]').textContent = s.phone;
       document.querySelector('label[for="e_pass"]').textContent=s.pass;
       document.querySelector('label[for="e_confirm"]').textContent=s.confirm;
+      document.querySelector('label[for="e_dob"]').textContent = s.dob;
 
       // Switcher text
       document.getElementById('tab-worker').textContent=s.worker;

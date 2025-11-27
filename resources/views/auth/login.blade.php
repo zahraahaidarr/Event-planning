@@ -113,7 +113,7 @@
         <div class="brand">
           <div class="logo">V</div>
           <div>
-            <div style="font-weight:800">{{ config('app.name', 'VolunteerHub') }}</div>
+            <div style="font-weight:758">CrewConnect</div>
             <div class="muted" id="authDesc">@lang('Sign in to continue')</div>
           </div>
         </div>
@@ -185,7 +185,7 @@
       </div>
 
       <p class="footer-note">
-        <span class="pill">@lang('Volunteer • Secure Sign-in')</span>
+        <span class="pill">@lang('• Secure Sign-in')</span>
       </p>
     </article>
   </div>

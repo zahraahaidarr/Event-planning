@@ -38,18 +38,7 @@
 <body data-theme="dark">
   <div class="wrap">
     <!-- Top bar -->
-    <div class="topbar">
-      <div class="search" role="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
-                stroke="currentColor" stroke-width="1.6" opacity=".55"/>
-        </svg>
-        <input id="globalSearch" placeholder="Search..." aria-label="Search">
-      </div>
-      {{-- optional theme/lang toggles; only if you add buttons with these IDs --}}
-      {{-- <button id="themeToggle" class="btn small ghost">Theme</button>
-      <button id="langToggle" class="btn small ghost">EN/AR</button> --}}
-    </div>
+    
 
     <!-- Header -->
     <header class="page-head">
@@ -134,9 +123,7 @@
       <article class="card">
         <h3>Account Info</h3>
         <div class="info-list">
-          <div class="info-row">
-            <span class="info-label">User ID</span><span>{{ $u->id }}</span>
-          </div>
+          
           <div class="info-row">
             <span class="info-label">Email</span>
             <span id="infoEmail">{{ $email }}</span>

@@ -46,12 +46,15 @@ function renderCategoryList(){
     return;
   }
 
-  listEl.innerHTML = categories.map(c => `
-    <div class="list-item">
-      <span class="list-name">${c.name}</span>
-      <span class="list-delete" data-id="${c.category_id}">Delete</span>
-    </div>
-  `).join('');
+listEl.innerHTML = categories.map(c => `
+  <div class="list-item">
+    <span class="list-name">${c.name}</span>
+    <button class="btn btn-danger btn-sm list-delete" data-id="${c.category_id}">
+      Delete
+    </button>
+  </div>
+`).join('');
+
 
   // bind deletes
   listEl.querySelectorAll('.list-delete').forEach(el => {
@@ -168,12 +171,15 @@ function renderWorkerList() {
     return;
   }
 
-  listEl.innerHTML = workers.map(w => `
-    <div class="list-item">
-      <span class="list-name">${w.name}</span>
-      <span class="list-delete" data-id="${w.role_type_id}">Delete</span>
-    </div>
-  `).join('');
+listEl.innerHTML = workers.map(w => `
+  <div class="list-item">
+    <span class="list-name">${w.name}</span>
+    <button class="btn btn-danger btn-sm list-delete" data-id="${w.role_type_id}">
+      Delete
+    </button>
+  </div>
+`).join('');
+
 
   // bind delete clicks
   listEl.querySelectorAll('.list-delete').forEach(el => {

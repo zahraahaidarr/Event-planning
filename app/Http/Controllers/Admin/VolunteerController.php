@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Worker;
+use App\Models\RoleType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\Notify;
 use App\Models\WorkerReservation;
 use Carbon\Carbon;
+use App\Models\Event;
 
 class VolunteerController extends Controller
 {
@@ -20,8 +22,18 @@ class VolunteerController extends Controller
         $initial = $this->baseQuery()->get();
         $volunteers = $this->normalize($initial);
 
+        $roles = RoleType::orderBy('name')->get(['role_type_id', 'name']);
+
+        $locations = \App\Models\Event::query()
+        ->select('location')
+        ->distinct()
+        ->orderBy('location')
+        ->pluck('location');
+
         return view('Admin.volunteers', [
             'volunteers' => $volunteers,
+            'roles'      => $roles,   
+            'locations'  => $locations,
         ]);
     }
 

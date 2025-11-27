@@ -78,26 +78,24 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label class="filter-label">Role</label>
-                    <select class="filter-select" id="filterRole" onchange="renderVolunteers()">
-                        <option value="">All Roles</option>
-                        <option value="Organizer">Organizer</option>
-                        <option value="Civil Defense">Civil Defense</option>
-                        <option value="Media Staff">Media Staff</option>
-                        <option value="Tech Support">Tech Support</option>
-                        <option value="Cleaner">Cleaner</option>
-                        <option value="Decorator">Decorator</option>
-                        <option value="Gardener">Gardener</option>
-                    </select>
+                   <select class="filter-select" id="filterRole" onchange="renderVolunteers()">
+    <option value="">All Roles</option>
+    @foreach($roles as $role)
+        <option value="{{ $role->name }}">{{ $role->name }}</option>
+    @endforeach
+</select>
+
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-label">Location</label>
                     <select class="filter-select" id="filterLocation" onchange="renderVolunteers()">
-                        <option value="">All Locations</option>
-                        <option value="Riyadh">Riyadh</option>
-                        <option value="Jeddah">Jeddah</option>
-                        <option value="Dammam">Dammam</option>
-                    </select>
+    <option value="">All Locations</option>
+    @foreach($locations as $loc)
+        <option value="{{ $loc }}">{{ $loc }}</option>
+    @endforeach
+</select>
+
                 </div>
 
                 <div class="filter-group">
@@ -106,7 +104,6 @@
                         <option value="">All Status</option>
                         <option value="active">Active</option>
                         <option value="suspended">Suspended</option>
-                        <option value="banned">Banned</option>
                         <option value="pending">Pending</option>
                     </select>
                 </div>

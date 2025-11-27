@@ -114,7 +114,15 @@ body{
 }
 .list-item:first-child{border-top:none}
 .list-name{font-weight:600;color:var(--text-primary)}
-.list-delete{font-size:13px;color:var(--danger);cursor:pointer}
+.list-delete{font-size:13px;cursor:pointer}
+.list-item .btn-danger.btn-sm {
+  border-radius: 999px;
+}
+/* Make ALL Delete buttons pill-shaped */
+.btn-danger.btn-sm {
+  border-radius: 999px !important;
+}
+
 .list-delete:hover{text-decoration:underline}
 
 .table-container{background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden}

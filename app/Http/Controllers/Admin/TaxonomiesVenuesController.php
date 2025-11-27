@@ -14,9 +14,25 @@ use App\Models\Venue;
 class TaxonomiesVenuesController extends Controller
 {
     public function index()
-    {
-        return view('Admin.admin-taxonomies-venues');
-    }
+{
+    // Worker types
+    $workerTypes = RoleType::orderBy('name')
+        ->get(['role_type_id', 'name', 'description']);
+
+    // Event categories
+    $eventCategories = EventCategory::orderBy('name')
+        ->get(['category_id', 'name', 'description']);
+
+    // Venues
+    $venues = Venue::orderBy('name')
+        ->get(['id', 'name', 'city', 'area_m2']);
+
+    return view('Admin.admin-taxonomies-venues', [
+        'workerTypes'      => $workerTypes,
+        'eventCategories'  => $eventCategories,
+        'venues'           => $venues,
+    ]);
+}
 
     // GET /admin/taxonomies-venues/worker-types
     public function workerTypesIndex()

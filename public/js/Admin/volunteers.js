@@ -72,7 +72,6 @@
             <div class="action-buttons">
               <button class="btn btn-success"  onclick="setActive(${vol.id}, event)"    ${vol.status==='active'?'disabled':''}>Activate</button>
               <button class="btn btn-warning"  onclick="setSuspended(${vol.id}, event)" ${vol.status==='suspended'?'disabled':''}>Suspend</button>
-              <button class="btn btn-danger"   onclick="setBanned(${vol.id}, event)"    ${vol.status==='banned'?'disabled':''}>Ban</button>
               <button class="btn btn-secondary" onclick="viewVolunteer(${vol.id})">View</button>
             </div>
           </td>

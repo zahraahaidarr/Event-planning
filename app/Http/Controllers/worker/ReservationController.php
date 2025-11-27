@@ -106,15 +106,15 @@ class ReservationController extends Controller
 
                 // Date & Time
                 'date' => $event->date
-                          ?? optional($event->starts_at)->format('Y-m-d')
+                          ?? optional($event?->starts_at)->format('Y-m-d')
                           ?? null,
 
                 'time' => $event->time
-                          ?? optional($event->starts_at)->format('H:i')
+                          ?? optional($event?->starts_at)->format('H:i')
                           ?? null,
 
                 // Venue or location
-                'location' => optional($event->venue)->name
+                'location' => optional($event?->venue)->name
                               ?? $event->location
                               ?? '—',
 
@@ -160,34 +160,58 @@ class ReservationController extends Controller
     /**
      * Worker marks a reservation as completed.
      */
-    public function markCompleted(WorkerReservation $reservation, Request $request)
-    {
-        $user = $request->user();
-        $worker = Worker::where('user_id', $user->id)->first();
+public function markCompleted(WorkerReservation $reservation, Request $request)
+{
+    $user   = $request->user();
+    $worker = Worker::where('user_id', $user->id)->first();
 
-        if (! $worker || $reservation->worker_id !== $worker->worker_id) {
-            return response()->json(['ok' => false, 'message' => 'Unauthorized'], 403);
-        }
+    if (! $worker || $reservation->worker_id !== $worker->worker_id) {
+        return response()->json(['ok' => false, 'message' => 'Unauthorized'], 403);
+    }
 
-        if (strtolower($reservation->status) === 'completed') {
-            return response()->json([
-                'ok'      => true,
-                'message' => 'This reservation is already marked as completed.',
-            ]);
-        }
+    if (strtolower($reservation->status) === 'completed') {
+        return response()->json([
+            'ok'      => true,
+            'message' => 'This reservation is already marked as completed.',
+        ]);
+    }
 
-        $reservation->status = 'COMPLETED';
-        $reservation->check_out_time = now();
+    // Make sure we have the event
+    $event = $reservation->event()->first();   // or $reservation->load('event')->event;
 
+    $reservation->status = 'COMPLETED';
+
+    if ($event && $event->starts_at && $event->ends_at) {
+        // Use the scheduled event window
+        $reservation->check_in_time  = $event->starts_at;
+        $reservation->check_out_time = $event->ends_at;
+
+        $minutes = Carbon::parse($event->starts_at)
+            ->diffInMinutes(Carbon::parse($event->ends_at));
+
+        // credit = planned duration
+        $reservation->credited_hours = round($minutes / 60, 2);
+    } else {
+        // Fallback if event has no proper times
         if (! $reservation->check_in_time) {
             $reservation->check_in_time = $reservation->reserved_at ?? now();
         }
 
-        $reservation->save();
+        $reservation->check_out_time = now();
 
-        return response()->json([
-            'ok'      => true,
-            'message' => 'Reservation marked as completed.',
-        ]);
+        $minutes = Carbon::parse($reservation->check_in_time)
+            ->diffInMinutes($reservation->check_out_time);
+
+        $reservation->credited_hours = round($minutes / 60, 2);
     }
+
+    $reservation->save();
+
+    return response()->json([
+        'ok'      => true,
+        'message' => 'Reservation marked as completed.',
+    ]);
+}
+
+
 }

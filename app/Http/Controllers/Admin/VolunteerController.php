@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\Notify;
+use App\Models\WorkerReservation;
+use Carbon\Carbon;
 
 class VolunteerController extends Controller
 {
@@ -112,18 +114,72 @@ class VolunteerController extends Controller
             'message' => 'Status updated.',
         ]);
     }
+public function completeReservation($reservationId)
+{
+    $reservation = WorkerReservation::with('event')->findOrFail($reservationId);
+    $event = $reservation->event;
+
+    if (!$event) {
+        abort(500, 'Event not found');
+    }
+
+    // ---- 1) Fix missing check-in time ----
+    if (!$reservation->check_in_time) {
+        // Use event start time
+        $reservation->check_in_time = $event->starts_at;
+    }
+
+    // ---- 2) Fix missing check-out time ----
+    if (!$reservation->check_out_time) {
+        // Use event end time
+        $reservation->check_out_time = $event->ends_at;
+    }
+
+    // ---- 3) Calculate hours ----
+    $checkIn  = Carbon::parse($reservation->check_in_time);
+    $checkOut = Carbon::parse($reservation->check_out_time);
+
+    // Prevent negative or unrealistic values
+    if ($checkOut->lessThan($checkIn)) {
+        $checkOut = $checkIn->copy()->addHours($event->duration_hours ?? 1);
+    }
+
+    $minutes = $checkIn->diffInMinutes($checkOut);
+    $reservation->credited_hours = round($minutes / 60, 2);
+
+    // ---- 4) Mark as completed ----
+    $reservation->status = 'COMPLETED';
+    $reservation->save();
+}
+
+
 
     /* ======================= Internals ======================= */
 
-    private function baseQuery()
-    {
-        return Worker::query()
-            ->with([
-                'user:id,first_name,last_name,email,status',
-                'reservations.workRole.roleType:role_type_id,name',
-            ])
-            ->withCount('reservations'); // events count
-    }
+private function baseQuery()
+{
+    return Worker::query()
+        ->with([
+            'user:id,first_name,last_name,email,status',
+            'reservations.workRole.roleType:role_type_id,name',
+        ])
+
+        // Count ONLY reservations that are NOT cancelled
+        ->withCount([
+            'reservations as reservations_count' => function ($q) {
+                $q->where('status', '!=', 'CANCELLED');
+            },
+        ])
+
+        // SUM credited_hours ONLY for completed reservations
+        ->withSum([
+            'reservations as total_hours' => function ($q) {
+                $q->where('status', 'COMPLETED');
+            }
+        ], 'credited_hours');
+}
+
+
 
     private function normalize($collection)
     {

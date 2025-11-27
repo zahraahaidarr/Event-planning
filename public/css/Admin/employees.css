@@ -155,3 +155,11 @@ body{
   .main-content{padding:16px}
   .employees-grid{grid-template-columns:1fr}
 }
+.btn-success {
+  background: var(--success);   /* uses your green theme variable */
+  color: #fff;
+}
+
+.btn-success:hover {
+  opacity: .9;
+}

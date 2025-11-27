@@ -109,7 +109,7 @@
             <option value="all" selected>All</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
-            <option value="pending">Pending</option>
+
           </select>
         </div>
 

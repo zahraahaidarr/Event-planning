@@ -12,6 +12,8 @@ use Illuminate\Validation\Rule;
 use App\Services\Notify;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Event;
+use App\Models\WorkerReservation;
+
 
 
 class EmployeesController extends Controller
@@ -160,11 +162,13 @@ public function index()
     }
 
     // DELETE /admin/employees/{id}
+ // make sure this is at the top with the other uses
+
 public function destroy($id)
 {
     $employee = Employee::with('user')->findOrFail($id);
 
-    // (optional) prevent deleting yourself
+    // ❗ Prevent deleting yourself
     if ($employee->user && $employee->user->id === auth()->id()) {
         return response()->json([
             'ok'      => false,
@@ -172,28 +176,59 @@ public function destroy($id)
         ], 422);
     }
 
-    // 🔍 Check if this employee owns/created any events
-    $eventCount = Event::where('created_by', $employee->employee_id)->count();
+    // 🚫 Turn off FK checks temporarily
+    DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-    if ($eventCount > 0) {
-        return response()->json([
-            'ok'      => false,
-            'message' => "This employee is linked to {$eventCount} event(s). Please cancel or reassign those events before deleting this employee.",
-        ], 422);
+    // 1) Get all events created by this employee
+    $events = Event::where('created_by', $employee->employee_id)->get();
+
+    foreach ($events as $event) {
+
+        // 1a) cancel the event
+        $event->status = 'CANCELLED';
+        $event->save();
+
+        // 1b) get all reservations for this event
+        $reservations = WorkerReservation::with('worker.user')
+            ->where('event_id', $event->event_id)
+            ->get();
+
+        foreach ($reservations as $res) {
+
+            // ✔ cancel the reservation also
+            $res->status = 'CANCELLED';
+            $res->save();
+
+            // ✔ notify the worker
+            $userId = $res->worker->user->id ?? null;
+
+            if ($userId) {
+                Notify::to(
+                    $userId,
+                    'Event Cancelled',
+                    "The event \"{$event->title}\" has been cancelled.",
+                    'EVENT'
+                );
+            }
+        }
     }
 
-    // ✅ Safe to delete
-    DB::transaction(function () use ($employee) {
-        if ($employee->user) {
-            // HARD delete user (FK cascade will remove employees row)
-            $employee->user()->forceDelete();
-        } else {
-            $employee->forceDelete();
-        }
-    });
+    // 2) delete the linked user
+    if ($employee->user) {
+        $employee->user->delete();
+    }
+
+    // 3) delete the employee
+    $employee->delete();
+
+    // turn FK back on
+    DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
     return response()->json(['ok' => true], 200);
 }
+
+
+
 
 
 }

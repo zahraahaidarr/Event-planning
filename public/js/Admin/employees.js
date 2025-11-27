@@ -44,7 +44,7 @@
   function actionButtons(emp){
     const isActive = (emp.status === 'active');
     const toggleLabel = isActive ? 'Deactivate' : 'Activate';
-    const toggleClass = isActive ? 'btn-danger' : 'btn-secondary';
+    const toggleClass = isActive ? 'btn-danger' : 'btn-success';
     return `
       <button class="btn ${toggleClass} btn-sm" onclick="toggleActive(${emp.id})">${toggleLabel}</button>
       <button class="btn btn-secondary btn-sm" onclick="deleteEmployee(${emp.id})">Delete</button>
@@ -223,31 +223,40 @@
     }
   };
 
-  window.deleteEmployee = async function(id){
-    if (!confirm('Delete this employee? This action cannot be undone.')) return;
-    try {
-      const res = await fetch(`/admin/employees/${id}`, {
-        method: 'DELETE',
-        credentials: 'same-origin',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrf(),
-        }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error('Delete failed', res.status, txt);
-        alert(`Failed to delete employee (HTTP ${res.status}).`);
-        return;
+ window.deleteEmployee = async function(id){
+  if (!confirm('Delete this employee? This action cannot be undone.')) return;
+
+  try {
+    const res = await fetch(`/admin/employees/${id}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': csrf(),
       }
-      employeesAll = employeesAll.filter(e => e.id !== id);
-      applyFiltersAndRender();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete employee (network).');
+    });
+
+    if (!res.ok) {
+      let msg = `Failed to delete employee (HTTP ${res.status}).`;
+      try {
+        const data = await res.json();
+        if (data.message) msg = data.message;   // 👈 show our custom message
+      } catch (e) {
+        console.error('Error parsing delete response', e);
+      }
+      alert(msg);
+      return;
     }
-  };
+
+    // success → remove from list
+    employeesAll = employeesAll.filter(e => e.id !== id);
+    applyFiltersAndRender();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to delete employee (network).');
+  }
+};
 
   // ========= Initial render =========
   applyFiltersAndRender();

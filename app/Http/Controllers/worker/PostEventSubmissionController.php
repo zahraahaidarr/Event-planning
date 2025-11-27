@@ -12,27 +12,30 @@ use Illuminate\Support\Facades\DB;
 
 class PostEventSubmissionController extends Controller
 {
-    public function index(Request $request)
-    {
-        $user   = $request->user();
-        $worker = $user->worker; // workers.worker_id
+public function index(Request $request)
+{
+    $user   = $request->user();
+    $worker = $user->worker;
 
-        $reservations = WorkerReservation::with(['event', 'workRole.roleType'])
-            ->where('worker_id', $worker->worker_id)
-            ->where('status', 'RESERVED')   // adjust if you use other statuses
-            ->orderByDesc('reserved_at')
-            ->get();
+    $reservations = WorkerReservation::with(['event', 'workRole.roleType'])
+        ->where('worker_id', $worker->worker_id)
+        // make sure event still exists
+        ->whereHas('event')
+        // allow only valid statuses
+        ->whereIn('status', ['RESERVED', 'CHECKED_IN', 'CHECKED_OUT', 'COMPLETED'])
+        ->orderByDesc('reserved_at')
+        ->get();
 
-        $submissions = PostEventSubmission::with(['event', 'role', 'civilCases'])
-            ->where('worker_id', $worker->worker_id)
-            ->latest('submitted_at')
-            ->get();
+    $submissions = PostEventSubmission::with(['event', 'role', 'civilCases'])
+        ->where('worker_id', $worker->worker_id)
+        ->latest('submitted_at')
+        ->get();
 
-        return view('worker.post-event-submission', [
-            'reservations' => $reservations,
-            'submissions'  => $submissions,
-        ]);
-    }
+    return view('worker.post-event-submission', [
+        'reservations' => $reservations,
+        'submissions'  => $submissions,
+    ]);
+}
 
     public function store(Request $request)
     {

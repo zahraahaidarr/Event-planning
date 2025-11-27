@@ -41,54 +41,77 @@
     <!-- Sidebar -->
     @if (! $isEmployee)
         {{-- ========== ADMIN SIDEBAR (unchanged) ========== --}}
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">V</div>
-                <span class="logo-text">VolunteerHub</span>
+  <!-- Sidebar -->
+      <aside class="sidebar">
+        @php($user = Auth::user())
+
+<div class="logo">
+    <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+        @if($user && $user->avatar_path)
+            <img
+                src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                class="logo-avatar"
+            >
+        @else
+            <div class="logo-icon">
+                {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
             </div>
+        @endif
 
-            <nav class="nav-section">
-                <div class="nav-label">Admin</div>
+        <div class="logo-id">
+            <div class="logo-name">
+                {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+            </div>
+            <div class="logo-role">
+                {{ strtoupper($user->role ?? 'USER') }}
+            </div>
+        </div>
+    </a>
+</div>
 
-                <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
-                   class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <span class="nav-icon">📊</span><span>Dashboard</span>
-                </a>
 
-                <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}" class="nav-item">
-                    <span class="nav-icon">👔</span><span>Employees</span>
-                </a>
 
-                <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}" class="nav-item">
-                    <span class="nav-icon">👥</span><span>Volunteers</span>
-                </a>
+        <nav class="nav-section">
+          
+            <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
+               class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <span class="nav-icon">📊</span><span>Dashboard</span>
+            </a>
 
-                <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
-                   class="nav-item active">
-                    <span class="nav-icon">📅</span><span>Events</span>
-                </a>
+            <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}" class="nav-item">
+                <span class="nav-icon">👔</span><span>Employees</span>
+            </a>
 
-                <a href="{{ route('taxonomies-venues.index') }}" class="nav-item">
-                    <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
-                </a>
+            <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}" class="nav-item">
+                <span class="nav-icon">👥</span><span>Volunteers</span>
+            </a>
 
-                <a href="{{ route('announcements.create') }}" class="nav-item">
-                    <span class="nav-icon">📢</span><span>Send Announcement</span>
-                </a>
-            </nav>
+            <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}" class="nav-item">
+                <span class="nav-icon">📅</span><span>Events</span>
+            </a>
+            <a href="{{ route('taxonomies-venues.index') }}" class="nav-item active">
+                <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+            </a>
 
-            <nav class="nav-section">
-                <div class="nav-label">Account</div>
+            <a href="{{ route('announcements.create') }}" class="nav-item">
+                <span class="nav-icon">📢</span><span>Send Announcement</span>
+            </a>
+        </nav>
 
-                <a href="{{ Route::has('profile.show') ? route('profile.show') : '#' }}" class="nav-item">
-                    <span class="nav-icon">👤</span><span>Profile</span>
-                </a>
+        <nav class="nav-section">
+            <div class="nav-label">Account</div>
 
-                <a href="{{ Route::has('settings.show') ? route('settings.show') : '#' }}" class="nav-item">
-                    <span class="nav-icon">🔧</span><span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="nav-item">
+                <span class="nav-icon">👤</span><span>Profile</span>
+            </a>
+<a href="{{ Route::has('settings') ? route('settings') : '#' }}" class="nav-item">
+  <span class="nav-icon">🔧</span><span>Settings</span>
+</a>
+
+            
+        </nav>
+    </aside>
     @else
         {{-- ========== EMPLOYEE SIDEBAR (copied from employee dashboard) ========== --}}
         <aside class="sidebar">

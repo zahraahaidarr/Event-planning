@@ -45,10 +45,12 @@ function renderEvents() {
       });
 
   tbody.innerHTML = filtered.map(event => {
-    const statusRaw   = event.status || 'DRAFT';      // backend sends upper-case
-    const statusKey   = statusRaw.toLowerCase();      // for css / filter
+    const statusRaw   = (event.status || 'DRAFT').toUpperCase(); // DRAFT / PUBLISHED / ...
+    const statusKey   = statusRaw.toLowerCase();
     const statusLabel = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
     const statusClass = `status-${statusKey}`;
+
+    const canPublish = statusRaw !== 'PUBLISHED';
 
     return `
       <tr>
@@ -59,12 +61,23 @@ function renderEvents() {
         <td>${event.applicants || 0} / ${event.totalSpots || 0}</td>
         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
         <td>
-          <div class="action-buttons">
-            <button class="btn btn-secondary btn-sm" data-edit="${event.id}">Edit</button>
-            <button class="btn btn-warning btn-sm" data-status="CANCELLED" data-id="${event.id}">Cancel</button>
-            <button class="btn btn-light btn-sm" data-status="DRAFT" data-id="${event.id}">Set as Draft</button>
-          </div>
-        </td>
+  <div class="action-buttons">
+    <button class="btn btn-secondary btn-sm" data-edit="${event.id}">Edit</button>
+
+    <button class="btn btn-success btn-sm" data-status="PUBLISHED" data-id="${event.id}">
+      Publish
+    </button>
+
+    <button class="btn btn-danger btn-sm" data-status="CANCELLED" data-id="${event.id}">
+      Cancel
+    </button>
+
+    <button class="btn btn-light btn-sm" data-status="DRAFT" data-id="${event.id}">
+      Set as Draft
+    </button>
+  </div>
+</td>
+
       </tr>`;
   }).join('');
 }
@@ -522,14 +535,16 @@ async function openEditModal(id) {
   $('#eventForm').reset();
   $('#rolesContainer').innerHTML = '';
   ensureCategoryOptions();
-  setWizardStep(3); // jump directly to details
+
+  // for editing we go straight to step 3 (details)
+  setWizardStep(3);
 
   try {
     const url = `${window.ENDPOINT_UPDATE_EVENT_BASE}/${id}`;
     const res = await fetch(url, {
       headers: {
-        'Accept':'application/json',
-        'X-Requested-With':'XMLHttpRequest'
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       }
     });
 
@@ -543,20 +558,22 @@ async function openEditModal(id) {
 
     const ev = data.event;
 
-    // fill form
-    $('#eventTitle').value       = ev.title || '';
-    $('#eventDescription').value = ev.description || '';
-    $('#eventCategory').value    = ev.category || '';
-    $('#eventLocation').value    = ev.location || '';
-    $('#eventDate').value        = ev.date || '';
-    $('#eventTime').value        = ev.time || '';
-    $('#eventDuration').value    = ev.duration_hours || 1;
-    $('#eventSpots').value       = ev.total_spots || 1;
-    $('#venue_area_m2').value    = ev.venue_area_m2 || '';
-    $('#expected_attendees').value = ev.expected_attendees || '';
-        // image preview if backend returns it
-    const preview = $('#eventImagePreview');
+    // ===== Fill the form fields =====
+    $('#eventTitle').value        = ev.title || '';
+    $('#eventDescription').value  = ev.description || '';
+    $('#eventCategory').value     = ev.category || '';
+    $('#eventLocation').value     = ev.location || '';
+    $('#eventDate').value         = ev.date || '';
+    $('#eventTime').value         = ev.time || '';
+    $('#eventDuration').value     = ev.duration_hours || 1;
+    $('#eventSpots').value        = ev.total_spots || 1;
+    $('#venue_area_m2').value     = ev.venue_area_m2 ?? '';
+    $('#expected_attendees').value = ev.expected_attendees ?? '';
+
+    // image preview
+    const preview  = $('#eventImagePreview');
     const imgInput = $('#eventImage');
+
     if (preview) {
       if (ev.image_url) {
         preview.src = ev.image_url;
@@ -576,6 +593,7 @@ async function openEditModal(id) {
       ev.roles.forEach(r => renderRoleRow(r.name, r.spots));
     }
 
+    // finally show modal
     $('#eventModal').classList.add('active');
 
   } catch (e) {
@@ -584,25 +602,9 @@ async function openEditModal(id) {
   }
 }
 
+
 /* ========= Theme / Language ========= */
 
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  $('#theme-icon').textContent = next === 'dark' ? '☀️' : '🌙';
-}
-
-function toggleLanguage() {
-  const html = document.documentElement;
-  const current = html.getAttribute('lang') || 'en';
-  const next = current === 'en' ? 'ar' : 'en';
-  const dir  = next === 'ar' ? 'rtl' : 'ltr';
-  html.setAttribute('lang', next);
-  html.setAttribute('dir', dir);
-  $('#lang-icon').textContent = next === 'en' ? 'AR' : 'EN';
-}
 
 /* ========= Table actions ========= */
 
@@ -631,8 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#btn_publish').addEventListener('click', publishEvent);
   $('#btn_save_draft').addEventListener('click', saveDraft);
   $('#btn_add_role').addEventListener('click', addRoleRow);
-  $('#btn_theme').addEventListener('click', toggleTheme);
-  $('#btn_lang').addEventListener('click', toggleLanguage);
+ 
   $('.table').addEventListener('click', handleTableClicks);
 
   ensureCategoryOptions();

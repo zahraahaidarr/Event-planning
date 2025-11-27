@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\JsonResponse;
 
 use App\Models\Event;
 use App\Models\WorkRole;
@@ -22,72 +23,75 @@ class EventsController extends Controller
      * GET /admin/events
      */
     public function index(Request $request)
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        // Base query
-        $eventsQuery = Event::orderByDesc('created_at');
+    // Base query: load category + count reservations
+    $eventsQuery = Event::with('category')        // relation: category()
+        ->withCount('reservations')               // relation: reservations()
+        ->orderByDesc('created_at');
 
-        // If user is EMPLOYEE, limit to events he created
-        if ($user && $user->role === 'EMPLOYEE') {
-            $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
+    // If user is EMPLOYEE, limit to events he created
+    if ($user && $user->role === 'EMPLOYEE') {
+        $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
 
-            // If for some reason the employee row doesn't exist, just show nothing
-            if ($employeeId) {
-                $eventsQuery->where('created_by', $employeeId);
-            } else {
-                // no matching employee → force empty result
-                $eventsQuery->whereRaw('1 = 0');
-            }
+        if ($employeeId) {
+            $eventsQuery->where('created_by', $employeeId);
+        } else {
+            // no matching employee → force empty result
+            $eventsQuery->whereRaw('1 = 0');
         }
-        // If user is ADMIN → no extra where → all events
-
-        $events = $eventsQuery->get([
-            'event_id',
-            'title',
-            'category_id',
-            'location',
-            'status',
-            'total_spots',
-            'starts_at',
-            'created_at',
-        ]);
-
-        $categories = EventCategory::orderBy('name')
-            ->get(['category_id', 'name']);
-
-        $roleTypes = RoleType::orderBy('name')
-            ->get(['role_type_id', 'name']);
-
-        $eventsPayload = $events->map(function ($e) {
-            return [
-                'id'          => $e->event_id,
-                'title'       => $e->title,
-                'category'    => $e->category_id,
-                'date'        => optional($e->starts_at)->format('Y-m-d'),
-                'location'    => $e->location,
-                'status'      => $e->status ?? 'published',
-                'totalSpots'  => $e->total_spots ?? 0,
-                'applicants'  => 0,
-            ];
-        });
-
-        $categoriesPayload = $categories->map(fn ($c) => [
-            'id'   => $c->category_id,
-            'name' => $c->name,
-        ]);
-
-        $roleTypesPayload = $roleTypes->map(fn ($r) => [
-            'id'   => $r->role_type_id,
-            'name' => $r->name,
-        ]);
-
-        return view('admin.events', [
-            'eventsPayload'     => $eventsPayload,
-            'categoriesPayload' => $categoriesPayload,
-            'roleTypesPayload'  => $roleTypesPayload,
-        ]);
     }
+
+    // Get all needed fields (+ reservations_count from withCount)
+    $events = $eventsQuery->get([
+        'event_id',
+        'title',
+        'category_id',
+        'location',
+        'status',
+        'total_spots',
+        'starts_at',
+        'created_at',
+    ]);
+
+    $categories = EventCategory::orderBy('name')
+        ->get(['category_id', 'name']);
+
+    $roleTypes = RoleType::orderBy('name')
+        ->get(['role_type_id', 'name']);
+
+    $eventsPayload = $events->map(function ($e) {
+        return [
+            'id'         => $e->event_id,
+            'title'      => $e->title,
+            // category NAME instead of id
+            'category'   => optional($e->category)->name ?? '-',
+            'date'       => optional($e->starts_at)->format('Y-m-d'),
+            'location'   => $e->location,
+            'status'     => $e->status ?? 'PUBLISHED',
+            'totalSpots' => $e->total_spots ?? 0,
+            // count from workers_reservations
+            'applicants' => (int) $e->reservations_count,
+        ];
+    });
+
+    $categoriesPayload = $categories->map(fn ($c) => [
+        'id'   => $c->category_id,
+        'name' => $c->name,
+    ]);
+
+    $roleTypesPayload = $roleTypes->map(fn ($r) => [
+        'id'   => $r->role_type_id,
+        'name' => $r->name,
+    ]);
+
+    return view('admin.events', [
+        'eventsPayload'     => $eventsPayload,
+        'categoriesPayload' => $categoriesPayload,
+        'roleTypesPayload'  => $roleTypesPayload,
+    ]);
+}
 
     /**
      * POST /admin/events
@@ -393,7 +397,22 @@ if ($request->hasFile('image')) {
                     ]);
                 }
             });
+        // 🔔 NEW: notify all workers who reserved this event
+        $event->load('reservations.worker.user');
 
+        foreach ($event->reservations as $reservation) {
+            $workerUserId = $reservation->worker->user_id ?? null;
+            if (!$workerUserId) {
+                continue;
+            }
+
+            Notify::to(
+                $workerUserId,
+                'Event updated',
+                "The event '{$event->title}' has been updated. Please review the new details in your dashboard.",
+                'EVENT_UPDATED'
+            );
+        }
             return response()->json([
                 'ok'    => true,
                 'event' => [

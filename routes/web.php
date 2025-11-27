@@ -80,7 +80,7 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
     Route::post('/events', [EventsController::class, 'store'])->name('events.store');
     Route::get   ('/events/{event}',        [EventsController::class, 'show'])->name('events.show');
     Route::put   ('/events/{event}',        [EventsController::class, 'update'])->name('events.update');
-    Route::patch ('/events/{event}/status', [EventsController::class, 'updateStatus'])->name('events.update-status');
+    Route::patch('/admin/events/{event}/status',[EventsController::class, 'updateStatus'])->name('admin.events.status');
 });
 
 

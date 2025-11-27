@@ -181,12 +181,6 @@
           <button class="btn btn-primary" id="btn_open_create">
             <span>➕</span>Create Event
           </button>
-          <button class="icon-btn" id="btn_theme" title="Toggle theme">
-            <span id="theme-icon">☀️</span>
-          </button>
-          <button class="icon-btn" id="btn_lang" title="Toggle language">
-            <span id="lang-icon">AR</span>
-          </button>
         </div>
       </div>
 
@@ -195,7 +189,6 @@
         <button class="tab active" data-filter="all">All Events</button>
         <button class="tab" data-filter="draft">Drafts</button>
         <button class="tab" data-filter="published">Published</button>
-        <button class="tab" data-filter="active">Active</button>
         <button class="tab" data-filter="completed">Completed</button>
         <button class="tab" data-filter="cancelled">Cancelled</button>
       </div>
@@ -360,7 +353,7 @@
     window.ENDPOINT_CREATE_EVENT             = "{{ route('events.store') }}";
     window.ENDPOINT_AI_STAFFING              = "{{ url('/api/ai/staffing') }}"; // optional
     window.ENDPOINT_UPDATE_EVENT_STATUS_BASE = "{{ url('/admin/events') }}";
-    window.ENDPOINT_UPDATE_EVENT_BASE        = "{{ url('/admin/events') }}";
+    window.ENDPOINT_UPDATE_EVENT_BASE        = "{{ url('/events') }}";
 
     window.initialEvents     = @json($eventsPayload);
     window.initialCategories = @json($categoriesPayload);

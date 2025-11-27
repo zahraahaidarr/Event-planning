@@ -468,8 +468,19 @@ body{
 .btn-sm{padding:6px 12px;font-size:13px}
 .btn-secondary{background:var(--bg-tertiary);color:var(--text-primary)}
 .btn-secondary:hover{background:var(--border-color)}
-.btn-danger{background:var(--danger);color:#fff}
+
+.btn-success{
+  background:var(--success);
+  color:#fff;
+}
+.btn-success:hover{opacity:.9}
+
+.btn-danger{
+  background:var(--danger);
+  color:#fff;
+}
 .btn-danger:hover{opacity:.9}
+
 
 /* Modal */
 .modal{
@@ -648,4 +659,39 @@ body{
   .table-container{overflow-x:auto}
   .form-grid{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
+}
+.status-badge{
+  padding:4px 10px;
+  border-radius:var(--radius-sm);
+  font-size:12px;
+  font-weight:600;
+}
+
+.status-draft{
+  background:rgba(170,179,214,.18);
+  color:var(--muted);
+}
+
+.status-published{
+  background:rgba(54,211,153,.18);
+  color:var(--success);
+}
+
+/* NEW – shaded pill for Cancelled */
+.status-cancelled{
+  background:rgba(255,107,107,.18);
+  color:var(--danger);
+}
+
+/* (optional) keep if you use "CLOSED" somewhere else */
+.status-closed{
+  background:rgba(255,107,107,.18);
+  color:var(--danger);
+}
+.btn-success{
+  background: var(--success);
+  color: #fff;
+}
+.btn-success:hover{
+  opacity: .9;
 }

@@ -11,17 +11,23 @@ class NotificationController extends Controller
 {
     /**
      * Display all notifications for the logged-in user.
+     * Automatically mark ALL unread notifications as read.
      */
     public function index()
     {
         $userId = Auth::id();
 
-        // Fetch the latest 50 notifications
+        // Fetch notifications first
         $notifications = DB::table('notifications')
-    ->where('user_id', $userId)
-    ->orderBy('created_at', 'desc')
-    ->paginate(15);   // << now it's a LengthAwarePaginator
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
+        // Mark unread as read immediately when page opens
+        DB::table('notifications')
+            ->where('user_id', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
 
         return view('notifications.index', compact('notifications'));
     }
@@ -42,7 +48,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Mark all notifications as read (AJAX).
+     * (Optional) Keep this for API use but not needed anymore on UI.
      */
     public function markAllRead(Request $request): JsonResponse
     {
@@ -57,8 +63,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Helper endpoint to create a test notification manually (optional).
-     * You can remove this in production.
+     * Helper endpoint to create a test notification manually.
      */
     public function createTestNotification(): JsonResponse
     {

@@ -23,16 +23,7 @@
     <!-- Main Content -->
     <main class="content" id="main">
       <!-- Top bar -->
-      <div class="topbar">
-        <div class="search" role="search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
-                  stroke="currentColor" stroke-width="1.6" opacity=".55"/>
-          </svg>
-          <input id="globalSearch" placeholder="Search settings..." aria-label="Search settings"/>
-        </div>
-
-      </div>
+      
 
       <!-- Page Header -->
       <section class="page-header">

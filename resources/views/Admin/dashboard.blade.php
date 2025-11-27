@@ -1,5 +1,7 @@
 {{-- resources/views/Admin/dashboard.blade.php --}}
-<!DOCTYPE html>
+<!DOCTYPE html lang="{{ $_COOKIE['vh_lang'] ?? 'en' }}"
+    dir="{{ (($_COOKIE['vh_lang'] ?? 'en') === 'ar') ? 'rtl' : 'ltr' }}"
+    data-theme="dark">
 <html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale()==='ar' ? 'rtl' : 'ltr' }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">

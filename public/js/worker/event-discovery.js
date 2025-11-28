@@ -24,20 +24,48 @@ function renderEvents(view = 'grid') {
     grid.innerHTML = '';
 
     filteredEvents.forEach(ev => {
+        // ---------- status label ----------
+        const status = ev.status || 'open';
         const statusClass =
-            ev.status === 'open'
+            status === 'open'
                 ? 'status-open'
-                : ev.status === 'limited'
+                : status === 'limited'
                     ? 'status-limited'
                     : 'status-full';
 
         const statusText =
-            ev.status === 'open'
+            status === 'open'
                 ? 'Open'
-                : ev.status === 'limited'
+                : status === 'limited'
                     ? 'Limited Spots'
                     : 'Full';
 
+        // ---------- spots: USED / TOTAL ----------
+        // backend gives us spotsRemaining (available) + spotsTotal
+        // we convert to: used = total - remaining
+        let spotsTotal = ev.spotsTotal;
+        let spotsRemaining = ev.spotsRemaining;
+
+        // make sure they are numbers, not undefined / strings
+        spotsTotal = typeof spotsTotal === 'number'
+            ? spotsTotal
+            : parseInt(spotsTotal || '0', 10);
+
+        spotsRemaining = typeof spotsRemaining === 'number'
+            ? spotsRemaining
+            : parseInt(spotsRemaining || '0', 10);
+
+        if (isNaN(spotsTotal)) spotsTotal = 0;
+        if (isNaN(spotsRemaining)) spotsRemaining = 0;
+
+        const spotsUsed = Math.max(0, spotsTotal - spotsRemaining);
+
+        // ---------- roles ----------
+        const rolesHtml = Array.isArray(ev.roles)
+            ? ev.roles.map(r => `<span class="role-badge">${r}</span>`).join('')
+            : '';
+
+        // ---------- card ----------
         const card = document.createElement('div');
         card.className = 'event-card';
 
@@ -48,10 +76,6 @@ function renderEvents(view = 'grid') {
         }
 
         card.onclick = () => openEventModal(ev);
-
-        const rolesHtml = Array.isArray(ev.roles)
-            ? ev.roles.map(r => `<span class="role-badge">${r}</span>`).join('')
-            : '';
 
         card.innerHTML = `
             <img src="${ev.image}" alt="${ev.title}" class="event-image">
@@ -78,17 +102,16 @@ function renderEvents(view = 'grid') {
                 </div>
                 <div class="event-roles">${rolesHtml}</div>
                 <div class="event-footer">
-                    <span class="spots-remaining">
-                        <strong>${ev.spotsRemaining}</strong> / ${ev.spotsTotal} spots
-                    </span>
-                    <button class="btn-apply"
-                            ${ev.status === 'full' ? 'disabled' : ''}
-                            onclick="event.stopPropagation(); openEventModal(${ev.id});">
-                        ${ev.status === 'full' ? 'Full' : 'Apply'}
-                    </button>
-                </div>
-            </div>
-        `;
+        <span class="spots-remaining">
+            <strong>${spotsUsed}</strong> / ${spotsTotal} spots
+        </span>
+        <button class="btn-apply"
+                ${status === 'full' ? 'disabled' : ''}
+                onclick="event.stopPropagation(); openEventModal(${ev.id});">
+            ${status === 'full' ? 'Full' : 'Apply'}
+        </button>
+    </div>
+`;
 
         grid.appendChild(card);
     });
@@ -96,6 +119,7 @@ function renderEvents(view = 'grid') {
     const countEl = $('#resultsCount');
     if (countEl) countEl.textContent = filteredEvents.length;
 }
+
 
 /* ========= Filters ========= */
 

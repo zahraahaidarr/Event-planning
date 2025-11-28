@@ -131,19 +131,18 @@ class EventDiscoveryController extends Controller
         ]);
     }
 
-  public function apply(Request $request, Event $event): JsonResponse
+ public function apply(Request $request, Event $event): JsonResponse
 {
     $userId = auth()->id();
     $worker = Worker::where('user_id', $userId)->first();
 
-    if (!$worker) {
+    if (! $worker) {
         return response()->json([
             'ok'      => false,
             'message' => 'Worker profile not found.',
         ], 422);
     }
 
-    // worker main role type (matches role_types / work_roles.role_type_id)
     $roleTypeId = $worker->role_type_id;
 
     $role = $event->workRoles()
@@ -151,33 +150,47 @@ class EventDiscoveryController extends Controller
         ->orderBy('role_id')
         ->first();
 
-    if (!$role) {
+    if (! $role) {
         return response()->json([
             'ok'      => false,
             'message' => 'No matching role for your profile in this event.',
         ], 422);
     }
 
-    // Use the same active states your ENUM supports
-    $activeStatuses = ['RESERVED', 'CHECKED_IN'];
+    // statuses that really consume a spot
+    $capacityStatuses = ['RESERVED', 'CHECKED_IN'];
 
-    // prevent duplicate active reservation
-    $exists = WorkerReservation::where('worker_id', $worker->worker_id)
-        ->where('event_id', $event->event_id)
-        ->whereIn('status', $activeStatuses)
-        ->exists();
+    // existing reservation (any status) for THIS event + role + worker
+    $existing = WorkerReservation::where('event_id', $event->event_id)
+        ->where('work_role_id', $role->role_id)
+        ->where('worker_id', $worker->worker_id)
+        ->first();
 
-    if ($exists) {
-        return response()->json([
-            'ok'      => false,
-            'message' => 'You already applied for this event.',
-        ], 422);
+    if ($existing) {
+        $rawStatus = strtoupper($existing->status ?? '');
+
+        // already applied / active
+        if (in_array($rawStatus, ['PENDING', 'RESERVED', 'CHECKED_IN'], true)) {
+            return response()->json([
+                'ok'      => false,
+                'message' => 'You already applied for this event.',
+            ], 422);
+        }
+
+        // never allow re-apply after rejection / fully completed / no-show
+        if (in_array($rawStatus, ['REJECTED', 'COMPLETED', 'NO_SHOW', 'CHECKED_OUT'], true)) {
+            return response()->json([
+                'ok'      => false,
+                'message' => 'Your application for this event is closed. You cannot apply again.',
+            ], 422);
+        }
+        // at this point, the only normal case is CANCELLED → we will reuse this row
     }
 
-    // capacity check for that role
+    // capacity check (only RESERVED + CHECKED_IN count)
     $used = WorkerReservation::where('event_id', $event->event_id)
         ->where('work_role_id', $role->role_id)
-        ->whereIn('status', $activeStatuses)
+        ->whereIn('status', $capacityStatuses)
         ->count();
 
     if ($used >= $role->required_spots) {
@@ -187,36 +200,49 @@ class EventDiscoveryController extends Controller
         ], 422);
     }
 
-    $reservation = WorkerReservation::create([
-        'event_id'     => $event->event_id,
-        'work_role_id' => $role->role_id,
-        'worker_id'    => $worker->worker_id,
-        'reserved_at'  => now(),
-        'status'       => 'RESERVED',   // <-- match ENUM
-        'created_at'   => now(),
-        'updated_at'   => now(),
-    ]);
-    // Notify the worker himself
-Notify::to(
-    $worker->user_id,
-    'Application submitted',
-    "You applied to '{$event->title}' successfully.",
-    'RESERVATION'
-);
+    // (re)activate reservation as PENDING
+    if ($existing) {
+        // was CANCELLED → reactivate same DB row (avoids UNIQUE error)
+        $reservation = $existing;
+        $reservation->status         = 'PENDING';
+        $reservation->reserved_at    = now();
+        $reservation->check_in_time  = null;
+        $reservation->check_out_time = null;
+        $reservation->credited_hours = null;
+        $reservation->save();
+    } else {
+        // first time applying → create new row
+        $reservation = WorkerReservation::create([
+            'event_id'     => $event->event_id,
+            'work_role_id' => $role->role_id,
+            'worker_id'    => $worker->worker_id,
+            'reserved_at'  => now(),
+            'status'       => 'PENDING',
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+    }
 
-// Optionally, notify the event creator (Employee or Admin)
-$creatorUserId = optional(\App\Models\Employee::find($event->created_by))->user_id ?? null;
-if ($creatorUserId) {
+    // notifications
     Notify::to(
-        $creatorUserId,
-        'New application received',
-        "{$worker->user->first_name} {$worker->user->last_name} applied to '{$event->title}'.",
+        $worker->user_id,
+        'Application submitted',
+        "You applied to '{$event->title}' successfully.",
         'RESERVATION'
     );
-}
 
+    $creatorUserId = optional(\App\Models\Employee::find($event->created_by))->user_id ?? null;
+    if ($creatorUserId) {
+        Notify::to(
+            $creatorUserId,
+            'New application received',
+            "{$worker->user->first_name} {$worker->user->last_name} applied to '{$event->title}'.",
+            'RESERVATION'
+        );
+    }
 
-    $spotsRemaining = max(0, $role->required_spots - ($used + 1));
+    // PENDING does NOT change capacity (only RESERVED + CHECKED_IN do)
+    $spotsRemaining = max(0, $role->required_spots - $used);
 
     return response()->json([
         'ok'             => true,
@@ -225,6 +251,5 @@ if ($creatorUserId) {
         'spotsRemaining' => $spotsRemaining,
     ]);
 }
-
 
 }

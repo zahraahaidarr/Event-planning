@@ -162,6 +162,12 @@
     window.ENDPOINT_APPS_BASE = "{{ url('/employee/volunteer-assignment/events') }}";
 </script>
 <script src="{{ asset('js/employee/volunteer-assignment.js') }}" defer></script>
+<script>
+    window.csrfToken           = "{{ csrf_token() }}";
+    window.ENDPOINT_APPS_BASE  = "{{ url('/employee/volunteer-assignment/events') }}";
+    // ⬇️ NEW: base URL to update reservation status
+    window.ENDPOINT_STATUS_BASE = "{{ url('/employee/volunteer-assignment/reservations') }}";
+</script>
 
 </body>
 </html>

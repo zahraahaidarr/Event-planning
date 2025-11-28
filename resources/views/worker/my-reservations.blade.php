@@ -18,58 +18,71 @@
 <div class="container">
 
     <!-- Sidebar -->
-    <aside class="sidebar">
+           <aside class="sidebar">
+        @php($user = Auth::user())
+
         <div class="logo">
-            <div class="logo-icon">V</div>
-            <span class="logo-text">VolunteerHub</span>
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                    </div>
+                @endif
+
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+                    <div class="logo-role">
+                        {{ strtoupper($user->role ?? 'WORKER') }}
+                    </div>
+                </div>
+            </a>
         </div>
 
         <nav class="nav-section">
-            <div class="nav-label">Worker</div>
-
+            {{-- removed the "Worker" label to match admin look --}}
             <a href="{{ route('worker.dashboard') }}" class="nav-item">
                 <span class="nav-icon">🏠</span>
                 <span>Dashboard</span>
             </a>
-
-            <a href="{{ route('worker.events.discover') }}" class="nav-item">
+            <a href="{{ route('worker.events.discover') }}" class="nav-item active">
                 <span class="nav-icon">🗓️</span>
                 <span>Discover Events</span>
             </a>
-
-            <a href="{{ route('worker.reservations') }}" class="nav-item active">
+            <a href="{{ route('worker.reservations') }}" class="nav-item">
                 <span class="nav-icon">✅</span>
                 <span>My Reservations</span>
             </a>
-
             <a href="{{ route('worker.submissions') }}" class="nav-item">
                 <span class="nav-icon">📝</span>
                 <span>Post-Event Submissions</span>
             </a>
         </nav>
 
+
         <nav class="nav-section">
             <div class="nav-label">Account</div>
-
-            <a href="{{ route('profile') }}" class="nav-item">
-                <span class="nav-icon">👤</span>
-                <span>Profile</span>
-            </a>
-
+            
             <a href="{{ route('worker.messages') }}" class="nav-item">
                 <span class="nav-icon">💬</span>
                 <span>Chat</span>
             </a>
-
             <a href="{{ route('worker.announcements.index') }}" class="nav-item">
                 <span class="nav-icon">📢</span>
                 <span>Announcements</span>
             </a>
-
             <a href="{{ route('settings') }}" class="nav-item">
                 <span class="nav-icon">⚙️</span>
                 <span>Settings</span>
             </a>
+                   
         </nav>
     </aside>
 
@@ -82,15 +95,7 @@
                 <p>Track your volunteer applications and commitments</p>
             </div>
 
-            <div class="header-actions">
-                <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
-                    <span id="theme-icon">☀️</span>
-                </button>
-
-                <button class="icon-btn" onclick="toggleLanguage()" title="Toggle language">
-                    <span id="lang-icon">AR</span>
-                </button>
-            </div>
+            
         </div>
 
         <!-- Stats -->
@@ -139,9 +144,11 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" data-tab="all">All</button>
+            <button class="tab" data-tab="pending">Pending</button>
             <button class="tab" data-tab="reserved">Reserved</button>
             <button class="tab" data-tab="completed">Completed</button>
             <button class="tab" data-tab="rejected">Rejected</button>
+            <button class="tab" data-tab="cancelled">Cancelled</button> 
         </div>
 
         <!-- Reservations List -->
@@ -157,5 +164,7 @@
 </script>
 
 <script src="{{ asset('js/worker/my-reservations.js') }}" defer></script>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
 </body>
 </html>

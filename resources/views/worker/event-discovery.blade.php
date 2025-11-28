@@ -13,14 +13,36 @@
 <body>
 <div class="container">
     <!-- Sidebar -->
-    <aside class="sidebar">
+        <aside class="sidebar">
+        @php($user = Auth::user())
+
         <div class="logo">
-            <div class="logo-icon">V</div>
-            <span class="logo-text">VolunteerHub</span>
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                    </div>
+                @endif
+
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+                    <div class="logo-role">
+                        {{ strtoupper($user->role ?? 'WORKER') }}
+                    </div>
+                </div>
+            </a>
         </div>
 
         <nav class="nav-section">
-            <div class="nav-label">Worker</div>
+            {{-- removed the "Worker" label to match admin look --}}
             <a href="{{ route('worker.dashboard') }}" class="nav-item">
                 <span class="nav-icon">🏠</span>
                 <span>Dashboard</span>
@@ -39,12 +61,10 @@
             </a>
         </nav>
 
+
         <nav class="nav-section">
             <div class="nav-label">Account</div>
-            <a href="{{ route('profile') }}" class="nav-item">
-                <span class="nav-icon">👤</span>
-                <span>Profile</span>
-            </a>
+            
             <a href="{{ route('worker.messages') }}" class="nav-item">
                 <span class="nav-icon">💬</span>
                 <span>Chat</span>
@@ -57,9 +77,7 @@
                 <span class="nav-icon">⚙️</span>
                 <span>Settings</span>
             </a>
-                        <a href="{{ route('notifications.index') }}" class="nav-item">
-                <span class="nav-icon">📢</span><span>notifications</span>
-            </a>
+                   
         </nav>
     </aside>
 
@@ -74,14 +92,7 @@
 @endif
 
             </div>
-            <div class="header-actions">
-                <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
-                    <span id="theme-icon">🌙</span>
-                </button>
-                <button class="icon-btn" onclick="toggleLanguage()" title="Toggle language">
-                    <span id="lang-icon">AR</span>
-                </button>
-            </div>
+            
         </div>
 
         <!-- Search and Filters -->
@@ -94,7 +105,7 @@
                            class="search-input"
                            placeholder="Search events by name, location, or description...">
                 </div>
-                <button class="btn btn-primary" onclick="applyFilters()">Search</button>
+                
             </div>
 
             <div class="filters-grid">
@@ -133,7 +144,6 @@
                     <select class="filter-select" id="availabilityFilter">
                         <option value="">All Events</option>
                         <option value="open">Open for Applications</option>
-                        <option value="limited">Limited Spots</option>
                         <option value="full">Full</option>
                     </select>
                 </div>

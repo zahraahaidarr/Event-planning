@@ -28,11 +28,14 @@ function renderReservations() {
     // "All" => reserved + completed + rejected (hide pending)
     all: (r) => {
       const st = normalizeStatus(r.status);
-      return st === 'reserved' || st === 'completed' || st === 'rejected';
+      return st === 'pending' || st === 'reserved' || st === 'completed' || st === 'rejected' ||st === 'cancelled';
     },
+    pending:   (r) => normalizeStatus(r.status) === 'pending',
     reserved: (r) => normalizeStatus(r.status) === 'reserved',
     completed: (r) => normalizeStatus(r.status) === 'completed',
     rejected: (r) => normalizeStatus(r.status) === 'rejected',
+    cancelled: (r) => normalizeStatus(r.status) === 'cancelled',
+
   };
 
   const filterFn = filterMap[currentFilter] || filterMap.all;
@@ -76,20 +79,21 @@ function renderReservations() {
       let actions = '';
       if (statusKey === 'reserved') {
         actions = `
-          <button class="btn btn-primary" data-act="view" data-id="${r.id}">View Details</button>
-          <button class="btn btn-success" data-act="complete" data-id="${r.id}">Mark as Completed</button>
           <button class="btn btn-danger"  data-act="cancel" data-id="${r.id}">Cancel</button>
         `;
       } else if (statusKey === 'completed') {
         actions = `
           <a class="btn btn-primary" href="${window.submissionsUrl}">Submit Report</a>
-          <button class="btn btn-secondary" data-act="certificate" data-id="${r.id}">View Certificate</button>
         `;
       } else if (statusKey === 'rejected') {
         actions = `
-          <button class="btn btn-secondary" data-act="reason" data-id="${r.id}">View Reason</button>
         `;
-      }
+      } else if (statusKey === 'pending') {
+  actions = `
+    <button class="btn btn-danger"  data-act="cancel" data-id="${r.id}">Cancel</button>
+  `;
+}
+
 
       const dateText = r.date || 'N/A';
       const timeText = r.time || 'N/A';
@@ -165,8 +169,13 @@ async function cancelReservation(id) {
     const data = await response.json();
 
     if (data.ok) {
-      // remove from local array & re-render
-      reservations = reservations.filter((r) => Number(r.id) !== Number(id));
+      // 🔁 update status locally instead of removing
+      reservations = reservations.map((r) =>
+        Number(r.id) === Number(id)
+          ? { ...r, status: data.uiStatus || 'cancelled' }
+          : r
+      );
+
       renderReservations();
       alert(data.message || 'Reservation cancelled successfully');
     } else {
@@ -177,6 +186,7 @@ async function cancelReservation(id) {
     alert('Something went wrong while cancelling. Please try again.');
   }
 }
+
 
 // ---- AJAX Mark Completed ----
 async function completeReservation(id) {

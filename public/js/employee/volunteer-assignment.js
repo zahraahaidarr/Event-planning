@@ -171,17 +171,26 @@ function renderApplications() {
             .join('');
 
         let actions = '';
+
         if (app.status === 'pending') {
+            // ⬇️ Pending: show green Accept + red Reject + View Profile
             actions = `
-                <button class="btn btn-danger" onclick="rejectApplication(${app.id})">Reject</button>
+                <button class="btn btn-success" onclick="acceptApplication(${app.id})">Accept</button>
+                <button class="btn btn-danger"  onclick="rejectApplication(${app.id})">Reject</button>
                 <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
             `;
         } else if (app.status === 'rejected') {
+            // Still allow re-accepting if needed
             actions = `
                 <button class="btn btn-success" onclick="acceptApplication(${app.id})">Accept</button>
                 <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
             `;
+        } else if (app.status === 'accepted') {
+            actions = `
+                <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
+            `;
         } else {
+            // fallback
             actions = `<button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>`;
         }
 
@@ -231,28 +240,66 @@ function renderApplications() {
         `;
     }).join('');
 }
+async function updateReservationStatus(id, newStatus) {
+    if (!window.ENDPOINT_STATUS_BASE) {
+        console.error('ENDPOINT_STATUS_BASE is not defined');
+        return false;
+    }
+
+    try {
+        const res = await fetch(
+            `${window.ENDPOINT_STATUS_BASE}/${encodeURIComponent(id)}/status`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': window.csrfToken || ''
+                },
+                body: JSON.stringify({ status: newStatus })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('Failed to update reservation', res.status);
+            return false;
+        }
+
+        const data = await res.json();
+        if (!data.ok) return false;
+
+        // Update the in-memory item
+        const app = currentApps.find(a => a.id === id);
+        if (app) {
+            app.status = data.uiStatus || app.status;
+        }
+
+        // Recalculate stats
+        currentStats.total    = currentApps.length;
+        currentStats.pending  = currentApps.filter(a => a.status === 'pending').length;
+        currentStats.rejected = currentApps.filter(a => a.status === 'rejected').length;
+
+        updateStats();
+        renderApplications();
+        return true;
+    } catch (e) {
+        console.error('Error updating status', e);
+        return false;
+    }
+}
 
 // Local-only status changes (UI only)
-function rejectApplication(id) {
-    const app = currentApps.find(a => a.id === id);
-    if (!app) return;
-    app.status = 'rejected';
-    currentStats.rejected = (currentStats.rejected || 0) + 1;
-    currentStats.pending  = Math.max((currentStats.pending || 0) - 1, 0);
-    updateStats();
-    renderApplications();
+async function rejectApplication(id) {
+    // DB status -> CANCELLED
+    await updateReservationStatus(id, 'REJECTED');
 }
 
-function acceptApplication(id) {
-    const app = currentApps.find(a => a.id === id);
-    if (!app) return;
-    const prev = app.status;
-    app.status = 'accepted';
-    if (prev === 'pending')  currentStats.pending  = Math.max((currentStats.pending  || 0) - 1, 0);
-    if (prev === 'rejected') currentStats.rejected = Math.max((currentStats.rejected || 0) - 1, 0);
-    updateStats();
-    renderApplications();
+async function acceptApplication(id) {
+    // DB status -> RESERVED
+    await updateReservationStatus(id, 'RESERVED');
 }
+
 
 // ---------- Profile modal ----------
 function viewProfile(volunteerId) {

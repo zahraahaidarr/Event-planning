@@ -85,13 +85,17 @@ class VolunteerAssignmentController extends Controller
             $role   = $r->workRole;
 
             // map DB status -> UI status
-            $rawStatus = strtoupper($r->status ?? 'RESERVED');
-            $statusMap = [
-                'RESERVED'  => 'pending',
-                'CANCELLED' => 'rejected',
-                'COMPLETED' => 'accepted',
-            ];
-            $status = $statusMap[$rawStatus] ?? strtolower($rawStatus);
+            $rawStatus = strtoupper($r->status ?? 'PENDING');
+
+$statusMap = [
+    'PENDING'   => 'pending',   // new app: waiting decision
+    'RESERVED'  => 'accepted', 
+    'REJECTED'  => 'rejected', // after employee accepts
+    
+    'COMPLETED' => 'completed',
+];
+
+$status = $statusMap[$rawStatus] ?? strtolower($rawStatus);
 
             // date of application
             $date = $r->reserved_at ?? $r->created_at;
@@ -144,4 +148,54 @@ class VolunteerAssignmentController extends Controller
             'applications' => $apps->values(),
         ]);
     }
+
+    public function updateStatus(Request $request, WorkerReservation $reservation)
+{
+    $user = $request->user();
+
+    // make sure this user is an employee
+    $employeeId = Employee::where('user_id', $user->id)->value('employee_id');
+    if (! $employeeId) {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'Employee profile not found.',
+        ], 403);
+    }
+
+    // make sure the reservation belongs to an event created by this employee
+    $event = Event::where('event_id', $reservation->event_id)
+        ->where('created_by', $employeeId)
+        ->first();
+
+    if (! $event) {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'You are not allowed to modify this reservation.',
+        ], 403);
+    }
+
+    // validate desired status
+   $data = $request->validate([
+    'status' => 'required|in:PENDING,RESERVED,CHECKED_IN,CHECKED_OUT,COMPLETED,NO_SHOW,CANCELLED,REJECTED',
+]);
+
+    $reservation->status = $data['status'];
+    $reservation->save();
+
+    // backend -> UI status mapping (same as in applications())
+    $statusMap = [
+        'PENDING'   => 'pending',
+        'RESERVED'  => 'accepted',
+        'REJECTED'  => 'rejected',
+        'COMPLETED' => 'completed',
+    ];
+    $uiStatus = $statusMap[$reservation->status] ?? strtolower($reservation->status);
+
+    return response()->json([
+        'ok'       => true,
+        'status'   => $reservation->status,
+        'uiStatus' => $uiStatus,
+    ]);
+}
+
 }

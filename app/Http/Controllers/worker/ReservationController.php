@@ -14,51 +14,142 @@ use Carbon\Carbon;
 class ReservationController extends Controller
 {
     /**
+     * Automatically mark past reservations as COMPLETED
+     * when the event's ends_at time has passed.
+     */
+    protected function autoCompletePastReservations($worker): void
+{
+    // Use the app timezone (set in config/app.php)
+    $now = Carbon::now();
+
+    // Get ALL active reservations for this worker
+    $reservations = WorkerReservation::with('event')
+        ->where('worker_id', $worker->worker_id)
+        ->whereIn('status', ['RESERVED', 'CHECKED_IN', 'CHECKED_OUT'])
+        ->get();
+
+    foreach ($reservations as $reservation) {
+        $event = $reservation->event;
+
+        // safety checks
+        if (! $event || ! $event->ends_at) {
+            continue;
+        }
+
+        // normalize ends_at as Carbon instance
+        $endsAt = $event->ends_at instanceof Carbon
+            ? $event->ends_at
+            : Carbon::parse($event->ends_at);
+
+        // if event has NOT finished yet, skip it
+        if ($endsAt->gt($now)) {
+            continue;
+        }
+
+        // --- event is in the past: mark reservation as COMPLETED ---
+        $reservation->status = 'COMPLETED';
+
+        if ($event->starts_at && $event->ends_at) {
+            // use the scheduled window
+            $reservation->check_in_time  = $reservation->check_in_time ?: $event->starts_at;
+            $reservation->check_out_time = $event->ends_at;
+
+            $minutes = $event->starts_at->diffInMinutes($event->ends_at);
+            $reservation->credited_hours = round($minutes / 60, 2);
+        } else {
+            // fallback if event times are missing
+            if (! $reservation->check_in_time) {
+                $reservation->check_in_time = $reservation->reserved_at ?? $now;
+            }
+
+            $reservation->check_out_time = $now;
+
+            $minutes = Carbon::parse($reservation->check_in_time)
+                ->diffInMinutes($reservation->check_out_time);
+
+            $reservation->credited_hours = round($minutes / 60, 2);
+        }
+
+        $reservation->save();
+    }
+}
+
+
+public function complete(WorkerReservation $reservation, Request $request)
+{
+    $user   = $request->user();
+    $worker = Worker::where('user_id', $user->id)->first();
+
+    if (! $worker || $reservation->worker_id !== $worker->worker_id) {
+        return response()->json(['ok' => false, 'message' => 'Unauthorized'], 403);
+    }
+
+    $event = $reservation->event;
+
+    if (! $event || ! $event->ends_at || $event->ends_at->isFuture()) {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'Event has not finished yet.',
+        ], 422);
+    }
+
+    // Auto-complete it
+    $reservation->status = 'COMPLETED';
+    $reservation->check_in_time  = $reservation->check_in_time ?: $event->starts_at;
+    $reservation->check_out_time = $event->ends_at;
+
+    $minutes = Carbon::parse($event->starts_at)->diffInMinutes($event->ends_at);
+    $reservation->credited_hours = round($minutes / 60, 2);
+
+    $reservation->save();
+
+    return response()->json([
+        'ok'      => true,
+        'message' => 'Reservation automatically marked as completed.',
+    ]);
+}
+
+    /**
      * Show reservations for the logged-in worker.
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-
-        // Find worker row for this user
+        $user   = $request->user();
         $worker = Worker::where('user_id', $user->id)->first();
 
         if (! $worker) {
             abort(403, 'Worker profile not found for this user.');
         }
 
-        // Base query
-        $reservationsQuery = WorkerReservation::with(['event', 'workRole'])
-            ->where('worker_id', $worker->worker_id)
-            ->latest();
+        // ✅ First, auto-complete any past events
+        $this->autoCompletePastReservations($worker);
 
-        $reservations = $reservationsQuery->get();
+        // Now load fresh reservations after auto-update
+        $reservations = WorkerReservation::with(['event', 'workRole'])
+            ->where('worker_id', $worker->worker_id)
+            ->latest()
+            ->get();
 
         // ===== STATS =====
         $now          = Carbon::now();
         $startOfMonth = $now->copy()->startOfMonth();
         $endOfMonth   = $now->copy()->endOfMonth();
 
-        // Total
         $totalApplications = $reservations->count();
 
-        // Total this month (using reserved_at)
         $applicationsThisMonth = $reservations->filter(function ($r) use ($startOfMonth, $endOfMonth) {
             return $r->reserved_at &&
                 Carbon::parse($r->reserved_at)->between($startOfMonth, $endOfMonth);
         })->count();
 
-        // Reserved count
         $reservedCount = $reservations->filter(function ($r) {
             return strtolower($r->status) === 'reserved';
         })->count();
 
-        // Completed count
         $completedCount = $reservations->filter(function ($r) {
             return strtolower($r->status) === 'completed';
         })->count();
 
-        // Completed this month (using check_out_time)
         $completedThisMonth = $reservations->filter(function ($r) use ($startOfMonth, $endOfMonth) {
             return strtolower($r->status) === 'completed'
                 && $r->check_out_time
@@ -75,7 +166,6 @@ class ReservationController extends Controller
 
         // ===== TRANSFORM FOR FRONTEND =====
         $applications = $reservations->map(function (WorkerReservation $res) {
-
             $event = $res->event;
 
             // Duration logic
@@ -99,12 +189,9 @@ class ReservationController extends Controller
                 'eventTitle' => $event->title
                                  ?? $event->name
                                  ?? 'Untitled Event',
-
                 'role'       => optional($res->workRole)->role_name ?? 'Volunteer',
-
                 'status'     => strtolower($res->status),
 
-                // Date & Time
                 'date' => $event->date
                           ?? optional($event?->starts_at)->format('Y-m-d')
                           ?? null,
@@ -113,20 +200,15 @@ class ReservationController extends Controller
                           ?? optional($event?->starts_at)->format('H:i')
                           ?? null,
 
-                // Venue or location
                 'location' => optional($event?->venue)->name
                               ?? $event->location
                               ?? '—',
 
-                // Application datetime
                 'appliedDate' => $res->reserved_at
                     ? Carbon::parse($res->reserved_at)->format('Y-m-d H:i')
                     : null,
 
-                // Duration
-                'duration' => $durationText,
-
-                // Rejection reason
+                'duration'        => $durationText,
                 'rejectionReason' => $res->rejection_reason ?? null,
             ];
         })->values();
@@ -137,81 +219,53 @@ class ReservationController extends Controller
         ]);
     }
 
-    /**
-     * Worker cancels a reservation (hard delete).
-     */
-    public function cancel(WorkerReservation $reservation, Request $request)
-    {
-        $user = $request->user();
-        $worker = Worker::where('user_id', $user->id)->first();
-
-        if (! $worker || $reservation->worker_id !== $worker->worker_id) {
-            return response()->json(['ok' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $reservation->delete();
-
-        return response()->json([
-            'ok'      => true,
-            'message' => 'Reservation cancelled successfully',
-        ]);
-    }
-
-    /**
-     * Worker marks a reservation as completed.
-     */
-public function markCompleted(WorkerReservation $reservation, Request $request)
+    // cancel() stays as you already have it
+public function cancel($id, Request $request)
 {
     $user   = $request->user();
     $worker = Worker::where('user_id', $user->id)->first();
 
-    if (! $worker || $reservation->worker_id !== $worker->worker_id) {
-        return response()->json(['ok' => false, 'message' => 'Unauthorized'], 403);
-    }
-
-    if (strtolower($reservation->status) === 'completed') {
+    if (! $worker) {
         return response()->json([
-            'ok'      => true,
-            'message' => 'This reservation is already marked as completed.',
-        ]);
+            'ok'      => false,
+            'message' => 'Worker profile not found.',
+        ], 403);
     }
 
-    // Make sure we have the event
-    $event = $reservation->event()->first();   // or $reservation->load('event')->event;
+    // Find only THIS worker's reservation
+    $reservation = WorkerReservation::where('reservation_id', $id)
+        ->where('worker_id', $worker->worker_id)
+        ->first();
 
-    $reservation->status = 'COMPLETED';
-
-    if ($event && $event->starts_at && $event->ends_at) {
-        // Use the scheduled event window
-        $reservation->check_in_time  = $event->starts_at;
-        $reservation->check_out_time = $event->ends_at;
-
-        $minutes = Carbon::parse($event->starts_at)
-            ->diffInMinutes(Carbon::parse($event->ends_at));
-
-        // credit = planned duration
-        $reservation->credited_hours = round($minutes / 60, 2);
-    } else {
-        // Fallback if event has no proper times
-        if (! $reservation->check_in_time) {
-            $reservation->check_in_time = $reservation->reserved_at ?? now();
-        }
-
-        $reservation->check_out_time = now();
-
-        $minutes = Carbon::parse($reservation->check_in_time)
-            ->diffInMinutes($reservation->check_out_time);
-
-        $reservation->credited_hours = round($minutes / 60, 2);
+    if (! $reservation) {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'Reservation not found.',
+        ], 404);
     }
 
+    // Optional: block cancelling completed ones
+    if (strtoupper($reservation->status) === 'COMPLETED') {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'You cannot cancel a completed reservation.',
+        ], 422);
+    }
+
+    // Update ONLY this reservation
+    $reservation->status         = 'CANCELLED';
+    $reservation->check_out_time = now(); // optional
     $reservation->save();
 
     return response()->json([
-        'ok'      => true,
-        'message' => 'Reservation marked as completed.',
+        'ok'       => true,
+        'message'  => 'Reservation cancelled successfully',
+        'status'   => 'CANCELLED',
+        'uiStatus' => 'cancelled',
     ]);
 }
 
 
+
+    // You can now remove markCompleted() if you don't use it anymore.
 }

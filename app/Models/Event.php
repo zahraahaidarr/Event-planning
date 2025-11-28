@@ -92,48 +92,53 @@ class Event extends Model
      * Calculate spots for a given worker role_type_id.
      * If $roleTypeId is null => uses all roles.
      */
-    public function calculateRoleSpots(?int $roleTypeId): array
-{
-    if ($roleTypeId) {
-        // roles in this event matching worker's role_type
-        $roleQuery = $this->workRoles()->where('role_type_id', $roleTypeId);
+     public function calculateRoleSpots(?int $roleTypeId): array
+    {
+        // statuses that actually occupy a spot
+        $activeStatuses = ['RESERVED', 'CHECKED_IN'];
 
-        $total = (int) $roleQuery->sum('required_spots');
+        if ($roleTypeId) {
+            // roles in this event matching worker's role_type
+            $roleQuery = $this->workRoles()->where('role_type_id', $roleTypeId);
 
-        $roleIds = $roleQuery->pluck('role_id');
+            $total   = (int) $roleQuery->sum('required_spots');
+            $roleIds = $roleQuery->pluck('role_id');
 
-        $taken = (int) WorkerReservation::query()
-            ->where('event_id', $this->event_id)
-            ->whereIn('work_role_id', $roleIds)
-            ->count();
-    } else {
-        // fallback: summary across all roles
-        $total = (int) $this->workRoles()->sum('required_spots');
+            $taken = (int) WorkerReservation::query()
+                ->where('event_id', $this->event_id)
+                ->whereIn('work_role_id', $roleIds)
+                ->whereIn('status', $activeStatuses)   // ✅ count only active
+                ->count();
+        } else {
+            // fallback: summary across all roles
+            $total = (int) $this->workRoles()->sum('required_spots');
 
-        $taken = (int) WorkerReservation::query()
-            ->where('event_id', $this->event_id)
-            ->count();
+            $taken = (int) WorkerReservation::query()
+                ->where('event_id', $this->event_id)
+                ->whereIn('status', $activeStatuses)   // ✅ count only active
+                ->count();
+        }
+
+        $remaining = max(0, $total - $taken);
+
+        if ($total <= 0) {
+            $status = 'full';
+        } elseif ($remaining <= 0) {
+            $status = 'full';
+        } elseif ($remaining <= max(1, (int) round($total * 0.25))) {
+            $status = 'limited';
+        } else {
+            $status = 'open';
+        }
+
+        return [
+            'total'     => $total,
+            'taken'     => $taken,        // active reservations only
+            'remaining' => $remaining,    // true remaining
+            'status'    => $status,
+        ];
     }
 
-    $remaining = max(0, $total - $taken);
-
-    if ($total <= 0) {
-        $status = 'full';
-    } elseif ($remaining <= 0) {
-        $status = 'full';
-    } elseif ($remaining <= max(1, (int) round($total * 0.25))) {
-        $status = 'limited';
-    } else {
-        $status = 'open';
-    }
-
-    return [
-        'total'     => $total,
-        'taken'     => $taken,
-        'remaining' => $remaining,
-        'status'    => $status,
-    ];
-}
 
 
     /* ========= Transformer for Discover Grid ========= */
@@ -143,8 +148,11 @@ class Event extends Model
      * - spotsTotal / spotsRemaining / status => ONLY for that worker's role.
      * - roles[] => all role names needed for that event.
      */
-   public function toWorkerCard(?int $workerRoleTypeId = null): array
+  
+public function toWorkerCard(?int $workerRoleTypeId = null): array
 {
+    // calculateRoleSpots() should return:
+    // ['total' => totalSpots, 'taken' => takenSpots, 'status' => 'open|limited|full']
     $roleSpots = $this->calculateRoleSpots($workerRoleTypeId);
 
     $allRoles = $this->workRoles()
@@ -153,6 +161,11 @@ class Event extends Model
         ->unique()
         ->values()
         ->all();
+
+    // Normalize + derive remaining
+    $spotsTotal = $roleSpots['total'] ?? 0;
+    $spotsTaken = $roleSpots['taken'] ?? 0;
+    $spotsRemaining = max(0, $spotsTotal - $spotsTaken);
 
     return [
         'id'             => $this->event_id,
@@ -169,11 +182,14 @@ class Event extends Model
                             ? $this->duration_hours . ' hours'
                             : '—',
 
-        // IMPORTANT: first number = taken, second = total
-        'spotsTotal'     => $roleSpots['total'],
-        'spotsRemaining' => $roleSpots['taken'],
+        // JS can now do:
+        //   used = spotsTotal - spotsRemaining
+        // or use spotsUsed directly.
+        'spotsTotal'     => $spotsTotal,
+        'spotsRemaining' => $spotsRemaining,   // ✅ true remaining
+        'spotsUsed'      => $spotsTaken,       // ✅ true taken (RESERVED + CHECKED_IN)
 
-        'status'         => $roleSpots['status'],
+        'status'         => $roleSpots['status'] ?? 'open',
 
         'image'          => $this->image_url
                             ?? asset('images/events/default.jpg'),

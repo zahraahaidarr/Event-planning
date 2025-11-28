@@ -67,6 +67,10 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
        
         Route::get('/employee/volunteer-assignment', [VolunteerAssignmentController::class, 'index'])->name('employee.volunteer.assignment');
         Route::get('/employee/volunteer-assignment/events/{event}/applications',[VolunteerAssignmentController::class, 'applications'])->name('volunteers.assign.applications');
+    Route::patch(
+    '/employee/volunteer-assignment/reservations/{reservation}/status',
+    [VolunteerAssignmentController::class, 'updateStatus']
+)->name('employee.volunteer-assignment.status');
 
         Route::get('/employee/messages', [EmployeeMessageController::class, 'index'])->name('employee.messages');
         Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])->name('employee.messages.contacts');
@@ -143,8 +147,10 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::post('/events/{event}/apply', [EventDiscoveryController::class, 'apply'])->name('events.apply');
         
         Route::get('/my-reservations', [ReservationController::class, 'index'])->name('reservations');
-        Route::delete('/reservation/{reservation}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
-        Route::patch('/reservation/{reservation}/complete', [ReservationController::class, 'markCompleted'])->name('reservation.complete');
+Route::delete('/reservation/{id}', [ReservationController::class, 'cancel'])
+    ->name('reservation.cancel');
+Route::patch('/reservation/{reservation}/complete',
+    [ReservationController::class, 'complete'])->name('reservation.complete');
 
 
         Route::get('/submissions', [PostEventSubmissionController::class, 'index'])->name('submissions'); // used by your Blade

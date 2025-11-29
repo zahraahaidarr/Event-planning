@@ -49,30 +49,26 @@ body{
 }
 
 .wrap{
-  display:grid;
-  grid-template-columns: 250px minmax(0, var(--content-width)) 1fr;
-  gap:20px;
+  /* remove grid completely */
+  display:flex;
+  justify-content:center;    /* center the main content */
+  align-items:stretch;
+  gap:0;
   padding:22px;
-  max-width:1440px;
-  margin:0 auto;
-  height:100%;                  /* fill viewport */
-}
-@media (max-width:860px){
-  .wrap{grid-template-columns:1fr}
-  .sidebar{display:none}
+  max-width:100%;
+  margin:0;
+  height:100%;
 }
 
-.sidebar{
-  background:var(--surface);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  visibility:hidden;
-  pointer-events:none;
+@media (max-width:860px){
+  .wrap{
+    display:block;           /* simple flow on small screens */
+    padding:10px;
+  }
 }
+
+
+
 .brand{
   display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px;
   background:linear-gradient(135deg,#1d2460 0%,#231a52 90%);
@@ -93,8 +89,20 @@ body{
   flex-direction:column;
   gap:20px;
   height:100%;
-  grid-column:2;
-  min-height:0;                 /* important for internal scrolling */
+  /* remove this if it exists:
+     grid-column:2;
+  */
+  min-height:0;
+  width:75%;                 /* main content = 3/4 of page */
+  max-width:1200px;          /* or var(--content-width) if you prefer */
+  margin:0 auto;             /* center inside the page */
+}
+
+@media (max-width:1000px){
+  .content{
+    width:100%;
+    max-width:none;
+  }
 }
 
 .topbar{
@@ -251,3 +259,23 @@ body{
 
 /* RTL tweaks */
 [dir="rtl"] .wrap{ direction:rtl }
+.messages-title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.messages-title-bar h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text);
+  opacity: 0.98;
+}
+
+.messages-title-bar p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.85;
+}

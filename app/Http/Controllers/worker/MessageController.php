@@ -134,6 +134,7 @@ class MessageController extends Controller
                     'text'    => $m->content,
                     'time'    => $time,
                     'avatar'  => mb_substr($m->sender->name ?? 'U', 0, 1),
+                     'is_read' => (bool) $m->is_read,
                 ];
             });
 
@@ -172,6 +173,7 @@ class MessageController extends Controller
                 'text'    => $msg->content,
                 'time'    => $msg->timestamp ? $msg->timestamp->format('H:i') : '',
                 'avatar'  => mb_substr($authUser->name ?? 'U', 0, 1),
+                'is_read' => (bool) $msg->is_read,
             ],
         ]);
     }

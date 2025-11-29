@@ -18,31 +18,18 @@
   <div class="wrap">
 
     <!-- Sidebar -->
-    <aside class="sidebar" aria-label="Sidebar">
-      <div class="brand">🌟 <span id="brandName">VolunteerHub</span></div>
-      <nav class="nav" aria-label="Primary">
-        <a href="{{ route('employee.dashboard') }}">🏠 <span id="navDashboard">Dashboard</span></a>
-        {{-- Add more employee links here if you want --}}
-        <a href="{{ route('employee.messages') }}" aria-current="page">💬 <span id="navChat">Chat</span></a>
-      </nav>
-    </aside>
+
 
     <!-- Main Content -->
     <main class="content" id="main">
-      <!-- Top bar -->
-      <div class="topbar">
-        <div class="search" role="search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
-                  stroke="currentColor" stroke-width="1.6" opacity=".55"/>
-          </svg>
-          <input id="globalSearch" placeholder="Search messages…" aria-label="Search messages"/>
+
+      <!-- Title + subtitle (same style as worker) -->
+      <header class="messages-title-bar">
+        <div class="messages-title-wrapper">
+          <h1>Messages</h1>
+          <p>Chat with coordinators and volunteers, and keep track of your conversations.</p>
         </div>
-        <div class="bar-actions">
-          <button class="btn ghost" id="langToggle" title="Switch Language">EN/AR</button>
-          <button class="btn ghost" id="themeToggle" title="Toggle Theme">🌓</button>
-        </div>
-      </div>
+      </header>
 
       <!-- Chat Container -->
       <div class="chat-container">

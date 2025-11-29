@@ -77,32 +77,50 @@
 
     @else {{-- WORKER (default if not employee) --}}
         <aside class="sidebar">
+            @php($user = Auth::user())
+
             <div class="logo">
-                <div class="logo-icon">V</div>
-                <span class="logo-text">VolunteerHub</span>
+                <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                    @if($user && $user->avatar_path)
+                        <img
+                            src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                            alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                            class="logo-avatar"
+                        >
+                    @else
+                        <div class="logo-icon">
+                            {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                        </div>
+                    @endif
+
+                    <div class="logo-id">
+                        <div class="logo-name">
+                            {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                        </div>
+                        <div class="logo-role">
+                            {{ strtoupper($user->role ?? 'WORKER') }}
+                        </div>
+                    </div>
+                </a>
             </div>
 
             <nav class="nav-section">
-                <div class="nav-label">Worker</div>
-
+                {{-- same links as Discover Events page --}}
                 <a href="{{ route('worker.dashboard') }}"
                    class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">🏠</span>
                     <span>Dashboard</span>
                 </a>
-
                 <a href="{{ route('worker.events.discover') }}"
                    class="nav-item {{ request()->routeIs('worker.events.discover') ? 'active' : '' }}">
                     <span class="nav-icon">🗓️</span>
                     <span>Discover Events</span>
                 </a>
-
                 <a href="{{ route('worker.reservations') }}"
                    class="nav-item {{ request()->routeIs('worker.reservations') ? 'active' : '' }}">
                     <span class="nav-icon">✅</span>
                     <span>My Reservations</span>
                 </a>
-
                 <a href="{{ route('worker.submissions') }}"
                    class="nav-item {{ request()->routeIs('worker.submissions') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span>
@@ -113,21 +131,14 @@
             <nav class="nav-section">
                 <div class="nav-label">Account</div>
 
-                <a href="{{ route('profile') }}"
-                   class="nav-item {{ request()->routeIs('profile') ? 'active' : '' }}">
-                    <span class="nav-icon">👤</span>
-                    <span>Profile</span>
-                </a>
-
                 <a href="{{ route('worker.messages') }}"
                    class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
                     <span class="nav-icon">💬</span>
                     <span>Chat</span>
                 </a>
 
-<a href="{{ route('worker.announcements.index') }}"
-   class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
-
+                <a href="{{ route('worker.announcements.index') }}"
+                   class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
                     <span class="nav-icon">📢</span>
                     <span>Announcements</span>
                 </a>
@@ -145,10 +156,6 @@
     <main class="main-content" id="main">
         <div class="header">
             <h1 class="header-title" id="pageTitle">Announcements</h1>
-            <div class="header-actions">
-                <button class="lang-toggle" id="langToggle">EN</button>
-                <button class="theme-toggle" id="themeToggle">🌙</button>
-            </div>
         </div>
 
         <section class="card" style="margin-bottom:20px;">

@@ -48,31 +48,30 @@ body{
              var(--bg);
 }
 
+/* ===== layout: no grid, centered content (same logic as worker) ===== */
 .wrap{
-  display:grid;
-  grid-template-columns: 250px minmax(0, var(--content-width)) 1fr;
-  gap:20px;
+  display:flex;
+  justify-content:center;    /* center main column */
+  align-items:stretch;
+  gap:0;
   padding:22px;
-  max-width:1440px;
-  margin:0 auto;
-  height:100%;                  /* fill viewport */
+  max-width:100%;
+  margin:0;
+  height:100%;
 }
 @media (max-width:860px){
-  .wrap{grid-template-columns:1fr}
-  .sidebar{display:none}
+  .wrap{
+    display:block;
+    padding:10px;
+  }
 }
 
+/* Hide sidebar on this page so chat width matches worker */
 .sidebar{
-  background:var(--surface);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  visibility:hidden;
-  pointer-events:none;
+  display:none;
 }
+
+/* ===== sidebar styles (kept for consistency if reused elsewhere) ===== */
 .brand{
   display:flex;
   align-items:center;
@@ -98,60 +97,49 @@ body{
   outline:1px solid rgba(255,255,255,.06);
 }
 
+/* ===== main column – same sizing as worker ===== */
 .content{
   display:flex;
   flex-direction:column;
   gap:20px;
   height:100%;
-  grid-column:2;
   min-height:0;
+  width:75%;                 /* same 3/4 width as worker */
+  max-width:1200px;
+  margin:0 auto;             /* center */
 }
 
-.topbar{
+@media (max-width:1000px){
+  .content{
+    width:100%;
+    max-width:none;
+  }
+}
+
+/* Title + subtitle — match worker page */
+.messages-title-bar{
+  padding:4px 2px 0;
+}
+.messages-title-wrapper{
   display:flex;
-  align-items:center;
-  gap:10px;
-  background:var(--surface);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:10px;
+  flex-direction:column;
+  gap:4px;
 }
-.search{flex:1;position:relative}
-.search input,
-.search-input{
-  width:100%;
-  padding:12px 14px 12px 42px;
-  border-radius:12px;
-  border:0;
-  outline:2px solid transparent;
-  background:var(--surface-2);
+.messages-title-bar h1{
+  font-size:32px;
+  font-weight:800;
+  margin:0;
   color:var(--text);
+  opacity:.98;
 }
-.search svg{
-  position:absolute;
-  left:12px;
-  top:50%;
-  transform:translateY(-50%);
-  opacity:.6
+.messages-title-bar p{
+  margin:0;
+  font-size:14px;
+  color:var(--muted);
+  opacity:.85;
 }
 
-.bar-actions{display:flex;gap:8px}
-.btn{
-  border:0;
-  border-radius:12px;
-  padding:10px 14px;
-  cursor:pointer;
-  color:#fff;
-  background:var(--primary);
-  box-shadow:0 8px 18px rgba(79,124,255,.35);
-}
-.btn.ghost{
-  background:transparent;
-  color:var(--text);
-  outline:1px solid rgba(255,255,255,.12);
-}
-
-/* layout: list + chat */
+/* ===== chat layout – same as worker ===== */
 .chat-container{
   display:grid;
   grid-template-columns:360px 1fr;
@@ -179,6 +167,18 @@ body{
 .conversations-header h2{
   margin:0 0 10px;
   font-size:18px;
+}
+.search-input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:0;
+  outline:2px solid transparent;
+  background:var(--surface-2);
+  color:var(--text);
+}
+.search-input::placeholder{
+  color:var(--muted);
 }
 .conversations-list{
   flex:1;

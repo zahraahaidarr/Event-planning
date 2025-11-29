@@ -77,6 +77,107 @@ let currentEditable   = true;   // track if current loaded submission is editabl
 // =========================
 // i18n on static elements
 // =========================
+function populateEventsFromJson() {
+  if (!eventSelect) return;
+
+  const raw = eventSelect.dataset.reservations;
+  if (!raw) return;
+
+  let items = [];
+  try {
+    items = JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to parse reservations JSON', e);
+    return;
+  }
+
+  // remove all options except the first placeholder
+  while (eventSelect.options.length > 1) {
+    eventSelect.remove(1);
+  }
+
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.reservation_id;
+    opt.dataset.roleSlug = item.role_slug;
+    opt.dataset.roleName = item.role_label;
+
+    let label = item.event_name;
+    if (item.date) {
+      label += ' - ' + item.date;
+    }
+    label += ' • Role: ' + item.role_label;
+
+    opt.textContent = label;
+    eventSelect.appendChild(opt);
+  });
+}
+
+function renderSubmissionsFromJson() {
+  if (!list) return;
+
+  const raw = list.dataset.submissions;
+  let items = [];
+  try {
+    items = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to parse submissions JSON', e);
+  }
+
+  list.innerHTML = '';
+
+  if (!items.length) {
+    const msg = document.createElement('div');
+    msg.style.textAlign = 'center';
+    msg.style.padding   = '40px';
+    msg.style.color     = 'var(--muted)';
+    msg.textContent     = STRINGS[lang].noSubmissions;
+    list.appendChild(msg);
+    return;
+  }
+
+  items.forEach(sub => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.dataset.subId   = sub.id;
+    card.dataset.resId   = sub.worker_reservation_id;
+    card.dataset.roleSlug= sub.role_slug;
+    card.dataset.canEdit = sub.can_edit ? '1' : '0';
+    card.dataset.data    = JSON.stringify(sub.data || {});
+    card.dataset.civil   = JSON.stringify(sub.civil_cases || []);
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-title">${sub.event_name}</div>
+        <span class="chip-status ${sub.chip_class}">
+          ${sub.status_label}
+        </span>
+      </div>
+
+      <div class="meta">
+        <span>📅 Submitted: ${sub.submitted_at}</span>
+        ${sub.can_edit ? '<span>🕒 Editable for 24h</span>' : ''}
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn small ghost"
+                type="button"
+                data-act="view"
+                data-id="${sub.id}">
+          ${STRINGS[lang].viewReport}
+        </button>
+        ${
+          sub.can_edit
+            ? '<span class="hint-editable">You can still edit this report.</span>'
+            : '<span class="hint-locked">View only (locked).</span>'
+        }
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
 function i18nApply(){
   const s = STRINGS[lang];
   document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
@@ -165,6 +266,8 @@ function applyRoleFromEvent(){
   showRoleForm(currentRoleSlugDb);
 }
 
+populateEventsFromJson();   // <-- build options first
+
 if (eventSelect) {
   eventSelect.addEventListener('change', () => {
     // New event picked => treat as new submission
@@ -176,8 +279,10 @@ if (eventSelect) {
 
     applyRoleFromEvent();
   });
+
   applyRoleFromEvent();
 }
+
 
 // =========================
 // Civil Defense dynamic cases
@@ -675,6 +780,8 @@ function toast(msg){
 // Init
 // =========================
 i18nApply();
+renderSubmissionsFromJson();
+populateEventsFromJson();
 bindForm();
 bindActions();
 bindSearch();

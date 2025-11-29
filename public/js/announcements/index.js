@@ -80,7 +80,6 @@
       card.innerHTML = `
         <div class="announce-header">
           <div class="announce-title">${a.title}</div>
-          <span class="chip-status ${chip.cls}">${chip.label}</span>
         </div>
         <div class="meta">
           ${formattedDate ? `<span>📅 ${formattedDate}</span>` : ''}

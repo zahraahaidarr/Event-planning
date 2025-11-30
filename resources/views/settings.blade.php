@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Settings • Volunteer</title>
 
-  {{-- Worker / Admin Settings CSS --}}
+  {{-- Worker / Admin / Employee Settings CSS --}}
   <link rel="stylesheet" href="{{ asset('css/settings.css') }}">
 </head>
 
@@ -17,8 +17,9 @@
   $s = $settings ?? [];
   $user = Auth::user();
   $role = strtoupper($user->role ?? '');
-  $isAdmin  = $role === 'ADMIN';
-  $isWorker = $role === 'WORKER';
+  $isAdmin    = $role === 'ADMIN';
+  $isWorker   = $role === 'WORKER';
+  $isEmployee = $role === 'EMPLOYEE';
 @endphp
 
 <body data-theme="{{ $s['ui_theme'] ?? 'dark' }}">
@@ -441,8 +442,231 @@
       </main>
     </div> {{-- .container (worker) --}}
 
+  @elseif($isEmployee)
+    {{-- ===== EMPLOYEE LAYOUT: same sidebar as Volunteer Assignment / Events ===== --}}
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        @php($user = Auth::user())
+
+        <div class="logo">
+          <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+            @if($user && $user->avatar_path)
+              <img
+                  src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                  alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                  class="logo-avatar"
+              >
+            @else
+              <div class="logo-icon">
+                {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+              </div>
+            @endif
+
+            <div class="logo-id">
+              <div class="logo-name">
+                {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+              </div>
+              <div class="logo-role">
+                EMPLOYEE
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <nav>
+          <div class="nav-section">
+            
+
+            <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
+               class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
+              <span class="nav-icon">📊</span><span>Dashboard</span>
+            </a>
+
+            <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
+               class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
+              <span class="nav-icon">📅</span><span>Event Management</span>
+            </a>
+
+            <a href="{{ Route::has('volunteers.assign') ? route('volunteers.assign') : '#' }}"
+               class="nav-item {{ request()->routeIs('volunteers.assign') ? 'active' : '' }}">
+              <span class="nav-icon">👥</span><span>Volunteer Assignment</span>
+            </a>
+
+            <a href="{{ Route::has('employee.reports') ? route('employee.reports') : '#' }}"
+               class="nav-item {{ request()->routeIs('employee.reports') ? 'active' : '' }}">
+              <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+            </a>
+          </div>
+
+          <div class="nav-section">
+            <div class="nav-label">Communication</div>
+
+            <a href="{{ route('employee.messages') }}"
+               class="nav-item {{ request()->routeIs('employee.messages') ? 'active' : '' }}">
+              <span class="nav-icon">💬</span><span>Messages</span>
+            </a>
+
+            <a href="{{ route('announcements.create') }}"
+               class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
+              <span class="nav-icon">📢</span><span>Send Announcement</span>
+            </a>
+
+            <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}"
+               class="nav-item {{ request()->routeIs('employee.announcements.index') ? 'active' : '' }}">
+              <span class="nav-icon">📢</span><span>Announcements</span>
+            </a>
+          </div>
+
+          <div class="nav-section">
+            <div class="nav-label">Account</div>
+
+            <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
+               class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+              <span class="nav-icon">⚙️</span><span>Settings</span>
+            </a>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content for EMPLOYEE settings -->
+      <main class="main-content" id="main">
+        <!-- Page Header -->
+        <section class="page-header">
+          <h1 id="pageTitle">Settings</h1>
+          <p id="pageSubtitle">Manage your account preferences and notifications.</p>
+        </section>
+
+        <!-- ROW 1: Notifications + Interface -->
+        <section class="row">
+          {{-- Notifications card --}}
+          <article class="card">
+            <h2 class="section-title">Notifications</h2>
+            <div class="settings-list">
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>App Notifications</h4>
+                  <p>Receive in-app notifications for updates inside VolunteerHub.</p>
+                </div>
+                <div class="toggle {{ ($s['notifications_app'] ?? '1') === '1' ? 'active' : '' }}"
+                     data-toggle
+                     data-setting="notifications_app"></div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Announcements</h4>
+                  <p>Get notified when new announcements are published.</p>
+                </div>
+                <div class="toggle {{ ($s['notifications_announcements'] ?? '1') === '1' ? 'active' : '' }}"
+                     data-toggle
+                     data-setting="notifications_announcements"></div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Chat Messages</h4>
+                  <p>Receive alerts for new chat messages.</p>
+                </div>
+                <div class="toggle {{ ($s['notifications_chat'] ?? '1') === '1' ? 'active' : '' }}"
+                     data-toggle
+                     data-setting="notifications_chat"></div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Event Reminders</h4>
+                  <p>Get reminders before your accepted events start.</p>
+                </div>
+                <div class="toggle {{ ($s['notifications_event_reminders'] ?? '1') === '1' ? 'active' : '' }}"
+                     data-toggle
+                     data-setting="notifications_event_reminders"></div>
+              </div>
+
+            </div>
+          </article>
+
+          {{-- Interface & Preferences card --}}
+          <article class="card">
+            <h2 class="section-title">Interface & Preferences</h2>
+            <div class="settings-list">
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Language</h4>
+                  <p>Switch between English and Arabic.</p>
+                </div>
+                <button class="btn small ghost"
+                        type="button"
+                        id="langToggleSecondary">
+                  Toggle EN / AR
+                </button>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Theme</h4>
+                  <p>Toggle between light and dark mode.</p>
+                </div>
+                <button class="btn small ghost"
+                        type="button"
+                        id="themeToggleSecondary">
+                  Toggle Theme
+                </button>
+              </div>
+
+            </div>
+          </article>
+        </section>
+
+        <!-- ROW 2: Security | Account Management -->
+        <section class="row">
+          {{-- Security card --}}
+          <article class="card">
+            <h2 class="section-title">Security</h2>
+            <div class="settings-list">
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Logout From All Devices</h4>
+                  <p>Log out from all active sessions on other devices.</p>
+                </div>
+                <form method="POST" action="{{ route('settings.logoutAll') }}">
+                  @csrf
+                  <button class="btn small" type="submit">Logout All</button>
+                </form>
+              </div>
+
+            </div>
+          </article>
+
+          {{-- Account Management card --}}
+          <article class="card">
+            <h2 class="section-title">Account Management</h2>
+            <div class="settings-list">
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <h4>Delete Account</h4>
+                  <p>Permanently delete your account and information.</p>
+                </div>
+                <form method="POST" action="{{ route('settings.deleteAccount') }}"
+                      onsubmit="return confirm('Are you sure you want to delete your account?');">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn small danger" type="submit">Delete</button>
+                </form>
+              </div>
+
+            </div>
+          </article>
+        </section>
+      </main>
+    </div> {{-- .container (employee) --}}
+
   @else
-    {{-- ===== OTHER NON-ADMIN ROLES (e.g. EMPLOYEE): keep simple layout ===== --}}
+    {{-- ===== OTHER NON-ADMIN ROLES (fallback simple layout) ===== --}}
     <div class="wrap">
       <!-- Main Content -->
       <main class="content" id="main">

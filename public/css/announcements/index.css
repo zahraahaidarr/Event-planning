@@ -42,22 +42,41 @@ body::before{
 
 .app-container{display:flex;min-height:100vh;position:relative;z-index:1}
 
-/* ===== SIDEBAR – EXACTLY LIKE WORKER DISCOVER EVENTS ===== */
-.sidebar{
+/* ===================================================================== */
+/* WORKER SIDEBAR  (keeps your old look)                                  */
+/* ===================================================================== */
+.worker-sidebar{
   width:260px;
   background:var(--bg-primary);
   border-right:1px solid var(--border-color);
   padding:24px 16px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:15px;
   position:sticky;
   top:0;
   height:100vh;
   overflow-y:auto;
 }
 
-/* User block (avatar + name + role) – used on worker side */
+/* ===================================================================== */
+/* EMPLOYEE SIDEBAR  (NOW SAME SIZE AS EVENT EMPLOYEE SIDEBAR)           */
+/* ===================================================================== */
+.employee-sidebar{
+  width:260px;
+  background:var(--bg-primary);
+  border-right:1px solid var(--border-color);
+  padding:24px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+
+/* Shared logo / avatar styles (used by both sidebars) */
 .logo{
   display:flex;
   align-items:center;
@@ -101,7 +120,6 @@ body::before{
   flex-direction:column;
   gap:2px;
 }
-
 .logo-name{
   font-size:18px;
   font-weight:700;
@@ -109,7 +127,6 @@ body::before{
   letter-spacing:0.3px;
   text-transform:capitalize;
 }
-
 .logo-role{
   font-size:11px;
   font-weight:600;
@@ -118,14 +135,7 @@ body::before{
   color:var(--text-secondary);
 }
 
-/* simple text logo (employee block) still works */
-.logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-/* Nav sections */
+/* Nav sections (shared) */
 .nav-section{
   display:flex;
   flex-direction:column;
@@ -170,20 +180,18 @@ body::before{
   justify-content:center;
 }
 
-/* ===== MAIN CONTENT (unchanged structure) ===== */
+/* ===== MAIN CONTENT ===== */
 .main-content{
   flex:1;
-    padding-left: 100px;
-    padding-right: 100px;
-    padding-top: 32px;
-
+  padding-left:100px;
+  padding-right:100px;
+  padding-top:32px;
   max-width:1400px;
 }
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  
 }
 .header-title{
   font-size:32px;
@@ -219,7 +227,6 @@ body::before{
 .theme-toggle:hover{
   background:var(--card);
 }
-
 
 .card-header{
   display:flex;
@@ -360,6 +367,7 @@ body::before{
 }
 
 @media (max-width:768px){
-  .sidebar{display:none}
+  .worker-sidebar,
+  .employee-sidebar{display:none}
   .main-content{padding:16px}
 }

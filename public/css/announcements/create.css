@@ -90,38 +90,168 @@ button:hover, .btn-primary:hover{ background:var(--primary-2); transform:transla
 /* ===================================================================================== */
 /* EMPLOYEE SIDEBAR (exact as employee dashboard) — scoped to body.has-employee          */
 /* ===================================================================================== */
-.has-employee .app-container{ display:flex; min-height:100vh; position:relative; z-index:1; }
-.has-employee .content-area{ flex:1; padding:40px 20px; display:flex; justify-content:center; }
+/* ===================================================================================== */
+/* EMPLOYEE SIDEBAR (same style & size as main employee sidebar) — scoped to has-employee */
+/* ===================================================================================== */
+.has-employee .app-container{
+  display:flex;
+  min-height:100vh;
+  position:relative;
+  z-index:1;
+}
 
+.has-employee .content-area{
+  flex:1;
+  padding:40px 20px;
+  display:flex;
+  justify-content:center;
+}
+
+/* sidebar shell */
 .has-employee .employee-sidebar.sidebar{
-  width:280px; background:var(--surface);
-  border-right:1px solid rgba(255,255,255,0.05);
-  padding:24px; display:flex; flex-direction:column; gap:32px;
-  position:sticky; top:0; height:100vh; overflow-y:auto;
+  width:260px;
+  background:var(--bg-primary);
+  border-right:1px solid var(--border-color);
+  padding:24px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
 }
-.has-employee .employee-sidebar .logo{ display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; color:var(--primary); }
-.has-employee .employee-sidebar .logo-icon{
-  width:40px; height:40px; font-size:20px; border-radius:12px;
-  background:linear-gradient(135deg, var(--primary), var(--accent));
-  display:flex; align-items:center; justify-content:center;
-}
-.has-employee .employee-sidebar .nav-section{ display:flex; flex-direction:column; gap:8px; }
-.has-employee .employee-sidebar .nav-label{
-  font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:600; padding:0 12px; margin-bottom:4px;
-}
-.has-employee .employee-sidebar .nav-item{
-  display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px;
-  color:var(--muted); text-decoration:none; transition:.2s; font-size:14px; font-weight:500;
-}
-.has-employee .employee-sidebar .nav-item:hover{ background:rgba(79,124,255,0.1); color:var(--primary); }
-.has-employee .employee-sidebar .nav-item.active{ background:rgba(79,124,255,0.15); color:var(--primary); }
-.has-employee .employee-sidebar .nav-icon{ width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
 
-@media (max-width:768px){
-  .has-employee .employee-sidebar{ position:fixed; left:-280px; z-index:100; transition:left .3s; }
-  .has-employee .employee-sidebar.open{ left:0; }
-  .has-employee .content-area{ padding:20px; }
+/* user block – avatar + name + role */
+.has-employee .employee-sidebar .logo{
+  display:flex;
+  align-items:center;
+  padding:10px 8px 18px;
+  gap:12px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
 }
+
+.has-employee .employee-sidebar .logo-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:inherit;
+}
+
+/* avatar / fallback circle */
+.has-employee .employee-sidebar .logo-avatar,
+.has-employee .employee-sidebar .logo-icon{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+}
+
+.has-employee .employee-sidebar .logo-avatar{
+  object-fit:cover;
+  border:2px solid var(--border-color);
+  box-shadow:0 0 6px rgba(0,0,0,0.25);
+}
+
+.has-employee .employee-sidebar .logo-icon{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:700;
+  font-size:18px;
+}
+
+/* name + role text */
+.has-employee .employee-sidebar .logo-id{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.has-employee .employee-sidebar .logo-name{
+  font-size:18px;
+  font-weight:700;
+  color:var(--text-primary);
+  text-transform:capitalize;
+  letter-spacing:.3px;
+}
+
+.has-employee .employee-sidebar .logo-role{
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text-secondary);
+}
+
+/* navigation */
+.has-employee .employee-sidebar .nav-section{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  margin-bottom:12px;
+}
+
+.has-employee .employee-sidebar .nav-label{
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:var(--text-tertiary);
+  padding:0 12px;
+  margin-bottom:8px;
+}
+
+.has-employee .employee-sidebar .nav-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:var(--radius-sm);
+  color:var(--text-secondary);
+  text-decoration:none;
+  font-size:14px;
+  font-weight:500;
+  transition:all .2s ease;
+  cursor:pointer;
+}
+
+.has-employee .employee-sidebar .nav-item:hover{
+  background:var(--bg-secondary);
+  color:var(--text-primary);
+}
+
+.has-employee .employee-sidebar .nav-item.active{
+  background:var(--accent-primary);
+  color:#fff;
+}
+
+.has-employee .employee-sidebar .nav-icon{
+  width:20px;
+  height:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* mobile */
+@media (max-width:768px){
+  .has-employee .employee-sidebar{
+    position:fixed;
+    left:-260px;
+    z-index:100;
+    transition:left .3s;
+  }
+  .has-employee .employee-sidebar.open{
+    left:0;
+  }
+  .has-employee .content-area{
+    padding:20px;
+  }
+}
+
 
 /* ===================================================================================== */
 /* ADMIN SIDEBAR (EXACT from Admin Dashboard) — scoped to body.has-admin                  */

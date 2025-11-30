@@ -13,17 +13,39 @@
     <link rel="stylesheet" href="{{ asset('css/employee/volunteer-assignment.css') }}">
 </head>
 <body>
-<div class="container">
+<div class="container layout-employee">
     <!-- Sidebar -->
     <aside class="sidebar">
+        @php($user = Auth::user())
+
         <div class="logo">
-            <div class="logo-icon">🎯</div>
-            <span>VolunteerHub</span>
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                    </div>
+                @endif
+
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+                    <div class="logo-role">
+                        EMPLOYEE
+                    </div>
+                </div>
+            </a>
         </div>
 
         <nav>
             <div class="nav-section">
-                <div class="nav-label">Employee</div>
+                
 
                 <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                    class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
@@ -49,7 +71,7 @@
             <div class="nav-section">
                 <div class="nav-label">Communication</div>
 
-                <a href="{{ Route::has('messages.index') ? route('messages.index') : '#' }}"
+                <a href="{{ route('employee.messages') }}"
                    class="nav-item">
                     <span class="nav-icon">💬</span><span>Messages</span>
                 </a>
@@ -67,9 +89,7 @@
             <div class="nav-section">
                 <div class="nav-label">Account</div>
 
-                <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="nav-item">
-                    <span class="nav-icon">👤</span><span>Profile</span>
-                </a>
+                
 
                 <a href="{{ Route::has('settings') ? route('settings') : '#' }}" class="nav-item">
                     <span class="nav-icon">⚙️</span><span>Settings</span>

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Messages • Employee</title>
-
+<script src="{{ asset('js/preferences.js') }}" defer></script>
   <link rel="stylesheet" href="{{ asset('css/employee/messages.css') }}">
 </head>
 <body data-theme="dark"

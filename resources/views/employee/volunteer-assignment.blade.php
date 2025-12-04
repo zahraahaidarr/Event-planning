@@ -45,8 +45,6 @@
 
         <nav>
             <div class="nav-section">
-                
-
                 <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                    class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span><span>Dashboard</span>
@@ -89,8 +87,6 @@
             <div class="nav-section">
                 <div class="nav-label">Account</div>
 
-                
-
                 <a href="{{ Route::has('settings') ? route('settings') : '#' }}" class="nav-item">
                     <span class="nav-icon">⚙️</span><span>Settings</span>
                 </a>
@@ -105,29 +101,46 @@
                 <h1>Volunteer Assignment</h1>
                 <p>Review and manage volunteer applications</p>
             </div>
-            <div class="header-actions">
-                <button class="icon-btn" id="btnTheme" title="Toggle theme">
-                    <span id="theme-icon">🌙</span>
-                </button>
-                <button class="icon-btn" id="btnLang" title="Toggle language">
-                    <span id="lang-icon">AR</span>
-                </button>
-            </div>
+            
         </div>
 
-        <!-- Event Selection -->
+        <!-- Event Selection (cards instead of dropdown) -->
         <div class="event-selection">
             <h2 class="section-title">Select Event</h2>
-            <select class="event-select" id="eventSelect">
-    <option value="">Choose an event...</option>
-    @foreach($events as $event)
-        <option value="{{ $event->event_id }}">
-            {{ $event->title }} – {{ $event->starts_at->format('Y-m-d') }}
-        </option>
-    @endforeach
+            <p class="event-hint">Click an event to view and manage its volunteer applications.</p>
 
-</select>
-
+            <div class="event-list" id="eventList">
+                @forelse($events as $event)
+                    <button
+                        type="button"
+                        class="event-card {{ $loop->first ? 'active' : '' }}"
+                        data-event-id="{{ $event->event_id }}"
+                    >
+                        <div class="event-card-title">
+                            {{ $event->title }}
+                        </div>
+                        <div class="event-card-meta">
+                            <span class="event-date">
+                                {{ $event->starts_at ? $event->starts_at->format('Y-m-d') : 'No date' }}
+                            </span>
+                            @if(optional($event->venue)->name)
+                                <span class="event-dot">•</span>
+                                <span class="event-venue">
+                                    {{ $event->venue->name }}
+                                </span>
+                            @endif
+                        </div>
+                    </button>
+                @empty
+                    <div class="empty-state small">
+                        <div class="empty-icon">📭</div>
+                        <h3 class="empty-title">No events found</h3>
+                        <p class="empty-description">
+                            Create an event first to assign volunteers.
+                        </p>
+                    </div>
+                @endforelse
+            </div>
         </div>
 
         <!-- Stats -->
@@ -148,13 +161,15 @@
 
         <!-- Applications -->
         <div class="applications-section" id="applicationsSection" style="display:none;">
-            <div class="applications-header">
-                <h2 class="section-title">Applications</h2>
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="rejected">Rejected</button>
-                </div>
-            </div>
+           <div class="applications-header">
+    <h2 class="section-title">Applications</h2>
+    <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="accepted">Accepted</button>
+        <button class="filter-btn" data-filter="rejected">Rejected</button>
+    </div>
+</div>
+
 
             <div id="applicationsList"></div>
         </div>
@@ -177,17 +192,13 @@
 
 @include('notify.widget')
 <script src="{{ asset('js/notify-poll.js') }}" defer></script>
-<script>
-    window.csrfToken = "{{ csrf_token() }}";
-    window.ENDPOINT_APPS_BASE = "{{ url('/employee/volunteer-assignment/events') }}";
-</script>
-<script src="{{ asset('js/employee/volunteer-assignment.js') }}" defer></script>
+
 <script>
     window.csrfToken           = "{{ csrf_token() }}";
     window.ENDPOINT_APPS_BASE  = "{{ url('/employee/volunteer-assignment/events') }}";
-    // ⬇️ NEW: base URL to update reservation status
     window.ENDPOINT_STATUS_BASE = "{{ url('/employee/volunteer-assignment/reservations') }}";
 </script>
+<script src="{{ asset('js/employee/volunteer-assignment.js') }}" defer></script>
 
 </body>
 </html>

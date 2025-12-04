@@ -10,41 +10,40 @@ let currentApps      = [];
 let currentStats     = { total: 0, pending: 0, rejected: 0 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    const eventSelect         = $('#eventSelect');
-    const statsGrid           = $('#statsGrid');
-    const applicationsSection = $('#applicationsSection');
-    const filterButtons       = $$('.filter-btn');
+    const eventButtons       = $$('.event-card');
+    const statsGrid          = $('#statsGrid');
+    const applicationsSection= $('#applicationsSection');
+    const filterButtons      = $$('.filter-btn');
 
     const btnTheme            = $('#btnTheme');
     const btnLang             = $('#btnLang');
     const btnCloseModal       = $('#btnCloseModal');
     const btnCloseModalFooter = $('#btnCloseModalFooter');
 
-    // ----------------- event dropdown -----------------
-    if (eventSelect) {
-        // Load applications for the initially selected event (if any)
-        if (eventSelect.value) {
-            currentEventId = eventSelect.value;
+    // ----------------- event cards -----------------
+    if (eventButtons.length) {
+        // Auto-load first event on page open
+        const firstBtn = eventButtons[0];
+        const firstId  = firstBtn.dataset.eventId;
+        if (firstId) {
+            currentEventId = firstId;
+            firstBtn.classList.add('active');
             loadApplicationsForEvent(currentEventId, statsGrid, applicationsSection);
         }
 
-        // Reload when user changes event
-        eventSelect.addEventListener('change', async () => {
-            const eventId = eventSelect.value;
+        // Click handlers: change active card & reload applications
+        eventButtons.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const eventId = btn.dataset.eventId;
+                if (!eventId || eventId === currentEventId) return;
 
-            if (!eventId) {
-                if (statsGrid)           statsGrid.style.display = 'none';
-                if (applicationsSection) applicationsSection.style.display = 'none';
-                currentEventId = null;
-                currentApps = [];
-                currentStats = { total: 0, pending: 0, rejected: 0 };
-                updateStats();
-                renderApplications();
-                return;
-            }
+                currentEventId = eventId;
 
-            currentEventId = eventId;
-            await loadApplicationsForEvent(eventId, statsGrid, applicationsSection);
+                eventButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                await loadApplicationsForEvent(eventId, statsGrid, applicationsSection);
+            });
         });
     }
 
@@ -73,8 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // AJAX: load applications for one event from backend
 // =====================================================
 async function loadApplicationsForEvent(eventId, statsGrid, applicationsSection) {
-    // window.ENDPOINT_APPS_BASE is set in Blade, e.g.
-    // window.ENDPOINT_APPS_BASE = "{{ url('/employee/volunteer-assignment/events') }}";
     const base = window.ENDPOINT_APPS_BASE;
     if (!base) {
         console.error('ENDPOINT_APPS_BASE is not defined on window.');
@@ -104,7 +101,7 @@ async function loadApplicationsForEvent(eventId, statsGrid, applicationsSection)
         }
 
         const data = await res.json();
-        console.log('Applications response:', data); // <= should show rows from DB
+        console.log('Applications response:', data);
 
         currentApps  = data.applications || [];
         currentStats = data.stats || {
@@ -173,14 +170,12 @@ function renderApplications() {
         let actions = '';
 
         if (app.status === 'pending') {
-            // ⬇️ Pending: show green Accept + red Reject + View Profile
             actions = `
                 <button class="btn btn-success" onclick="acceptApplication(${app.id})">Accept</button>
                 <button class="btn btn-danger"  onclick="rejectApplication(${app.id})">Reject</button>
                 <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
             `;
         } else if (app.status === 'rejected') {
-            // Still allow re-accepting if needed
             actions = `
                 <button class="btn btn-success" onclick="acceptApplication(${app.id})">Accept</button>
                 <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
@@ -190,7 +185,6 @@ function renderApplications() {
                 <button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>
             `;
         } else {
-            // fallback
             actions = `<button class="btn btn-secondary" onclick="viewProfile(${app.volunteerId})">View Profile</button>`;
         }
 
@@ -240,6 +234,7 @@ function renderApplications() {
         `;
     }).join('');
 }
+
 async function updateReservationStatus(id, newStatus) {
     if (!window.ENDPOINT_STATUS_BASE) {
         console.error('ENDPOINT_STATUS_BASE is not defined');
@@ -269,13 +264,11 @@ async function updateReservationStatus(id, newStatus) {
         const data = await res.json();
         if (!data.ok) return false;
 
-        // Update the in-memory item
         const app = currentApps.find(a => a.id === id);
         if (app) {
             app.status = data.uiStatus || app.status;
         }
 
-        // Recalculate stats
         currentStats.total    = currentApps.length;
         currentStats.pending  = currentApps.filter(a => a.status === 'pending').length;
         currentStats.rejected = currentApps.filter(a => a.status === 'rejected').length;
@@ -291,15 +284,12 @@ async function updateReservationStatus(id, newStatus) {
 
 // Local-only status changes (UI only)
 async function rejectApplication(id) {
-    // DB status -> CANCELLED
     await updateReservationStatus(id, 'REJECTED');
 }
 
 async function acceptApplication(id) {
-    // DB status -> RESERVED
     await updateReservationStatus(id, 'RESERVED');
 }
-
 
 // ---------- Profile modal ----------
 function viewProfile(volunteerId) {

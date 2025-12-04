@@ -17,63 +17,61 @@ class ReservationController extends Controller
      * Automatically mark past reservations as COMPLETED
      * when the event's ends_at time has passed.
      */
-    protected function autoCompletePastReservations($worker): void
-{
-    // Use the app timezone (set in config/app.php)
-    $now = Carbon::now();
+       protected function autoCompletePastReservations($worker): void
+    {
+        $now = Carbon::now();
 
-    // Get ALL active reservations for this worker
-    $reservations = WorkerReservation::with('event')
-        ->where('worker_id', $worker->worker_id)
-        ->whereIn('status', ['RESERVED', 'CHECKED_IN', 'CHECKED_OUT'])
-        ->get();
+        $reservations = WorkerReservation::with('event')
+            ->where('worker_id', $worker->worker_id)
+            ->whereIn('status', ['RESERVED', 'CHECKED_IN', 'CHECKED_OUT'])
+            ->get();
 
-    foreach ($reservations as $reservation) {
-        $event = $reservation->event;
+        foreach ($reservations as $reservation) {
+            $event = $reservation->event;
 
-        // safety checks
-        if (! $event || ! $event->ends_at) {
-            continue;
-        }
-
-        // normalize ends_at as Carbon instance
-        $endsAt = $event->ends_at instanceof Carbon
-            ? $event->ends_at
-            : Carbon::parse($event->ends_at);
-
-        // if event has NOT finished yet, skip it
-        if ($endsAt->gt($now)) {
-            continue;
-        }
-
-        // --- event is in the past: mark reservation as COMPLETED ---
-        $reservation->status = 'COMPLETED';
-
-        if ($event->starts_at && $event->ends_at) {
-            // use the scheduled window
-            $reservation->check_in_time  = $reservation->check_in_time ?: $event->starts_at;
-            $reservation->check_out_time = $event->ends_at;
-
-            $minutes = $event->starts_at->diffInMinutes($event->ends_at);
-            $reservation->credited_hours = round($minutes / 60, 2);
-        } else {
-            // fallback if event times are missing
-            if (! $reservation->check_in_time) {
-                $reservation->check_in_time = $reservation->reserved_at ?? $now;
+            if (! $event || ! $event->ends_at) {
+                continue;
             }
 
-            $reservation->check_out_time = $now;
+            $endsAt = $event->ends_at instanceof Carbon
+                ? $event->ends_at
+                : Carbon::parse($event->ends_at);
 
-            $minutes = Carbon::parse($reservation->check_in_time)
-                ->diffInMinutes($reservation->check_out_time);
+            if ($endsAt->gt($now)) {
+                continue;
+            }
 
-            $reservation->credited_hours = round($minutes / 60, 2);
+            // --- event is in the past: mark reservation as COMPLETED ---
+            $reservation->status = 'COMPLETED';
+
+            if ($event->starts_at && $event->ends_at) {
+                $reservation->check_in_time  = $reservation->check_in_time ?: $event->starts_at;
+                $reservation->check_out_time = $event->ends_at;
+
+                $minutes = $event->starts_at->diffInMinutes($event->ends_at);
+                $reservation->credited_hours = round($minutes / 60, 2);
+            } else {
+                if (! $reservation->check_in_time) {
+                    $reservation->check_in_time = $reservation->reserved_at ?? $now;
+                }
+
+                $reservation->check_out_time = $now;
+
+                $minutes = Carbon::parse($reservation->check_in_time)
+                    ->diffInMinutes($reservation->check_out_time);
+
+                $reservation->credited_hours = round($minutes / 60, 2);
+            }
+
+            $reservation->save();
+
+            // 🔁 ALSO update the EVENT status to COMPLETED
+            if ($event->status !== 'CANCELLED' && $event->status !== 'COMPLETED') {
+                $event->status = 'COMPLETED';
+                $event->save();
+            }
         }
-
-        $reservation->save();
     }
-}
-
 
 public function complete(WorkerReservation $reservation, Request $request)
 {

@@ -364,6 +364,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
 
 </body>
 </html>

@@ -266,9 +266,11 @@ function closeModal() {
 function ensureCategoryOptions() {
   const select = $('#eventCategory');
   if (select) {
+    // add missing categories but keep the first "Select category..." option
     const existing = new Set(
       $$('#eventCategory option').map(o => o.value)
     );
+
     categoryList.forEach(c => {
       if (!existing.has(c)) {
         const opt = document.createElement('option');
@@ -277,12 +279,21 @@ function ensureCategoryOptions() {
         select.appendChild(opt);
       }
     });
+
+    // 👉 when creating a new event (not editing) keep the placeholder selected
+    if (!editingEventId) {
+      select.value = '';      // this is your `<option value="">Select category...</option>`
+    }
   }
 
-  $('#wizard_event_category').innerHTML = categoryList
-    .map(c => `<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`)
-    .join('');
+  // Wizard select – also add a placeholder as the default
+  $('#wizard_event_category').innerHTML =
+    '<option value="">Select category...</option>' +
+    categoryList
+      .map(c => `<option value="${c}">${c[0].toUpperCase() + c.slice(1)}</option>`)
+      .join('');
 }
+
 
 /* ========= Step 2 rows ========= */
 

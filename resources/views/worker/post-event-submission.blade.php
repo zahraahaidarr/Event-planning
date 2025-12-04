@@ -499,18 +499,26 @@ $submissionsPayload = $submissions->map(function ($sub) {
         ? ($sub->submitted_at ?? $sub->created_at)->format('d M Y, H:i')
         : '—';
 
+    // 🔹 Map real DB status → label + CSS chip class
     switch ($sub->status) {
-        case 'submitted':
-        case 'reviewed':
-            $statusLabel = 'Submitted';
-            $chipClass   = 'chip-submitted';
+        case 'approved':
+            $statusLabel = 'Approved';
+            $chipClass   = 'chip-approved';
             break;
+
+        case 'rejected':
+            $statusLabel = 'Rejected';
+            $chipClass   = 'chip-rejected';
+            break;
+
+        case 'pending':
         default:
             $statusLabel = 'Pending Review';
             $chipClass   = 'chip-pending';
+            break;
     }
 
-    // Editable for 24h while pending
+    // Editable for 24h WHILE pending
     $canEdit = $sub->submitted_at &&
                $sub->submitted_at->gt(now()->subDay()) &&
                $sub->status === 'pending';
@@ -537,6 +545,7 @@ $submissionsPayload = $submissions->map(function ($sub) {
     ];
 })->values();
 @endphp
+
 <section>
     <h2>Previous Submissions</h2>
 
@@ -569,5 +578,7 @@ $submissionsPayload = $submissions->map(function ($sub) {
 
 {{-- JS --}}
 <script src="{{ asset('js/worker/post-event-submission.js') }}" defer></script>
+@include('notify.widget')
+<script src="{{ asset('js/notify-poll.js') }}" defer></script>
 </body>
 </html>

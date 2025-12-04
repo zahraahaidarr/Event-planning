@@ -104,7 +104,8 @@ body{
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);
   color:var(--text-secondary);text-decoration:none;font-size:14px;font-weight:500;transition:all .2s ease;cursor:pointer}
 .nav-item:hover{background:var(--bg-secondary);color:var(--text-primary)}
-.nav-item.active{background:var(--accent-primary);color:#fff}
+.nav-item.active{background: var(--bg-secondary);
+    color: #fff;}
 .nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
 
 /* Main */

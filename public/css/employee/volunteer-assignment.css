@@ -192,8 +192,8 @@ body{
 }
 
 .nav-item.active{
-  background:var(--accent-primary);
-  color:#fff;
+  background: var(--bg-secondary);
+    color: #fff;
 }
 
 .nav-icon{

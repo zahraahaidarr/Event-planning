@@ -19,4 +19,10 @@ class PostEventSubmissionFile extends Model
     {
         return $this->belongsTo(PostEventSubmission::class, 'submission_id');
     }
+
+    // optional helper
+    public function getUrlAttribute()
+    {
+        return \Storage::url($this->path);
+    }
 }

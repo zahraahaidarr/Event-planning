@@ -36,7 +36,8 @@
     <span>Volunteer Assignment</span>
 </a>
 
-                <a href="{{ Route::has('employee.reports') ? route('employee.reports') : '#' }}" class="nav-item">
+                <a href="{{ route('employee.postEventReports.index') }}"
+                   class="nav-item">
                     <span class="nav-icon">📝</span><span>Post-Event Reports</span>
                 </a>
             </div>

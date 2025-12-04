@@ -22,6 +22,7 @@ use App\Http\Controllers\Employee\VolunteerAssignmentController;
 use App\Http\Controllers\Worker\ReservationController;
 use App\Http\Controllers\Employee\MessageController as EmployeeMessageController;
 use App\Http\Controllers\Worker\MessageController as WorkerMessageController;
+use App\Http\Controllers\Employee\PostEventReportController;
 
 //Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
    
@@ -76,6 +77,16 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])->name('employee.messages.contacts');
         Route::get('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'thread'])->name('employee.messages.thread');
         Route::post('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'send'])->name('employee.messages.send');
+
+
+            Route::get('/employee/post-event-reports', [PostEventReportController::class, 'index'])
+        ->name('employee.postEventReports.index');
+
+    Route::post('/employee/post-event-reports/{submission}/approve', [PostEventReportController::class, 'approve'])
+        ->name('employee.postEventReports.approve');
+
+    Route::post('/employee/post-event-reports/{submission}/reject', [PostEventReportController::class, 'reject'])
+        ->name('employee.postEventReports.reject');
 
     });
 

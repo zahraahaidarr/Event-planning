@@ -120,7 +120,8 @@ body {
   transition: all .2s ease; cursor: pointer;
 }
 .nav-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
-.nav-item.active { background: var(--accent-primary); color: #fff; }
+.nav-item.active { background: var(--bg-secondary);
+    color: #fff; }
 .nav-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
 
 /* ===== Main ===== */

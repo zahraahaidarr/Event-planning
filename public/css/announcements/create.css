@@ -224,8 +224,8 @@ button:hover, .btn-primary:hover{ background:var(--primary-2); transform:transla
 }
 
 .has-employee .employee-sidebar .nav-item.active{
-  background:var(--accent-primary);
-  color:#fff;
+  background: var(--bg-secondary);
+    color: #fff;
 }
 
 .has-employee .employee-sidebar .nav-icon{

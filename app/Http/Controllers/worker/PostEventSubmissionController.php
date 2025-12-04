@@ -26,7 +26,7 @@ public function index(Request $request)
         ->orderByDesc('reserved_at')
         ->get();
 
-    $submissions = PostEventSubmission::with(['event', 'role', 'civilCases'])
+    $submissions = PostEventSubmission::with(['event', 'workRole.roleType',  'civilCases'])
         ->where('worker_id', $worker->worker_id)
         ->latest('submitted_at')
         ->get();

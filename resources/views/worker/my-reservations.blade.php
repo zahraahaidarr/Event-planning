@@ -18,73 +18,85 @@
 <div class="container">
 
     <!-- Sidebar -->
-           <aside class="sidebar">
-        @php($user = Auth::user())
+<!-- Sidebar -->
+<aside class="sidebar">
+    @php($user = Auth::user())
 
-        <div class="logo">
-            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
-                @if($user && $user->avatar_path)
-                    <img
-                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
-                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
-                        class="logo-avatar"
-                    >
-                @else
-                    <div class="logo-icon">
-                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
-                    </div>
-                @endif
-
-                <div class="logo-id">
-                    <div class="logo-name">
-                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
-                    </div>
-                    <div class="logo-role">
-                        {{ strtoupper($user->role ?? 'WORKER') }}
-                    </div>
+    <div class="logo">
+        <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+            @if($user && $user->avatar_path)
+                <img
+                    src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                    alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                    class="logo-avatar"
+                >
+            @else
+                <div class="logo-icon">
+                    {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
                 </div>
-            </a>
-        </div>
+            @endif
 
-        <nav class="nav-section">
-            {{-- removed the "Worker" label to match admin look --}}
-            <a href="{{ route('worker.dashboard') }}" class="nav-item">
-                <span class="nav-icon">🏠</span>
-                <span>Dashboard</span>
-            </a>
-            <a href="{{ route('worker.events.discover') }}" class="nav-item active">
-                <span class="nav-icon">🗓️</span>
-                <span>Discover Events</span>
-            </a>
-            <a href="{{ route('worker.reservations') }}" class="nav-item">
-                <span class="nav-icon">✅</span>
-                <span>My Reservations</span>
-            </a>
-            <a href="{{ route('worker.submissions') }}" class="nav-item">
-                <span class="nav-icon">📝</span>
-                <span>Post-Event Submissions</span>
-            </a>
-        </nav>
+            <div class="logo-id">
+                <div class="logo-name">
+                    {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                </div>
+                <div class="logo-role">
+                    {{ strtoupper($user->role ?? 'WORKER') }}
+                </div>
+            </div>
+        </a>
+    </div>
 
+    <nav class="nav-section">
+        {{-- main worker links --}}
+        <a href="{{ route('worker.dashboard') }}"
+           class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+        </a>
 
-        <nav class="nav-section">
-            <div class="nav-label">Account</div>
-            
-            <a href="{{ route('worker.messages') }}" class="nav-item">
-                <span class="nav-icon">💬</span>
-                <span>Chat</span>
-            </a>
-            <a href="{{ route('worker.announcements.index') }}" class="nav-item">
-                <span class="nav-icon">📢</span>
-                <span>Announcements</span>
-            </a>
-            <a href="{{ route('settings') }}" class="nav-item">
-                <span class="nav-icon">⚙️</span>
-                <span>Settings</span>
-            </a>
-                   
-        </nav>
-    </aside>
+        <a href="{{ route('worker.events.discover') }}"
+           class="nav-item {{ request()->routeIs('worker.events.discover') ? 'active' : '' }}">
+            <span class="nav-icon">🗓️</span>
+            <span>Discover Events</span>
+        </a>
+
+        <a href="{{ route('worker.reservations') }}"
+           class="nav-item {{ request()->routeIs('worker.reservations') ? 'active' : '' }}">
+            <span class="nav-icon">✅</span>
+            <span>My Reservations</span>
+        </a>
+
+        <a href="{{ route('worker.submissions') }}"
+           class="nav-item {{ request()->routeIs('worker.submissions') ? 'active' : '' }}">
+            <span class="nav-icon">📝</span>
+            <span>Post-Event Submissions</span>
+        </a>
+    </nav>
+
+    <nav class="nav-section">
+        <div class="nav-label">Account</div>
+
+        <a href="{{ route('worker.messages') }}"
+           class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
+            <span class="nav-icon">💬</span>
+            <span>Chat</span>
+        </a>
+
+        <a href="{{ route('worker.announcements.index') }}"
+           class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
+            <span class="nav-icon">📢</span>
+            <span>Announcements</span>
+        </a>
+
+        <a href="{{ route('settings') }}"
+           class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+</aside>
+
 
     <!-- Main Content -->
     <main class="main-content">

@@ -307,8 +307,8 @@ body{
 }
 
 .layout-employee .nav-item.active{
-  background:var(--accent-primary);
-  color:#fff;
+  background: var(--bg-secondary);
+    color: #fff;
 }
 
 .layout-employee .nav-icon{

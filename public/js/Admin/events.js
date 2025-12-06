@@ -50,8 +50,6 @@ function renderEvents() {
     const statusLabel = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
     const statusClass = `status-${statusKey}`;
 
-    const canPublish = statusRaw !== 'PUBLISHED';
-
     return `
       <tr>
         <td class="event-title-cell">${event.title}</td>
@@ -61,23 +59,13 @@ function renderEvents() {
         <td>${event.applicants || 0} / ${event.totalSpots || 0}</td>
         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
         <td>
-  <div class="action-buttons">
-    <button class="btn btn-secondary btn-sm" data-edit="${event.id}">Edit</button>
-
-    <button class="btn btn-success btn-sm" data-status="PUBLISHED" data-id="${event.id}">
-      Publish
-    </button>
-
-    <button class="btn btn-danger btn-sm" data-status="CANCELLED" data-id="${event.id}">
-      Cancel
-    </button>
-
-    <button class="btn btn-light btn-sm" data-status="DRAFT" data-id="${event.id}">
-      Set as Draft
-    </button>
-  </div>
-</td>
-
+          <div class="action-buttons">
+            <button class="btn btn-secondary btn-sm" data-edit="${event.id}">Edit</button>
+            <button class="btn btn-success btn-sm" data-status="PUBLISHED" data-id="${event.id}">Publish</button>
+            <button class="btn btn-danger btn-sm" data-status="CANCELLED" data-id="${event.id}">Cancel</button>
+            <button class="btn btn-light btn-sm" data-status="DRAFT" data-id="${event.id}">Set as Draft</button>
+          </div>
+        </td>
       </tr>`;
   }).join('');
 }
@@ -209,13 +197,15 @@ function wizardBack() {
 
 async function wizardNext() {
   if (WZ_STEP === 1) {
-    ensureCategoryOptions();
+    // sync category selects and call AI staffing
+   
+
     const cat1 = $('#wizard_event_category').value;
     const cat3 = $('#eventCategory');
     if (cat3 && cat1) cat3.value = cat1;
 
-    buildStep2CapacityRows();
-    await runStaffingAndFillStep2(); // optional
+    
+    await runStaffingAndFillStep2(); // AI prediction fills step 2
 
     setWizardStep(2);
     return;
@@ -266,7 +256,7 @@ function closeModal() {
 function ensureCategoryOptions() {
   const select = $('#eventCategory');
   if (select) {
-    // add missing categories but keep the first "Select category..." option
+    // keep the first "Select category..." option
     const existing = new Set(
       $$('#eventCategory option').map(o => o.value)
     );
@@ -280,20 +270,19 @@ function ensureCategoryOptions() {
       }
     });
 
-    // 👉 when creating a new event (not editing) keep the placeholder selected
+    // when creating a new event keep placeholder selected
     if (!editingEventId) {
-      select.value = '';      // this is your `<option value="">Select category...</option>`
+      select.value = '';      // matches <option value="">Select category...</option>
     }
   }
 
-  // Wizard select – also add a placeholder as the default
+  // Wizard select – always rebuild with placeholder as the default
   $('#wizard_event_category').innerHTML =
     '<option value="">Select category...</option>' +
     categoryList
       .map(c => `<option value="${c}">${c[0].toUpperCase() + c.slice(1)}</option>`)
       .join('');
 }
-
 
 /* ========= Step 2 rows ========= */
 
@@ -307,7 +296,7 @@ function buildStep2CapacityRows() {
   `).join('');
 }
 
-/* ========= AI staffing (optional) ========= */
+/* ========= AI staffing ========= */
 
 async function runStaffingAndFillStep2() {
   if (!window.ENDPOINT_AI_STAFFING) return false;
@@ -316,32 +305,53 @@ async function runStaffingAndFillStep2() {
   const people = Number($('#expected_attendees').value || 0);
   const cat    = $('#wizard_event_category').value || (categoryList[0] || 'general');
 
+  const roles = [...workerTypeList];
+
   try {
     const res = await fetch(window.ENDPOINT_AI_STAFFING, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Requested-With':'XMLHttpRequest'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': window.csrfToken
       },
       body: JSON.stringify({
-        venue_area_m2: area,
+        venue_area_m2:      area,
         expected_attendees: people,
-        category: cat,
-        available_roles: [...workerTypeList]
+        category:           cat,
+        available_roles:    roles
       })
     });
 
-    if (!res.ok) return false;
+    if (!res.ok) {
+      console.error('AI staffing HTTP error', res.status, res.statusText);
+      return false;
+    }
 
-    const ai = await res.json(); // { roles:[{name,spots}] }
+    const ai = await res.json();
+    console.log('AI staffing response:', ai); // 👈 log full payload
 
+    // Support both { role_capacities: {...} } and { data: { role_capacities: {...} } }
+    const caps =
+      ai.role_capacities ||
+      (ai.data && ai.data.role_capacities) ||
+      {};
+
+    console.log('Parsed role capacities:', caps);
+
+    // build rows once here and fill them
     buildStep2CapacityRows();
-    const map = new Map(ai.roles.map(r => [r.name, r.spots]));
 
     $$('#wizard_role_capacity_rows tr').forEach(tr => {
       const label = tr.querySelector('td').textContent.trim();
       const inp   = tr.querySelector('input.capacity');
-      inp.value = map.get(label) ?? 0;
+
+      const val = caps[label];
+
+      if (typeof val === 'number' && !Number.isNaN(val)) {
+        inp.value = val;
+      }
     });
 
     return true;
@@ -350,6 +360,7 @@ async function runStaffingAndFillStep2() {
     return false;
   }
 }
+
 
 /* ========= Create/Update (Publish / Draft) ========= */
 
@@ -370,7 +381,7 @@ async function submitEvent(status = 'PUBLISHED') {
   const url = isEdit
     ? `${window.ENDPOINT_UPDATE_EVENT_BASE}/${editingEventId}`
     : window.ENDPOINT_CREATE_EVENT;
-  const method = isEdit ? 'POST' : 'POST'; // use POST + _method for PUT
+  const method = 'POST'; // using POST + _method for PUT
 
   const fd = new FormData();
   fd.append('_token', window.csrfToken);
@@ -386,15 +397,13 @@ async function submitEvent(status = 'PUBLISHED') {
   fd.append('time', $('#eventTime').value);
   fd.append('duration_hours', $('#eventDuration').value);
   fd.append('total_spots', $('#eventSpots').value);
-  fd.append('requirements', ''); // adjust if you add UI
+  fd.append('requirements', '');
   fd.append('venue_area_m2', $('#venue_area_m2').value || 0);
   fd.append('expected_attendees', $('#expected_attendees').value || 0);
   fd.append('status', status);
 
-  // roles as JSON
   fd.append('roles', JSON.stringify(roles));
 
-  // image file (optional)
   const imgInput = $('#eventImage');
   if (imgInput && imgInput.files && imgInput.files[0]) {
     fd.append('image', imgInput.files[0]);
@@ -407,7 +416,6 @@ async function submitEvent(status = 'PUBLISHED') {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': window.csrfToken,
-        // DO NOT set Content-Type; browser sets multipart boundary
       },
       body: fd,
     });
@@ -482,7 +490,6 @@ async function submitEvent(status = 'PUBLISHED') {
   }
 }
 
-
 function publishEvent() {
   submitEvent('PUBLISHED');
 }
@@ -514,14 +521,12 @@ async function updateEventStatus(id, status) {
 
     const data = await res.json().catch(() => null);
 
-    // ❌ real failure => error popup
     if (!res.ok || !data || data.ok !== true) {
       console.error('Status update error', {res, data});
       alert('Failed to update status. Please try again.');
       return;
     }
 
-    // ✅ success => update UI + success popup
     const newStatus = data.event?.status || status;
     const ev = events.find(e => String(e.id) === String(id));
     if (ev) {
@@ -537,7 +542,6 @@ async function updateEventStatus(id, status) {
   }
 }
 
-
 /* ========= Load event into modal for EDIT ========= */
 
 async function openEditModal(id) {
@@ -547,7 +551,6 @@ async function openEditModal(id) {
   $('#rolesContainer').innerHTML = '';
   ensureCategoryOptions();
 
-  // for editing we go straight to step 3 (details)
   setWizardStep(3);
 
   try {
@@ -569,7 +572,6 @@ async function openEditModal(id) {
 
     const ev = data.event;
 
-    // ===== Fill the form fields =====
     $('#eventTitle').value        = ev.title || '';
     $('#eventDescription').value  = ev.description || '';
     $('#eventCategory').value     = ev.category || '';
@@ -581,7 +583,6 @@ async function openEditModal(id) {
     $('#venue_area_m2').value     = ev.venue_area_m2 ?? '';
     $('#expected_attendees').value = ev.expected_attendees ?? '';
 
-    // image preview
     const preview  = $('#eventImagePreview');
     const imgInput = $('#eventImage');
 
@@ -595,16 +596,14 @@ async function openEditModal(id) {
       }
     }
     if (imgInput) {
-      imgInput.value = ''; // reset file input
+      imgInput.value = '';
     }
 
-    // roles
     $('#rolesContainer').innerHTML = '';
     if (Array.isArray(ev.roles) && ev.roles.length) {
       ev.roles.forEach(r => renderRoleRow(r.name, r.spots));
     }
 
-    // finally show modal
     $('#eventModal').classList.add('active');
 
   } catch (e) {
@@ -612,10 +611,6 @@ async function openEditModal(id) {
     alert('Unexpected error while loading event.');
   }
 }
-
-
-/* ========= Theme / Language ========= */
-
 
 /* ========= Table actions ========= */
 
@@ -630,7 +625,7 @@ function handleTableClicks(e) {
   }
 
   if (status && statusId) {
-    updateEventStatus(statusId, status); // CANCELLED or DRAFT
+    updateEventStatus(statusId, status);
   }
 }
 
@@ -644,14 +639,15 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#btn_publish').addEventListener('click', publishEvent);
   $('#btn_save_draft').addEventListener('click', saveDraft);
   $('#btn_add_role').addEventListener('click', addRoleRow);
- 
+
   $('.table').addEventListener('click', handleTableClicks);
 
   ensureCategoryOptions();
   buildStep2CapacityRows();
   wireTabs();
   renderEvents();
-    const imgInput = $('#eventImage');
+
+  const imgInput = $('#eventImage');
   if (imgInput) {
     imgInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -668,5 +664,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
 });

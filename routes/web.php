@@ -10,7 +10,6 @@ use App\Http\Controllers\Employee\dashboardController as EmployeeDashboardContro
 use App\Http\Controllers\Admin\VolunteerController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\TaxonomiesVenuesController;
-//use App\Http\Controllers\AI\StaffingController;
 use App\Http\Controllers\Admin\EventsController;
 use App\Http\Controllers\AnnouncementFeedController;
 use App\Http\Controllers\ProfileController;
@@ -23,8 +22,11 @@ use App\Http\Controllers\Worker\ReservationController;
 use App\Http\Controllers\Employee\MessageController as EmployeeMessageController;
 use App\Http\Controllers\Worker\MessageController as WorkerMessageController;
 use App\Http\Controllers\Employee\PostEventReportController;
+use App\Http\Controllers\EventStaffingController;
 
-//Route::post('/ai/staffing', [StaffingController::class, 'predict'])->name('api.ai.staffing');
+
+Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
+
    
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');

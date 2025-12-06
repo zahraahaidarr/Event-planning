@@ -41,79 +41,76 @@
     <!-- Sidebar -->
     @if (! $isEmployee)
         {{-- ========== ADMIN SIDEBAR (unchanged) ========== --}}
-  <!-- Sidebar -->
-      <aside class="sidebar">
-        @php($user = Auth::user())
+        <aside class="sidebar">
+            @php($user = Auth::user())
 
-<div class="logo">
-    <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
-        @if($user && $user->avatar_path)
-            <img
-                src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
-                alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
-                class="logo-avatar"
-            >
-        @else
-            <div class="logo-icon">
-                {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+            <div class="logo">
+                <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                    @if($user && $user->avatar_path)
+                        <img
+                            src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                            alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                            class="logo-avatar"
+                        >
+                    @else
+                        <div class="logo-icon">
+                            {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                        </div>
+                    @endif
+
+                    <div class="logo-id">
+                        <div class="logo-name">
+                            {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                        </div>
+                        <div class="logo-role">
+                            {{ strtoupper($user->role ?? 'USER') }}
+                        </div>
+                    </div>
+                </a>
             </div>
-        @endif
 
-        <div class="logo-id">
-            <div class="logo-name">
-                {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
-            </div>
-            <div class="logo-role">
-                {{ strtoupper($user->role ?? 'USER') }}
-            </div>
-        </div>
-    </a>
-</div>
+            <nav class="nav-section">
+                <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
+                   class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">📊</span><span>Dashboard</span>
+                </a>
 
+                <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
+                    <span class="nav-icon">👔</span><span>Employees</span>
+                </a>
 
+                <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
+                    <span class="nav-icon">👥</span><span>Volunteers</span>
+                </a>
 
-        <nav class="nav-section">
-    <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
-       class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
-    </a>
+                <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
+                    <span class="nav-icon">📅</span><span>Events</span>
+                </a>
 
-    <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
-       class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
-        <span class="nav-icon">👔</span><span>Employees</span>
-    </a>
+                <a href="{{ route('taxonomies-venues.index') }}"
+                   class="nav-item {{ request()->routeIs('taxonomies-venues.index') ? 'active' : '' }}">
+                    <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
+                </a>
 
-    <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
-       class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
-        <span class="nav-icon">👥</span><span>Volunteers</span>
-    </a>
+                <a href="{{ route('announcements.create') }}"
+                   class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span><span>Send Announcement</span>
+                </a>
+            </nav>
 
-    <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
-       class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
-        <span class="nav-icon">📅</span><span>Events</span>
-    </a>
+            <nav class="nav-section">
+                <div class="nav-label">Account</div>
 
-    <a href="{{ route('taxonomies-venues.index') }}"
-       class="nav-item {{ request()->routeIs('taxonomies-venues.index') ? 'active' : '' }}">
-        <span class="nav-icon">🏷️</span><span>Taxonomies & Venues</span>
-    </a>
-
-    <a href="{{ route('announcements.create') }}"
-       class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
-        <span class="nav-icon">📢</span><span>Send Announcement</span>
-    </a>
-</nav>
-
-        <nav class="nav-section">
-    <div class="nav-label">Account</div>
-
-    <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
-       class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
-        <span class="nav-icon">🔧</span><span>Settings</span>
-    </a>
-</nav>
-    </aside>
-        @else
+                <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
+                   class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                    <span class="nav-icon">🔧</span><span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+    @else
         {{-- ========== EMPLOYEE SIDEBAR (same style as admin) ========== --}}
         <aside class="sidebar">
             @php($user = Auth::user())
@@ -144,8 +141,6 @@
             </div>
 
             <nav class="nav-section">
-                
-
                 <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                    class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span><span>Dashboard</span>
@@ -319,9 +314,9 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label required" >Category</label>
+                <label class="form-label required">Category</label>
                 <select class="form-select" id="eventCategory" required>
-                  <option value="" >Select category...</option>
+                  <option value="">Select category...</option>
                 </select>
               </div>
               <div class="form-group">
@@ -375,11 +370,14 @@
     </div>
   </div>
 
-  {{-- JS --}}
+  {{-- JS bootstrapping --}}
   <script>
     window.csrfToken                         = "{{ csrf_token() }}";
     window.ENDPOINT_CREATE_EVENT             = "{{ route('events.store') }}";
-    window.ENDPOINT_AI_STAFFING              = "{{ url('/api/ai/staffing') }}"; // optional
+
+    {{-- AI staffing endpoint (JSON) --}}
+    window.ENDPOINT_AI_STAFFING              = "{{ url('/ai/staffing') }}";
+
     window.ENDPOINT_UPDATE_EVENT_STATUS_BASE = "{{ url('/admin/events') }}";
     window.ENDPOINT_UPDATE_EVENT_BASE        = "{{ url('/events') }}";
 

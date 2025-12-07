@@ -23,6 +23,7 @@ use App\Http\Controllers\Employee\MessageController as EmployeeMessageController
 use App\Http\Controllers\Worker\MessageController as WorkerMessageController;
 use App\Http\Controllers\Employee\PostEventReportController;
 use App\Http\Controllers\EventStaffingController;
+use App\Http\Controllers\worker\PaymentController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -70,10 +71,7 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
        
         Route::get('/employee/volunteer-assignment', [VolunteerAssignmentController::class, 'index'])->name('employee.volunteer.assignment');
         Route::get('/employee/volunteer-assignment/events/{event}/applications',[VolunteerAssignmentController::class, 'applications'])->name('volunteers.assign.applications');
-    Route::patch(
-    '/employee/volunteer-assignment/reservations/{reservation}/status',
-    [VolunteerAssignmentController::class, 'updateStatus']
-)->name('employee.volunteer-assignment.status');
+        Route::patch('/employee/volunteer-assignment/reservations/{reservation}/status',[VolunteerAssignmentController::class, 'updateStatus'])->name('employee.volunteer-assignment.status');
 
         Route::get('/employee/messages', [EmployeeMessageController::class, 'index'])->name('employee.messages');
         Route::get('/employee/messages/contacts', [EmployeeMessageController::class, 'contacts'])->name('employee.messages.contacts');
@@ -81,14 +79,9 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::post('/employee/messages/thread/{user}', [EmployeeMessageController::class, 'send'])->name('employee.messages.send');
 
 
-            Route::get('/employee/post-event-reports', [PostEventReportController::class, 'index'])
-        ->name('employee.postEventReports.index');
-
-    Route::post('/employee/post-event-reports/{submission}/approve', [PostEventReportController::class, 'approve'])
-        ->name('employee.postEventReports.approve');
-
-    Route::post('/employee/post-event-reports/{submission}/reject', [PostEventReportController::class, 'reject'])
-        ->name('employee.postEventReports.reject');
+        Route::get('/employee/post-event-reports', [PostEventReportController::class, 'index'])->name('employee.postEventReports.index');
+        Route::post('/employee/post-event-reports/{submission}/approve', [PostEventReportController::class, 'approve'])->name('employee.postEventReports.approve');
+        Route::post('/employee/post-event-reports/{submission}/reject', [PostEventReportController::class, 'reject'])->name('employee.postEventReports.reject');
 
     });
 
@@ -160,10 +153,8 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::post('/events/{event}/apply', [EventDiscoveryController::class, 'apply'])->name('events.apply');
         
         Route::get('/my-reservations', [ReservationController::class, 'index'])->name('reservations');
-Route::delete('/reservation/{id}', [ReservationController::class, 'cancel'])
-    ->name('reservation.cancel');
-Route::patch('/reservation/{reservation}/complete',
-    [ReservationController::class, 'complete'])->name('reservation.complete');
+        Route::delete('/reservation/{id}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
+        Route::patch('/reservation/{reservation}/complete',[ReservationController::class, 'complete'])->name('reservation.complete');
 
 
         Route::get('/submissions', [PostEventSubmissionController::class, 'index'])->name('submissions'); // used by your Blade
@@ -174,5 +165,6 @@ Route::patch('/reservation/{reservation}/complete',
         Route::get('/messages/thread/{user}', [WorkerMessageController::class, 'thread'])->name('messages.thread');
         Route::post('/messages/thread/{user}', [WorkerMessageController::class, 'send'])->name('messages.send');
 
+        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     });
 

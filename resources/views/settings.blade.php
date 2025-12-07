@@ -291,6 +291,17 @@
         <nav class="nav-section">
           <div class="nav-label">Account</div>
 
+          {{-- define $worker in the same scope --}}
+          @php($worker = optional(auth()->user())->worker)
+
+          @if($worker && !$worker->is_volunteer)
+            <a href="{{ route('worker.payments.index') }}"
+               class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+              <span class="nav-icon">💰</span>
+              <span>Payments</span>
+            </a>
+          @endif
+
           <a href="{{ route('worker.messages') }}" class="nav-item">
             <span class="nav-icon">💬</span>
             <span>Chat</span>
@@ -435,6 +446,13 @@
                   <button class="btn small danger" type="submit">Delete</button>
                 </form>
               </div>
+
+            </div>
+          </article>
+        </section>
+      </main>
+    </div> {{-- .container (worker) --}}
+
 
             </div>
           </article>

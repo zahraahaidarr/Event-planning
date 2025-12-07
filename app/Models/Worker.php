@@ -126,6 +126,12 @@ class Worker extends Model
 
     /** ================== Accessors / Helpers ================== */
 
+    // helper for UI / auth checks: "is this a PAID worker?"
+    public function isPaid(): bool
+    {
+        return !$this->is_volunteer;
+    }
+
     public function getApprovalStatusColorAttribute()
     {
         return match ($this->approval_status) {

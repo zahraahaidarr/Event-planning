@@ -79,60 +79,59 @@ class VolunteerAssignmentController extends Controller
             ->pluck('cnt', 'worker_id');     // [worker_id => completed_count]
 
         // --------- map DB rows -> JSON structure expected by JS ----------
-        $apps = $reservations->map(function (WorkerReservation $r) use ($completedCounts) {
-            $worker = $r->worker;
-            $user   = $worker?->user;
-            $role   = $r->workRole;
+        // --------- map DB rows -> JSON structure expected by JS ----------
+$apps = $reservations->map(function (WorkerReservation $r) use ($completedCounts) {
+    $worker = $r->worker;
+    $user   = $worker?->user;
+    $role   = $r->workRole;
 
-            // map DB status -> UI status
-            $rawStatus = strtoupper($r->status ?? 'PENDING');
+    // map DB status -> UI status
+    $rawStatus = strtoupper($r->status ?? 'PENDING');
+    $statusMap = [
+        'PENDING'   => 'pending',
+        'RESERVED'  => 'accepted',
+        'REJECTED'  => 'rejected',
+        'COMPLETED' => 'completed',
+    ];
+    $status = $statusMap[$rawStatus] ?? strtolower($rawStatus);
 
-$statusMap = [
-    'PENDING'   => 'pending',   // new app: waiting decision
-    'RESERVED'  => 'accepted', 
-    'REJECTED'  => 'rejected', // after employee accepts
-    
-    'COMPLETED' => 'completed',
-];
+    // date of application
+    $date    = $r->reserved_at ?? $r->created_at;
+    $dateStr = $date ? $date->format('Y-m-d') : null;
 
-$status = $statusMap[$rawStatus] ?? strtolower($rawStatus);
+    // 🔹 NEW: credited hours for this reservation
+    $creditedHours = (float) ($r->credited_hours ?? 0);
 
-            // date of application
-            $date = $r->reserved_at ?? $r->created_at;
-            $dateStr = $date ? $date->format('Y-m-d') : null;
+    // 🔹 NEW: worker type + hourly rate from workers table
+    $engagementKind = $worker?->engagement_kind ?? 'VOLUNTEER'; // VOLUNTEER | STIPENDED | PAID
+    $isVolunteer    = (bool) ($worker?->is_volunteer ?? true);
+    $workerType     = $isVolunteer ? 'Volunteer' : 'Worker';
+    $hourlyRate     = (float) ($worker?->hourly_rate ?? 0);
 
-            // experience: derive from joined_at in workers table if it exists
-            $joinedAt        = $worker?->joined_at;
-            $experienceYears = $joinedAt ? $joinedAt->diffInYears(now()) : null;
-            $experienceLabel = $experienceYears ? $experienceYears . ' years' : null;
+    // how many completed events this worker already has
+    $previousEvents = 0;
+    if ($worker && $completedCounts->has($worker->worker_id)) {
+        $previousEvents = (int) $completedCounts[$worker->worker_id];
+    }
 
-            // how many completed events this worker already has
-            $previousEvents = 0;
-            if ($worker && $completedCounts->has($worker->worker_id)) {
-                $previousEvents = (int) $completedCounts[$worker->worker_id];
-            }
+    return [
+        'id'             => $r->reservation_id,
+        'volunteerId'    => $worker?->worker_id,
+        'name'           => $user?->name ?? 'Unknown',
+        'email'          => $user?->email ?? null,
+        'phone'          => $user->phone ?? null,
+        'role'           => $role?->role_name ?? null,
+        'appliedDate'    => $dateStr,
+        'status'         => $status,
 
-            // skills + availability: if you don't have them in DB yet, they will be null
-            // you can later replace null with real queries when you add those tables/columns
-            $skills       = null;
-            $availability = null;
-
-            return [
-                'id'             => $r->reservation_id,
-                'volunteerId'    => $worker?->worker_id,
-                'name'           => $user?->name ?? 'Unknown',
-                'email'          => $user?->email ?? null,
-                'phone'          => $user->phone ?? null,  // if column does not exist => null
-                'role'           => $role?->role_name ?? null,
-                'appliedDate'    => $dateStr,
-                'status'         => $status,
-
-                'experience'     => $experienceLabel,
-                'skills'         => $skills,
-                'availability'   => $availability,
-                'previousEvents' => $previousEvents,
-            ];
-        });
+        // 🔹 what the JS will show
+        'creditedHours'  => $creditedHours,
+        'workerType'     => $workerType,
+        'engagementKind' => $engagementKind,
+        'hourlyRate'     => $hourlyRate,
+        'previousEvents' => $previousEvents,
+    ];
+});
 
         $total    = $apps->count();
         $pending  = $apps->where('status', 'pending')->count();

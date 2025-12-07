@@ -168,6 +168,34 @@
               @error('role_type_id') <div class="error">{{ $message }}</div> @enderror
             </div>
 
+            {{-- NEW: Engagement type (volunteer vs paid) --}}
+            <div class="field">
+              <label for="engagement_kind">@lang('Engagement Type')</label>
+              <select class="input" id="engagement_kind" name="engagement_kind" required>
+                @php $kind = old('engagement_kind','VOLUNTEER'); @endphp
+                <option id="opt-volunteer" value="VOLUNTEER" {{ $kind === 'VOLUNTEER' ? 'selected' : '' }}>
+                  Volunteer (unpaid)
+                </option>
+                <option id="opt-paid" value="PAID" {{ $kind === 'PAID' ? 'selected' : '' }}>
+                  Paid worker
+                </option>
+              </select>
+              @error('engagement_kind') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            {{-- NEW: hidden is_volunteer flag --}}
+            <input type="hidden" id="is_volunteer" name="is_volunteer"
+                   value="{{ $kind === 'VOLUNTEER' ? 1 : 0 }}"/>
+
+            {{-- NEW: Hourly rate (only for paid workers) --}}
+            <div class="field {{ $kind === 'PAID' ? '' : 'hidden' }}" id="hourly_rate_field">
+              <label for="hourly_rate">@lang('Hourly Rate')</label>
+              <input class="input" id="hourly_rate" type="number" step="0.01" min="0"
+                     name="hourly_rate" value="{{ old('hourly_rate') }}"
+                     placeholder="10.00"/>
+              @error('hourly_rate') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
             <div class="field">
               <label for="pass">@lang('Password')</label>
               <input class="input" id="pass" type="password" name="password" required minlength="6" placeholder="••••••••" autocomplete="new-password"/>
@@ -288,7 +316,12 @@
         create:'Create Account',
         worker:'Worker',
         employee:'Client',
-        dob:'Date of Birth'
+        dob:'Date of Birth',
+        // NEW
+        engagement:'Engagement Type',
+        hourly:'Hourly Rate',
+        volunteerOption:'Volunteer (unpaid)',
+        paidOption:'Paid worker'
       },
       ar:{
         title:'إنشاء حساب',
@@ -304,9 +337,14 @@
         tos:'أوافق على الشروط',
         have:'لديك حساب؟ تسجيل الدخول',
         create:'إنشاء الحساب',
-        worker:'متطوّع',
+        worker:'متطوّع/عامل',
         employee:'عميل',
-        dob:'تاريخ الميلاد'
+        dob:'تاريخ الميلاد',
+        // NEW
+        engagement:'نوع المشاركة',
+        hourly:'الأجر بالساعة',
+        volunteerOption:'متطوّع (من دون أجر)',
+        paidOption:'عامل بأجر'
       }
     };
     let lang = document.documentElement.getAttribute('dir') === 'rtl' ? 'ar' : 'en';
@@ -326,6 +364,10 @@
       document.querySelector('label[for="pass"]').textContent=s.pass;
       document.querySelector('label[for="confirm"]').textContent=s.confirm;
       document.querySelector('label[for="dob"]').textContent = s.dob;
+      // NEW: engagement + hourly labels
+      document.querySelector('label[for="engagement_kind"]').textContent = s.engagement;
+      document.querySelector('label[for="hourly_rate"]').textContent = s.hourly;
+
       document.getElementById('tosText') && (document.getElementById('tosText').textContent=s.tos);
       document.getElementById('toLogin') && (document.getElementById('toLogin').textContent=s.have);
       document.getElementById('regBtn').textContent=s.create;
@@ -342,6 +384,10 @@
       // Switcher text
       document.getElementById('tab-worker').textContent=s.worker;
       document.getElementById('tab-employee').textContent=s.employee;
+
+      // NEW: option texts
+      document.getElementById('opt-volunteer').textContent = s.volunteerOption;
+      document.getElementById('opt-paid').textContent = s.paidOption;
     }
 
     // Theme toggler
@@ -382,6 +428,31 @@
 
     tabWorker.addEventListener('click', ()=> setActive('worker'));
     tabEmployee.addEventListener('click', ()=> setActive('employee'));
+
+    // NEW: engagement select -> toggle hourly + is_volunteer
+    const engagementSelect = document.getElementById('engagement_kind');
+    const hourlyField = document.getElementById('hourly_rate_field');
+    const hourlyInput = document.getElementById('hourly_rate');
+    const isVolunteerInput = document.getElementById('is_volunteer');
+
+    function updateEngagementUI(){
+      if(!engagementSelect) return;
+      if(engagementSelect.value === 'PAID'){
+        hourlyField.classList.remove('hidden');
+        hourlyInput.disabled = false;
+        isVolunteerInput.value = 0;
+      }else{
+        hourlyField.classList.add('hidden');
+        hourlyInput.disabled = true;
+        hourlyInput.value = '';
+        isVolunteerInput.value = 1;
+      }
+    }
+
+    if(engagementSelect){
+      engagementSelect.addEventListener('change', updateEngagementUI);
+      updateEngagementUI(); // initial
+    }
 
     // Client-side checks (server will validate again)
     regForm.addEventListener('submit',(e)=>{

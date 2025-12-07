@@ -1,0 +1,212 @@
+/* public/css/worker/payments.css */
+/* Uses the same CSS variables and overall look as event-discovery.css.
+   We do NOT touch .sidebar/.container here – they come from event-discovery styles. */
+
+.payments-page {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header */
+.payments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.payments-header-left h1,
+.payments-title {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.payments-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Top right meta badges */
+.payments-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.payments-meta-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.meta-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Summary cards (match card feeling of event cards) */
+.payments-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.summary-card {
+    padding: 16px 18px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.summary-card-highlight {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.summary-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-tertiary);
+}
+
+.summary-card-highlight .summary-label {
+    color: rgba(255,255,255,0.9);
+}
+
+.summary-value {
+    margin-top: 6px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.summary-card-highlight .summary-value {
+    color: #fff;
+}
+
+.summary-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.summary-card-highlight .summary-unit {
+    color: rgba(255,255,255,0.85);
+}
+
+/* Table section */
+.payments-table-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.payments-table-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.payments-table-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.payments-table-wrapper {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.payments-table th,
+.payments-table td {
+    padding: 10px 14px;
+    text-align: left;
+}
+
+.payments-table thead {
+    background: var(--bg-secondary);
+}
+
+.payments-table th {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-tertiary);
+}
+
+.payments-table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.02);
+}
+
+.payments-table tbody tr:hover {
+    background: rgba(79,124,255,0.15);
+}
+
+.payments-table td {
+    color: var(--text-primary);
+}
+
+.payments-table-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+}
+
+/* Responsive tweaks (same spirit as discovery page) */
+@media (max-width: 900px) {
+    .payments-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .payments-summary {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .payments-page {
+        padding: 16px;
+    }
+
+    .payments-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .payments-table th:nth-child(3),
+    .payments-table td:nth-child(3) {
+        display: none; /* hide Location column on very small screens */
+    }
+}

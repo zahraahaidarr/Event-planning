@@ -195,7 +195,7 @@
                         <input id="vm-engagement_kind" type="text" disabled>
                     </div>
                     <div class="form-group">
-                        <label>Volunteer type</label>
+                        <label>Type</label>
                         <input id="vm-is_volunteer" type="text" disabled>
                     </div>
                     <div class="form-group">
@@ -203,8 +203,8 @@
                         <input id="vm-status" type="text" disabled>
                     </div>
                     <div class="form-group">
-                        <label>Verification status</label>
-                        <input id="vm-verification_status" type="text" disabled>
+                        <label>Hourly rate</label>
+                        <input id="vm-hourly_rate" type="text" disabled>
                     </div>
                     <div class="form-group">
                         <label>Total events</label>

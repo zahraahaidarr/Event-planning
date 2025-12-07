@@ -68,18 +68,24 @@ class RegisteredUserController extends Controller
         }
 
         /* ======================= WORKER FLOW ======================= */
-        $validated = $request->validate([
-            'first_name'    => ['required','string','max:255'],
-            'last_name'     => ['required','string','max:255'],
-            'email'         => ['required','string','email','max:255','unique:users,email'],
-            'phone'         => ['nullable','string','max:30'],
-            'city'          => ['nullable','string','max:100'],
-            'role_type_id'  => ['required','integer','exists:role_types,role_type_id'],
-            'certificate'   => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
-            'date_of_birth' => ['required','date','before:today'],
-            'password'      => ['required','confirmed', Password::min(6)],
-            'terms'         => ['accepted'],
-        ]);
+        /* ======================= WORKER FLOW ======================= */
+$validated = $request->validate([
+    'first_name'    => ['required','string','max:255'],
+    'last_name'     => ['required','string','max:255'],
+    'email'         => ['required','string','email','max:255','unique:users,email'],
+    'phone'         => ['nullable','string','max:30'],
+    'city'          => ['nullable','string','max:100'],
+    'role_type_id'  => ['required','integer','exists:role_types,role_type_id'],
+    'certificate'   => ['required','file','mimes:pdf,jpg,jpeg,png','max:4096'],
+    'date_of_birth' => ['required','date','before:today'],
+    'password'      => ['required','confirmed', Password::min(6)],
+    'terms'         => ['accepted'],
+
+    // 🔹 NEW:
+    'engagement_kind' => ['required','in:VOLUNTEER,PAID'],
+    'hourly_rate'     => ['nullable','required_if:engagement_kind,PAID','numeric','min:0'],
+]);
+
 
         // User: PENDING + role = worker
         $user = User::create([
@@ -95,17 +101,27 @@ class RegisteredUserController extends Controller
 
         $certificatePath = $request->file('certificate')->store('certificates', 'public');
 
-        Worker::create([
-            'user_id'             => $user->id,
-            'role_type_id'        => (int) $validated['role_type_id'],
-            'engagement_kind'     => 'VOLUNTEER',
-            'is_volunteer'        => true,
-            'location'            => $validated['city'] ?? null,
-            'certificate_path'    => $certificatePath,
-            'total_hours'         => 0,
-            'verification_status' => 'PENDING',
-            'joined_at'           => now()->toDateString(),
-        ]);
+     Worker::create([
+    'user_id'             => $user->id,
+    'role_type_id'        => (int) $validated['role_type_id'],
+
+    // NEW: take the choice from the form
+    'engagement_kind'     => $validated['engagement_kind'] ?? 'VOLUNTEER', // VOLUNTEER or PAID
+
+    // NEW: flag based on that choice
+    'is_volunteer'        => (($validated['engagement_kind'] ?? 'VOLUNTEER') === 'VOLUNTEER'),
+
+    // NEW: hourly rate only when PAID, otherwise null
+    'hourly_rate'         => (($validated['engagement_kind'] ?? 'VOLUNTEER') === 'PAID')
+                                ? ($validated['hourly_rate'] ?? null)
+                                : null,
+
+    'location'            => $validated['city'] ?? null,
+    'certificate_path'    => $certificatePath,
+    'total_hours'         => 0,
+    'verification_status' => 'PENDING',
+    'joined_at'           => now()->toDateString(),
+]);
 
         event(new Registered($user));
 

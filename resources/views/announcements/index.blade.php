@@ -152,27 +152,33 @@
                 </a>
             </nav>
 
-            <nav class="nav-section">
-                <div class="nav-label">Account</div>
+<nav class="nav-section">
+    <div class="nav-label">Account</div>
+    {{-- define $worker in the same scope --}}
+    @php($worker = optional(auth()->user())->worker)
 
-                <a href="{{ route('worker.messages') }}"
-                   class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
-                    <span class="nav-icon">💬</span>
-                    <span>Chat</span>
-                </a>
+    @if($worker && !$worker->is_volunteer)
+        <a href="{{ route('worker.payments.index') }}"
+           class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+            <span class="nav-icon">💰</span>
+            <span>Payments</span>
+        </a>
+    @endif
+    <a href="{{ route('worker.messages') }}" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span>Chat</span>
+    </a>
+    <a href="{{ route('worker.announcements.index') }}" class="nav-item">
+        <span class="nav-icon">📢</span>
+        <span>Announcements</span>
+    </a>
+    <a href="{{ route('settings') }}" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+    </a>
 
-                <a href="{{ route('worker.announcements.index') }}"
-                   class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
-                    <span class="nav-icon">📢</span>
-                    <span>Announcements</span>
-                </a>
 
-                <a href="{{ route('settings') }}"
-                   class="nav-item {{ request()->routeIs('worker.settings') ? 'active' : '' }}">
-                    <span class="nav-icon">⚙️</span>
-                    <span>Settings</span>
-                </a>
-            </nav>
+</nav>
         </aside>
     @endif
 

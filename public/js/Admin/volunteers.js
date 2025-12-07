@@ -50,7 +50,8 @@
     const statusFilter   = document.getElementById('filterStatus')?.value || '';
 
     const filtered = VOLUNTEERS.filter(v => {
-      if (roleFilter && v.role !== roleFilter) return false;
+      const roleName = v.role ?? v.role_name ?? '';
+      if (roleFilter && roleName !== roleFilter) return false;
       if (locationFilter && v.location !== locationFilter) return false;
       if (statusFilter && v.status !== statusFilter) return false;
       return true;
@@ -59,19 +60,20 @@
     tbody.innerHTML = filtered.map(vol => {
       const statusClass = `badge-${vol.status}`;
       const statusText  = (vol.status || 'pending').replace(/^\w/, c => c.toUpperCase());
+      const roleName    = vol.role ?? vol.role_name ?? '—';
 
       return `
         <tr>
           <td class="volunteer-name">${escapeHtml(vol.name ?? '—')}</td>
-          <td>${escapeHtml(vol.role ?? '—')}</td>
+          <td>${escapeHtml(roleName)}</td>
           <td>${escapeHtml(vol.location ?? '—')}</td>
           <td>${Number(vol.events) || 0}</td>
           <td>${Number(vol.hours) || 0}h</td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
           <td>
             <div class="action-buttons">
-              <button class="btn btn-success"  onclick="setActive(${vol.id}, event)"    ${vol.status==='active'?'disabled':''}>Activate</button>
-              <button class="btn btn-warning"  onclick="setSuspended(${vol.id}, event)" ${vol.status==='suspended'?'disabled':''}>Suspend</button>
+              <button class="btn btn-success"  onclick="setActive(${vol.id}, event)"    ${vol.status==='ACTIVE' || vol.status==='active' ? 'disabled' : ''}>Activate</button>
+              <button class="btn btn-warning"  onclick="setSuspended(${vol.id}, event)" ${vol.status==='SUSPENDED' || vol.status==='suspended' ? 'disabled' : ''}>Suspend</button>
               <button class="btn btn-secondary" onclick="viewVolunteer(${vol.id})">View</button>
             </div>
           </td>
@@ -119,7 +121,7 @@
     finally { if (btn) { btn.disabled = false; btn.textContent = 'Ban'; } }
   };
 
-    function setText(id, value) {
+  function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? '';
   }
@@ -144,12 +146,29 @@
     setInput('vm-first_name', vol.first_name || '');
     setInput('vm-last_name',  vol.last_name || '');
     setInput('vm-phone',      vol.phone || '');
-    setInput('vm-role',       vol.role || '');
+
+    const roleName = vol.role ?? vol.role_name ?? '';
+    setInput('vm-role',       roleName);
+
     setInput('vm-location',   vol.location || '');
     setInput('vm-engagement_kind', vol.engagement_kind || '');
-    setInput('vm-is_volunteer', vol.is_volunteer ? 'Volunteer' : 'Worker');
+
+    // normalize is_volunteer (bool / tinyint / string)
+    const isVol = String(vol.is_volunteer) === '1' || vol.is_volunteer === true;
+    setInput('vm-is_volunteer', isVol ? 'Volunteer' : 'Worker');
+
+    // Hourly rate field instead of verification status
+    let hourlyText;
+    if (isVol) {
+      hourlyText = '0 $';
+    } else if (vol.hourly_rate !== null && vol.hourly_rate !== undefined) {
+      hourlyText = vol.hourly_rate + ' $';
+    } else {
+      hourlyText = '—';
+    }
+    setInput('vm-hourly_rate', hourlyText);
+
     setInput('vm-status',     vol.status || '');
-    setInput('vm-verification_status', vol.verification_status || '');
     setInput('vm-events',     vol.events ?? 0);
     setInput('vm-hours',      (vol.hours ?? 0) + ' h');
     setInput('vm-joined_at',  vol.joined_at || '');
@@ -174,7 +193,6 @@
     const modal = document.getElementById('volunteerModal');
     if (modal) modal.classList.add('hidden');
   };
-
 
   // UI toggles
   window.toggleTheme = function() {

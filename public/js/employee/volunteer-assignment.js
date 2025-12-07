@@ -167,6 +167,10 @@ function renderApplications() {
             .map(n => n[0])
             .join('');
 
+        const hours      = Number(app.creditedHours ?? 0);
+        const hourlyRate = Number(app.hourlyRate ?? 0);
+        const workerType = app.workerType || app.engagementKind || '-';
+
         let actions = '';
 
         if (app.status === 'pending') {
@@ -210,21 +214,30 @@ function renderApplications() {
                         <span class="info-label">Phone</span>
                         <span class="info-value">${app.phone ?? '-'}</span>
                     </div>
+
+                    <!-- 🔹 Credited hours instead of Experience -->
                     <div class="info-item">
-                        <span class="info-label">Experience</span>
-                        <span class="info-value">${app.experience ?? '-'}</span>
+                        <span class="info-label">Credited hours</span>
+                        <span class="info-value">${hours.toFixed(2)} h</span>
                     </div>
+
                     <div class="info-item">
                         <span class="info-label">Previous Events</span>
                         <span class="info-value">${app.previousEvents ?? 0} events</span>
                     </div>
+
+                    <!-- 🔹 Worker type instead of Skills -->
                     <div class="info-item">
-                        <span class="info-label">Skills</span>
-                        <span class="info-value">${app.skills ?? '-'}</span>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">${workerType}</span>
                     </div>
+
+                    <!-- 🔹 Hourly rate instead of Availability -->
                     <div class="info-item">
-                        <span class="info-label">Availability</span>
-                        <span class="info-value">${app.availability ?? '-'}</span>
+                        <span class="info-label">Hourly rate</span>
+                        <span class="info-value">
+                            ${hourlyRate > 0 ? hourlyRate.toFixed(2) + ' $/h' : '-'}
+                        </span>
                     </div>
                 </div>
                 <div class="application-actions">
@@ -234,6 +247,7 @@ function renderApplications() {
         `;
     }).join('');
 }
+
 
 async function updateReservationStatus(id, newStatus) {
     if (!window.ENDPOINT_STATUS_BASE) {
@@ -296,6 +310,10 @@ function viewProfile(volunteerId) {
     const app = currentApps.find(a => a.volunteerId === volunteerId);
     if (!app) return;
 
+    const hours      = Number(app.creditedHours ?? 0);
+    const hourlyRate = Number(app.hourlyRate ?? 0);
+    const workerType = app.workerType || app.engagementKind || '-';
+
     $('#modalVolunteerName').textContent = app.name ?? 'Volunteer Profile';
     $('#modalBody').innerHTML = `
         <div class="profile-section">
@@ -311,27 +329,31 @@ function viewProfile(volunteerId) {
                 </div>
             </div>
         </div>
+
         <div class="profile-section">
-            <h3>Volunteer Experience</h3>
+            <h3>Work & Hours</h3>
             <div class="profile-grid">
                 <div class="profile-row">
-                    <span class="info-label">Experience:</span>
-                    <span class="info-value">${app.experience ?? '-'}</span>
+                    <span class="info-label">Type:</span>
+                    <span class="info-value">${workerType}</span>
                 </div>
                 <div class="profile-row">
-                    <span class="info-label">Previous Events:</span>
-                    <span class="info-value">${app.previousEvents ?? 0} events completed</span>
+                    <span class="info-label">Credited hours (this event):</span>
+                    <span class="info-value">${hours.toFixed(2)} h</span>
                 </div>
                 <div class="profile-row">
-                    <span class="info-label">Skills:</span>
-                    <span class="info-value">${app.skills ?? '-'}</span>
+                    <span class="info-label">Hourly rate:</span>
+                    <span class="info-value">
+                        ${hourlyRate > 0 ? hourlyRate.toFixed(2) + ' $/h' : '-'}
+                    </span>
                 </div>
                 <div class="profile-row">
-                    <span class="info-label">Availability:</span>
-                    <span class="info-value">${app.availability ?? '-'}</span>
+                    <span class="info-label">Completed events:</span>
+                    <span class="info-value">${app.previousEvents ?? 0} events</span>
                 </div>
             </div>
         </div>
+
         <div class="profile-section">
             <h3>Application Details</h3>
             <div class="profile-grid">
@@ -345,7 +367,9 @@ function viewProfile(volunteerId) {
                 </div>
                 <div class="profile-row">
                     <span class="info-label">Status:</span>
-                    <span class="info-value">${(app.status || '').charAt(0).toUpperCase() + (app.status || '').slice(1)}</span>
+                    <span class="info-value">
+                        ${(app.status || '').charAt(0).toUpperCase() + (app.status || '').slice(1)}
+                    </span>
                 </div>
             </div>
         </div>
@@ -353,6 +377,7 @@ function viewProfile(volunteerId) {
 
     $('#profileModal').classList.add('active');
 }
+
 
 function closeModal() {
     $('#profileModal').classList.remove('active');

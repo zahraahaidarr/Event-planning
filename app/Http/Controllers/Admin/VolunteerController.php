@@ -19,20 +19,20 @@ class VolunteerController extends Controller
 
     public function index()
     {
-        $initial = $this->baseQuery()->get();
+        $initial    = $this->baseQuery()->get();
         $volunteers = $this->normalize($initial);
 
         $roles = RoleType::orderBy('name')->get(['role_type_id', 'name']);
 
         $locations = \App\Models\Event::query()
-        ->select('location')
-        ->distinct()
-        ->orderBy('location')
-        ->pluck('location');
+            ->select('location')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location');
 
         return view('Admin.volunteers', [
             'volunteers' => $volunteers,
-            'roles'      => $roles,   
+            'roles'      => $roles,
             'locations'  => $locations,
         ]);
     }
@@ -57,7 +57,7 @@ class VolunteerController extends Controller
         // free-text (name/email)
         if ($term = trim((string) $request->input('q'))) {
             $q->whereHas('user', function ($uq) use ($term) {
-                $uq->where('name', 'like', "%{$term}%")
+                $uq->where(DB::raw("CONCAT(first_name,' ',last_name)"), 'like', "%{$term}%")
                    ->orWhere('email', 'like', "%{$term}%");
             });
         }
@@ -67,7 +67,8 @@ class VolunteerController extends Controller
         }
 
         if ($role = $request->string('role')->trim()) {
-            $q->whereHas('reservations.workRole.roleType', fn($qq) => $qq->where('name', $role));
+            // 🔹 Use worker->roleType instead of reservation role
+            $q->whereHas('roleType', fn($qq) => $qq->where('name', $role));
         }
 
         if ($status = $request->string('status')->trim()) {
@@ -104,7 +105,7 @@ class VolunteerController extends Controller
         $worker = Worker::with('user:id,status')->find($id);
         if (!$worker || !$worker->user) {
             return response()->json([
-                'ok' => false,
+                'ok'      => false,
                 'message' => 'Worker or linked user not found',
             ], Response::HTTP_NOT_FOUND);
         }
@@ -113,127 +114,141 @@ class VolunteerController extends Controller
             $worker->user->status = $request->input('status'); // ACTIVE/SUSPENDED/BANNED/PENDING
             $worker->user->save();
         });
-        Notify::to(
-    $worker->user->id,
-    'Account status updated',
-    "Your account status was changed to {$request->input('status')}.",
-    'ACCOUNT'
-);
 
+        Notify::to(
+            $worker->user->id,
+            'Account status updated',
+            "Your account status was changed to {$request->input('status')}.",
+            'ACCOUNT'
+        );
 
         return response()->json([
-            'ok' => true,
+            'ok'      => true,
             'message' => 'Status updated.',
         ]);
     }
-public function completeReservation($reservationId)
-{
-    $reservation = WorkerReservation::with('event')->findOrFail($reservationId);
-    $event = $reservation->event;
 
-    if (!$event) {
-        abort(500, 'Event not found');
+    public function completeReservation($reservationId)
+    {
+        $reservation = WorkerReservation::with('event')->findOrFail($reservationId);
+        $event       = $reservation->event;
+
+        if (!$event) {
+            abort(500, 'Event not found');
+        }
+
+        // ---- 1) Fix missing check-in time ----
+        if (!$reservation->check_in_time) {
+            // Use event start time
+            $reservation->check_in_time = $event->starts_at;
+        }
+
+        // ---- 2) Fix missing check-out time ----
+        if (!$reservation->check_out_time) {
+            // Use event end time
+            $reservation->check_out_time = $event->ends_at;
+        }
+
+        // ---- 3) Calculate hours ----
+        $checkIn  = Carbon::parse($reservation->check_in_time);
+        $checkOut = Carbon::parse($reservation->check_out_time);
+
+        // Prevent negative or unrealistic values
+        if ($checkOut->lessThan($checkIn)) {
+            $checkOut = $checkIn->copy()->addHours($event->duration_hours ?? 1);
+        }
+
+        $minutes                     = $checkIn->diffInMinutes($checkOut);
+        $reservation->credited_hours = round($minutes / 60, 2);
+
+        // ---- 4) Mark as completed ----
+        $reservation->status = 'COMPLETED';
+        $reservation->save();
     }
-
-    // ---- 1) Fix missing check-in time ----
-    if (!$reservation->check_in_time) {
-        // Use event start time
-        $reservation->check_in_time = $event->starts_at;
-    }
-
-    // ---- 2) Fix missing check-out time ----
-    if (!$reservation->check_out_time) {
-        // Use event end time
-        $reservation->check_out_time = $event->ends_at;
-    }
-
-    // ---- 3) Calculate hours ----
-    $checkIn  = Carbon::parse($reservation->check_in_time);
-    $checkOut = Carbon::parse($reservation->check_out_time);
-
-    // Prevent negative or unrealistic values
-    if ($checkOut->lessThan($checkIn)) {
-        $checkOut = $checkIn->copy()->addHours($event->duration_hours ?? 1);
-    }
-
-    $minutes = $checkIn->diffInMinutes($checkOut);
-    $reservation->credited_hours = round($minutes / 60, 2);
-
-    // ---- 4) Mark as completed ----
-    $reservation->status = 'COMPLETED';
-    $reservation->save();
-}
-
-
 
     /* ======================= Internals ======================= */
 
-private function baseQuery()
-{
-    return Worker::query()
-        ->with([
-            // add phone + avatar_path so we can show them if needed
-            'user:id,first_name,last_name,email,status,phone,avatar_path',
-            'reservations.workRole.roleType:role_type_id,name',
-        ])
-        ->withCount([
-            'reservations as reservations_count' => function ($q) {
-                $q->where('status', '!=', 'CANCELLED');
-            },
-        ])
-        ->withSum([
-            'reservations as total_hours' => function ($q) {
-                $q->where('status', 'COMPLETED');
-            }
-        ], 'credited_hours');
-}
+    private function baseQuery()
+    {
+        return Worker::query()
+            ->with([
+                // add phone + avatar_path so we can show them if needed
+                'user:id,first_name,last_name,email,status,phone,avatar_path',
 
+                // 🔹 Load the worker's *direct* role type
+                'roleType:role_type_id,name',
 
+                // still load reservations info for counts/hours
+                'reservations.workRole.roleType:role_type_id,name',
+            ])
+            ->withCount([
+                'reservations as reservations_count' => function ($q) {
+                    $q->where('status', '!=', 'CANCELLED');
+                },
+            ])
+            ->withSum([
+                'reservations as total_hours' => function ($q) {
+                    $q->where('status', 'COMPLETED');
+                }
+            ], 'credited_hours');
+    }
 
+    private function normalize($collection)
+    {
+        return $collection->map(function ($w) {
+            $user       = $w->user;
+            $firstName  = $user->first_name ?? '';
+            $lastName   = $user->last_name ?? '';
+            $fullName   = trim($firstName . ' ' . $lastName);
+            $userStatus = strtoupper((string) ($user->status ?? 'PENDING'));
 
-private function normalize($collection)
-{
-    return $collection->map(function ($w) {
-        $user       = $w->user;
-        $firstName  = $user->first_name ?? '';
-        $lastName   = $user->last_name ?? '';
-        $fullName   = trim($firstName . ' ' . $lastName);
-        $userStatus = strtoupper((string) ($user->status ?? 'PENDING'));
+            $statusForUi = match ($userStatus) {
+                'ACTIVE'    => 'active',
+                'SUSPENDED' => 'suspended',
+                'BANNED'    => 'banned',
+                'PENDING'   => 'pending',
+                default     => 'pending',
+            };
 
-        $statusForUi = match ($userStatus) {
-            'ACTIVE'    => 'active',
-            'SUSPENDED' => 'suspended',
-            'BANNED'    => 'banned',
-            'PENDING'   => 'pending',
-            default     => 'pending',
-        };
+            // 🔹 Prefer the worker's own roleType; fall back to reservation role
+            $roleName = $w->roleType->name
+                ?? $w->reservations->first()?->workRole?->roleType?->name
+                ?? '';
 
-        $roleName = $w->reservations->first()?->workRole?->roleType?->name ?? '';
+            return [
+                'id'                  => $w->worker_id,
+                'name'                => $fullName,
+                'first_name'          => $firstName,
+                'last_name'           => $lastName,
+                'email'               => $user->email ?? '',
+                'phone'               => $user->phone ?? '',
+                'role'                => $roleName,
+                'location'            => $w->location ?? '',
+                'engagement_kind'     => $w->engagement_kind ?? '',
+                'is_volunteer'        => (bool) $w->is_volunteer,
 
-        return [
-            'id'                  => $w->worker_id,
-            'name'                => $fullName,
-            'first_name'          => $firstName,
-            'last_name'           => $lastName,
-            'email'               => $user->email ?? '',
-            'phone'               => $user->phone ?? '',
-            'role'                => $roleName,
-            'location'            => $w->location ?? '',
-            'engagement_kind'     => $w->engagement_kind ?? '',
-            'is_volunteer'        => (bool) $w->is_volunteer,
-            'verification_status' => $w->verification_status ?? '',
-            'joined_at'           => optional($w->joined_at)->toDateString(),
-            'events'              => (int) ($w->reservations_count ?? 0),
-            'hours'               => (float) ($w->total_hours ?? 0),
-            'status'              => $statusForUi, // active|suspended|banned|pending
+                // 🔹 keep if you still need it elsewhere
+                'verification_status' => $w->verification_status ?? '',
 
-            // file paths / URLs
-            'certificate_path'    => $w->certificate_path,
-            'certificate_url'     => $w->certificate_path
-                ? asset('storage/' . ltrim($w->certificate_path, '/'))
-                : null,
-        ];
-    });
-}
+                'joined_at'           => $w->joined_at
+                    ? (string) $w->joined_at
+                    : '',
 
+                'events'              => (int) ($w->reservations_count ?? 0),
+                'hours'               => (float) ($w->total_hours ?? 0),
+                'status'              => $statusForUi, // active|suspended|banned|pending
+
+                // 🔹 NEW: send hourly_rate to the frontend
+                'hourly_rate'         => $w->hourly_rate !== null
+                    ? (float) $w->hourly_rate
+                    : null,
+
+                // file paths / URLs
+                'certificate_path'    => $w->certificate_path,
+                'certificate_url'     => $w->certificate_path
+                    ? asset('storage/' . ltrim($w->certificate_path, '/'))
+                    : null,
+            ];
+        });
+    }
 }

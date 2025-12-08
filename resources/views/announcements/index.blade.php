@@ -10,13 +10,18 @@
     <link rel="stylesheet" href="{{ asset('css/announcements/index.css') }}">
 </head>
 <body>
+@php
+    // Normalize role for this page
+    $user = Auth::user();
+    $role = strtolower($user->role ?? 'worker');
+@endphp
+
 <div class="app-container">
 
     {{-- =================== SIDEBAR (DYNAMIC) =================== --}}
     @if ($role === 'employee')
         {{-- EMPLOYEE SIDEBAR – same structure as employee pages --}}
         <aside class="sidebar employee-sidebar">
-            @php($user = Auth::user())
 
             <div class="logo">
                 <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
@@ -45,15 +50,13 @@
 
             <nav>
                 <div class="nav-section">
-                    {{-- (no label at top on the other employee pages either) --}}
-
                     <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                        class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                         <span class="nav-icon">📊</span><span>Dashboard</span>
                     </a>
 
                     <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
-                       class="nav-item">
+                       class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
                         <span class="nav-icon">📅</span><span>Event Management</span>
                     </a>
 
@@ -63,9 +66,9 @@
                     </a>
 
                     <a href="{{ route('employee.postEventReports.index') }}"
-                   class="nav-item">
-                    <span class="nav-icon">📝</span><span>Post-Event Reports</span>
-                </a>
+                       class="nav-item {{ request()->routeIs('employee.postEventReports.index') ? 'active' : '' }}">
+                        <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+                    </a>
                 </div>
 
                 <div class="nav-section">
@@ -99,9 +102,14 @@
         </aside>
 
     @else {{-- WORKER (default if not employee) --}}
-        {{-- WORKER SIDEBAR – unchanged, just added class worker-sidebar --}}
+        {{-- WORKER SIDEBAR – dynamic WORKER / VOLUNTEER label + Payments for paid workers --}}
         <aside class="sidebar worker-sidebar">
-            @php($user = Auth::user())
+            @php
+                $worker = optional($user)->worker;
+                $roleLabel = $worker
+                    ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER')
+                    : 'WORKER';
+            @endphp
 
             <div class="logo">
                 <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
@@ -122,14 +130,13 @@
                             {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                         </div>
                         <div class="logo-role">
-                            {{ strtoupper($user->role ?? 'WORKER') }}
+                            {{ $roleLabel }}
                         </div>
                     </div>
                 </a>
             </div>
 
             <nav class="nav-section">
-                {{-- same links as Discover Events page --}}
                 <a href="{{ route('worker.dashboard') }}"
                    class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">🏠</span>
@@ -152,33 +159,35 @@
                 </a>
             </nav>
 
-<nav class="nav-section">
-    <div class="nav-label">Account</div>
-    {{-- define $worker in the same scope --}}
-    @php($worker = optional(auth()->user())->worker)
+            <nav class="nav-section">
+                <div class="nav-label">Account</div>
 
-    @if($worker && !$worker->is_volunteer)
-        <a href="{{ route('worker.payments.index') }}"
-           class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
-            <span class="nav-icon">💰</span>
-            <span>Payments</span>
-        </a>
-    @endif
-    <a href="{{ route('worker.messages') }}" class="nav-item">
-        <span class="nav-icon">💬</span>
-        <span>Chat</span>
-    </a>
-    <a href="{{ route('worker.announcements.index') }}" class="nav-item">
-        <span class="nav-icon">📢</span>
-        <span>Announcements</span>
-    </a>
-    <a href="{{ route('settings') }}" class="nav-item">
-        <span class="nav-icon">⚙️</span>
-        <span>Settings</span>
-    </a>
+                @if($worker && !$worker->is_volunteer)
+                    <a href="{{ route('worker.payments.index') }}"
+                       class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+                        <span class="nav-icon">💰</span>
+                        <span>Payments</span>
+                    </a>
+                @endif
 
+                <a href="{{ route('worker.messages') }}"
+                   class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
+                    <span class="nav-icon">💬</span>
+                    <span>Chat</span>
+                </a>
 
-</nav>
+                <a href="{{ route('worker.announcements.index') }}"
+                   class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span>
+                    <span>Announcements</span>
+                </a>
+
+                <a href="{{ route('settings') }}"
+                   class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
         </aside>
     @endif
 

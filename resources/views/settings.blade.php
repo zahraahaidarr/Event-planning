@@ -1,4 +1,4 @@
-{{-- resources/views/worker/settings.blade.php --}}
+{{-- resources/views/settings.blade.php --}}
 <!doctype html>
 <html lang="{{ app()->getLocale() }}"
       dir="{{ app()->getLocale()==='ar' ? 'rtl' : 'ltr' }}"
@@ -24,13 +24,13 @@
 
 <body data-theme="{{ $s['ui_theme'] ?? 'dark' }}">
 
+  {{-- ================= ADMIN ================= --}}
   @if($isAdmin)
-    {{-- ===== ADMIN LAYOUT: with same sidebar as Admin Employees page ===== --}}
     <div class="container">
       <!-- Sidebar -->
       <aside class="sidebar">
 
-        {{-- == Sidebar user block (copied from admin-employee) == --}}
+        {{-- Sidebar user block --}}
         <div class="logo">
           <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
             @if($user && $user->avatar_path)
@@ -56,7 +56,7 @@
           </a>
         </div>
 
-        {{-- == Main navigation (copied from admin-employee) == --}}
+        {{-- Main navigation --}}
         <nav class="nav-section">
           <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : '#' }}"
              class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -89,7 +89,7 @@
           </a>
         </nav>
 
-        {{-- == Account section (Settings link is active here) == --}}
+        {{-- Account section --}}
         <nav class="nav-section">
           <div class="nav-label">Account</div>
 
@@ -101,7 +101,7 @@
 
       </aside>
 
-      <!-- Main Content for ADMIN settings (inside Admin layout) -->
+      <!-- Main Content for ADMIN settings -->
       <main class="main-content" id="main">
         {{-- Page Header --}}
         <section class="page-header">
@@ -237,87 +237,105 @@
       </main>
     </div> {{-- .container (admin) --}}
 
+  {{-- ================= WORKER ================= --}}
   @elseif($isWorker)
-    {{-- ===== WORKER LAYOUT: same sidebar as worker event-discovery ===== --}}
     <div class="container">
       <!-- Sidebar -->
       <aside class="sidebar">
-        @php($user = Auth::user())
+        @php
+            $user   = Auth::user();
+            $worker = optional($user)->worker;
+            $roleLabel = $worker
+                ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER')
+                : 'WORKER';
+        @endphp
 
         <div class="logo">
-          <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
-            @if($user && $user->avatar_path)
-              <img
-                src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
-                alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
-                class="logo-avatar"
-              >
-            @else
-              <div class="logo-icon">
-                {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
-              </div>
-            @endif
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                    </div>
+                @endif
 
-            <div class="logo-id">
-              <div class="logo-name">
-                {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
-              </div>
-              <div class="logo-role">
-                {{ strtoupper($user->role ?? 'WORKER') }}
-              </div>
-            </div>
-          </a>
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+
+                    {{-- Dynamic WORKER / VOLUNTEER label --}}
+                    <div class="logo-role">
+                        {{ $roleLabel }}
+                    </div>
+                </div>
+            </a>
         </div>
 
         <nav class="nav-section">
-          <a href="{{ route('worker.dashboard') }}" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span>Dashboard</span>
-          </a>
-          <a href="{{ route('worker.events.discover') }}" class="nav-item">
-            <span class="nav-icon">🗓️</span>
-            <span>Discover Events</span>
-          </a>
-          <a href="{{ route('worker.reservations') }}" class="nav-item">
-            <span class="nav-icon">✅</span>
-            <span>My Reservations</span>
-          </a>
-          <a href="{{ route('worker.submissions') }}" class="nav-item">
-            <span class="nav-icon">📝</span>
-            <span>Post-Event Submissions</span>
-          </a>
+            <a href="{{ route('worker.dashboard') }}"
+               class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
+                <span class="nav-icon">🏠</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ route('worker.events.discover') }}"
+               class="nav-item {{ request()->routeIs('worker.events.discover') ? 'active' : '' }}">
+                <span class="nav-icon">🗓️</span>
+                <span>Discover Events</span>
+            </a>
+
+            <a href="{{ route('worker.reservations') }}"
+               class="nav-item {{ request()->routeIs('worker.reservations') ? 'active' : '' }}">
+                <span class="nav-icon">✅</span>
+                <span>My Reservations</span>
+            </a>
+
+            <a href="{{ route('worker.submissions') }}"
+               class="nav-item {{ request()->routeIs('worker.submissions') ? 'active' : '' }}">
+                <span class="nav-icon">📝</span>
+                <span>Post-Event Submissions</span>
+            </a>
         </nav>
 
         <nav class="nav-section">
-          <div class="nav-label">Account</div>
+            <div class="nav-label">Account</div>
+            @php($worker = optional(auth()->user())->worker)
 
-          {{-- define $worker in the same scope --}}
-          @php($worker = optional(auth()->user())->worker)
+            @if($worker && !$worker->is_volunteer)
+                <a href="{{ route('worker.payments.index') }}"
+                   class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+                    <span class="nav-icon">💰</span>
+                    <span>Payments</span>
+                </a>
+            @endif
 
-          @if($worker && !$worker->is_volunteer)
-            <a href="{{ route('worker.payments.index') }}"
-               class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
-              <span class="nav-icon">💰</span>
-              <span>Payments</span>
+            <a href="{{ route('worker.messages') }}"
+               class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
             </a>
-          @endif
 
-          <a href="{{ route('worker.messages') }}" class="nav-item">
-            <span class="nav-icon">💬</span>
-            <span>Chat</span>
-          </a>
-          <a href="{{ route('worker.announcements.index') }}" class="nav-item">
-            <span class="nav-icon">📢</span>
-            <span>Announcements</span>
-          </a>
-          <a href="{{ route('settings') }}" class="nav-item active">
-            <span class="nav-icon">⚙️</span>
-            <span>Settings</span>
-          </a>
+            <a href="{{ route('worker.announcements.index') }}"
+               class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
+                <span class="nav-icon">📢</span>
+                <span>Announcements</span>
+            </a>
+
+            <a href="{{ route('settings') }}"
+               class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
         </nav>
       </aside>
 
-      <!-- Main Content for WORKER settings (same cards as before) -->
+      <!-- Main Content for WORKER settings -->
       <main class="main-content" id="main">
         <!-- Page Header -->
         <section class="page-header">
@@ -453,15 +471,8 @@
       </main>
     </div> {{-- .container (worker) --}}
 
-
-            </div>
-          </article>
-        </section>
-      </main>
-    </div> {{-- .container (worker) --}}
-
+  {{-- ================= EMPLOYEE ================= --}}
   @elseif($isEmployee)
-    {{-- ===== EMPLOYEE LAYOUT: same sidebar as Volunteer Assignment / Events ===== --}}
     <div class="container">
       <!-- Sidebar -->
       <aside class="sidebar">
@@ -494,8 +505,6 @@
 
         <nav>
           <div class="nav-section">
-            
-
             <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
               <span class="nav-icon">📊</span><span>Dashboard</span>
@@ -512,9 +521,9 @@
             </a>
 
             <a href="{{ route('employee.postEventReports.index') }}"
-                   class="nav-item">
-                    <span class="nav-icon">📝</span><span>Post-Event Reports</span>
-                </a>
+               class="nav-item">
+              <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+            </a>
           </div>
 
           <div class="nav-section">
@@ -683,8 +692,8 @@
       </main>
     </div> {{-- .container (employee) --}}
 
+  {{-- ================= FALLBACK ================= --}}
   @else
-    {{-- ===== OTHER NON-ADMIN ROLES (fallback simple layout) ===== --}}
     <div class="wrap">
       <!-- Main Content -->
       <main class="content" id="main">

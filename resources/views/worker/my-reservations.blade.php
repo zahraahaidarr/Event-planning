@@ -20,7 +20,13 @@
     <!-- Sidebar -->
 <!-- Sidebar -->
 <aside class="sidebar">
-    @php($user = Auth::user())
+    @php
+        $user   = Auth::user();
+        $worker = optional($user)->worker;
+        $roleLabel = $worker
+            ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER')
+            : 'WORKER';
+    @endphp
 
     <div class="logo">
         <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
@@ -40,68 +46,65 @@
                 <div class="logo-name">
                     {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                 </div>
+
+                {{-- 🔥 Dynamic Worker/Volunteer label --}}
                 <div class="logo-role">
-                    {{ strtoupper($user->role ?? 'WORKER') }}
+                    {{ $roleLabel }}
                 </div>
             </div>
         </a>
     </div>
 
     <nav class="nav-section">
-        {{-- main worker links --}}
-        <a href="{{ route('worker.dashboard') }}"
-           class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
+        <a href="{{ route('worker.dashboard') }}" class="nav-item">
             <span class="nav-icon">🏠</span>
             <span>Dashboard</span>
         </a>
 
-        <a href="{{ route('worker.events.discover') }}"
-           class="nav-item {{ request()->routeIs('worker.events.discover') ? 'active' : '' }}">
+        <a href="{{ route('worker.events.discover') }}" class="nav-item">
             <span class="nav-icon">🗓️</span>
             <span>Discover Events</span>
         </a>
 
-        <a href="{{ route('worker.reservations') }}"
-           class="nav-item {{ request()->routeIs('worker.reservations') ? 'active' : '' }}">
+        <a href="{{ route('worker.reservations') }}" class="nav-item">
             <span class="nav-icon">✅</span>
             <span>My Reservations</span>
         </a>
 
-        <a href="{{ route('worker.submissions') }}"
-           class="nav-item {{ request()->routeIs('worker.submissions') ? 'active' : '' }}">
+        <a href="{{ route('worker.submissions') }}" class="nav-item">
             <span class="nav-icon">📝</span>
             <span>Post-Event Submissions</span>
         </a>
     </nav>
 
-<nav class="nav-section">
-    <div class="nav-label">Account</div>
-    {{-- define $worker in the same scope --}}
-    @php($worker = optional(auth()->user())->worker)
+    <nav class="nav-section">
+        <div class="nav-label">Account</div>
 
-    @if($worker && !$worker->is_volunteer)
-        <a href="{{ route('worker.payments.index') }}"
-           class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
-            <span class="nav-icon">💰</span>
-            <span>Payments</span>
+        @if($worker && !$worker->is_volunteer)
+            <a href="{{ route('worker.payments.index') }}"
+               class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+                <span class="nav-icon">💰</span>
+                <span>Payments</span>
+            </a>
+        @endif
+
+        <a href="{{ route('worker.messages') }}" class="nav-item">
+            <span class="nav-icon">💬</span>
+            <span>Chat</span>
         </a>
-    @endif
-    <a href="{{ route('worker.messages') }}" class="nav-item">
-        <span class="nav-icon">💬</span>
-        <span>Chat</span>
-    </a>
-    <a href="{{ route('worker.announcements.index') }}" class="nav-item">
-        <span class="nav-icon">📢</span>
-        <span>Announcements</span>
-    </a>
-    <a href="{{ route('settings') }}" class="nav-item">
-        <span class="nav-icon">⚙️</span>
-        <span>Settings</span>
-    </a>
 
+        <a href="{{ route('worker.announcements.index') }}" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span>Announcements</span>
+        </a>
 
-</nav>
+        <a href="{{ route('settings') }}" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+    </nav>
 </aside>
+
 
 
     <!-- Main Content -->

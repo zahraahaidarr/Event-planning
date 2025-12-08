@@ -49,61 +49,68 @@ class EventStaffingController extends Controller
 'content' => <<<SYS
 You are an assistant that plans volunteer staffing for events.
 
-You MUST reply ONLY with a single JSON object in this exact shape:
+You MUST reply ONLY with a JSON object in this exact structure:
 { "roles": [ { "name": "Role name", "spots": 0 }, ... ] }
 
-General rules:
-- Use ONLY the roles given in the "roles" array from the user.
-- "spots" must be non-negative integers (0, 1, 2, 3, ...).
-- Consider: venue_area_m2, expected_attendees, and event_category.
-- If a role is not needed, set its spots to 0 (do NOT invent new roles).
-- Do NOT add any extra keys or any text outside the JSON.
-- Treat event_category case-insensitively (e.g. "Wedding", "wedding party" → wedding logic).
+General Rules:
+- Use ONLY the roles listed in the “roles” array from the user.
+- Assign a non-negative integer to each role.
+- If a role is clearly unnecessary for the specific event type, assign 0.
+- All logic MUST be consistent, explainable, and scale with expected_attendees.
+- Do NOT add any text outside the JSON.
 
-EVENT LOGIC (very important):
+HOW TO THINK (very important):
+1. Determine the event category (wedding, graduation, ashura/religious, conference, etc.).
+2. Identify which roles are typically required for this category.
+3. For each required role, calculate a reasonable staffing number based on:
+   • expected_attendees  
+   • type of activity  
+   • level of coordination or safety needed  
+   • complexity of logistics  
+4. The number of workers for each role MUST increase logically when attendees increase.
+5. If a role is listed but is irrelevant for the event category, set it to 0.
 
-1) WEDDING (event_category contains "wedding"):
-   - Civil Defense MUST ALWAYS be 0.
-   - Focus on roles such as:
-     * Cooking Team: typically 2–6 people (4–8 if attendees > 400).
-     * Decorator: 2–5 people.
-     * Media Staff: 2–4 people (photo / video).
-     * Cleaner: 2–5 people.
-     * Organizer / Coordinator: 1–3 people.
-     * Tech Support (if present in roles): 1–2 people.
-   - If a role is clearly unrelated to a wedding (e.g. heavy safety / rescue), set its spots to 0.
+SCALING LOGIC (general, not strict):
+- Small events (<100 attendees): small teams  
+- Medium events (100–400 attendees): moderate teams  
+- Large events (>400 attendees): large teams  
+Scale each role proportionally based on its responsibility level.
 
-2) GRADUATION (event_category contains "graduation"):
-   - Civil Defense: 0–2 at most, only if clearly needed.
-   - Typical roles:
-     * Organizer / Ushers / Guides (if present): 4–10 people.
-     * Media Staff: 2–4.
-     * Tech Support: 2–4.
-     * Cleaner: 2–5.
+CATEGORY GUIDELINES (not numeric, just logical):
 
-3) RELIGIOUS MASS EVENTS (event_category contains words like "ashura", "religious", "mourning"):
-   - These can require bigger safety and cleaning teams.
-   - Civil Defense (if present): 8–20 depending on attendees.
-   - Crowd / Gate Control roles (if present): 8–20.
-   - Cleaner: 8 or more.
-   - Cooking Team: 8 or more if food is served.
-   - Media Staff: 3–6.
+WEDDING:
+- Normally needs: Cooking Team, Decorators, Cleaners, Media Staff, Organizers.
+- Does NOT normally need Civil Defense or heavy rescue roles → set to 0.
 
-4) CONFERENCE / LECTURE / WORKSHOP (event_category contains "conference", "lecture", "seminar", "workshop"):
-   - Civil Defense: MUST be 0 unless the event explicitly involves high risk.
-   - Organizer / Registration / Ushers: 2–4.
-   - Media Staff: 1–3.
-   - Tech Support: 2–4.
-   - Cleaner: 1–3.
+GRADUATION:
+- Needs Organizers, Ushers, Media Staff, Tech Support, Cleaners,security.
+- Only minimal safety roles if absolutely necessary.
 
-Scaling rule:
-- For small events (<100 attendees), keep numbers on the lower bound.
-- For medium events (100–400 attendees), use mid-range values.
-- For large events (>400 attendees), use the higher bound or slightly above.
-- If a role is not mentioned above but exists in the roles list, assign 0 unless it is obviously useful.
+RELIGIOUS MASS EVENTS / ASHURA:
+- High coordination events with many moving parts.
+- Needs: Organizers:1-2, Crowd Control, Cleaners, possibly Cooking Team, Media Staff.
+- security/Civil Defense roles SHOULD exist and scale with crowd size.
+- Safety roles must increase logically with attendees, not randomly.
 
-Return ONLY the JSON object with the "roles" array.
+CONFERENCE / WORKSHOP:
+- Needs: Organizer, Tech Support, Cleaner, Media Staff.
+- Safety roles typically 0 unless the event implies risk.
+
+ROLE ASSIGNMENT PRINCIPLES:
+- Start from the expected_attendees value.
+- Assign staff proportionally:
+  • Organizational roles → scale slowly  
+  • Cleaning / serving roles → scale moderately  
+  • Crowd control / safety roles → scale only if the event type requires it  
+- Maintain internal consistency:
+  - If attendees double, staffing should increase but not explode.
+  - Avoid extreme or unrealistic numbers.
+
+Return ONLY the JSON with the roles and computed spots.
+
 SYS,
+
+
 
                         ],
                         [

@@ -15,33 +15,13 @@
 </head>
 <body>
 <div class="container">
- <aside class="sidebar">
+<aside class="sidebar">
     @php
-        $user = Auth::user();
-
-        $reservationOptions = $reservations->map(function ($res) {
-            $eventName = $res->event->name
-                ?? $res->event->title
-                ?? ('Event #'.$res->event_id);
-
-            $date = $res->event->start_time
-                ? $res->event->start_time->format('M d, Y')
-                : '';
-
-            $roleType   = optional(optional($res->workRole)->roleType);
-            $roleLabel  = $roleType->name ?? 'Unknown role';
-            $roleSlugDb = \Illuminate\Support\Str::slug($roleLabel, '_');
-
-            return [
-                'reservation_id' => $res->reservation_id,
-                'event_name'     => $eventName,
-                'date'           => $date,
-                'role_label'     => $roleLabel,
-                'role_slug'      => $roleSlugDb,
-            ];
-        })->values();
-
+        $user   = Auth::user();
         $worker = optional($user)->worker;
+        $roleLabel = $worker
+            ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER')
+            : 'WORKER';
     @endphp
 
     <div class="logo">
@@ -62,34 +42,32 @@
                 <div class="logo-name">
                     {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                 </div>
+
+                {{-- 🔥 Dynamic Worker/Volunteer label --}}
                 <div class="logo-role">
-                    {{ strtoupper($user->role ?? 'WORKER') }}
+                    {{ $roleLabel }}
                 </div>
             </div>
         </a>
     </div>
 
     <nav class="nav-section">
-        <a href="{{ route('worker.dashboard') }}"
-           class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
+        <a href="{{ route('worker.dashboard') }}" class="nav-item">
             <span class="nav-icon">🏠</span>
             <span>Dashboard</span>
         </a>
 
-        <a href="{{ route('worker.events.discover') }}"
-           class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
+        <a href="{{ route('worker.events.discover') }}" class="nav-item">
             <span class="nav-icon">🗓️</span>
             <span>Discover Events</span>
         </a>
 
-        <a href="{{ route('worker.reservations') }}"
-           class="nav-item {{ request()->routeIs('worker.reservations') ? 'active' : '' }}">
+        <a href="{{ route('worker.reservations') }}" class="nav-item">
             <span class="nav-icon">✅</span>
             <span>My Reservations</span>
         </a>
 
-        <a href="{{ route('worker.submissions') }}"
-           class="nav-item {{ request()->routeIs('worker.submissions') ? 'active' : '' }}">
+        <a href="{{ route('worker.submissions') }}" class="nav-item">
             <span class="nav-icon">📝</span>
             <span>Post-Event Submissions</span>
         </a>
@@ -106,20 +84,17 @@
             </a>
         @endif
 
-        <a href="{{ route('worker.messages') }}"
-           class="nav-item {{ request()->routeIs('worker.messages') ? 'active' : '' }}">
+        <a href="{{ route('worker.messages') }}" class="nav-item">
             <span class="nav-icon">💬</span>
             <span>Chat</span>
         </a>
 
-        <a href="{{ route('worker.announcements.index') }}"
-           class="nav-item {{ request()->routeIs('worker.announcements.index') ? 'active' : '' }}">
+        <a href="{{ route('worker.announcements.index') }}" class="nav-item">
             <span class="nav-icon">📢</span>
             <span>Announcements</span>
         </a>
 
-        <a href="{{ route('settings') }}"
-           class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+        <a href="{{ route('settings') }}" class="nav-item">
             <span class="nav-icon">⚙️</span>
             <span>Settings</span>
         </a>

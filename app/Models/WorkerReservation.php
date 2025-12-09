@@ -56,6 +56,6 @@ class WorkerReservation extends Model
 
     public function postEventSubmissions()
     {
-        return $this->hasMany(PostEventSubmission::class, 'worker_reservation_id');
+        return $this->hasMany(PostEventSubmission::class, 'worker_reservation_id','reservation_id' );
     }
 }

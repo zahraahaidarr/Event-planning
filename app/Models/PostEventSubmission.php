@@ -18,6 +18,9 @@ class PostEventSubmission extends Model
         'reviewed_at',
         'reviewed_by',
         'review_notes',
+        'owner_rating',
+        'worker_rating',
+
     ];
 
     protected $casts = [

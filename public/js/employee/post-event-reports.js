@@ -41,31 +41,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Attach comment text to approve/reject forms before submit
+    // Attach comment text + rating to approve/reject forms before submit
     document.querySelectorAll('.report-card').forEach(card => {
-        const textarea = card.querySelector('.comment-input');
-
+        const textarea    = card.querySelector('.comment-input');
         const approveForm = card.querySelector('.approve-form');
+        const rejectForm  = card.querySelector('.reject-form');
+
         if (approveForm && textarea) {
-            approveForm.addEventListener('submit', (e) => {
+            approveForm.addEventListener('submit', () => {
                 approveForm.querySelector('input[name="review_notes"]').value = textarea.value;
             });
         }
 
-        const rejectForm = card.querySelector('.reject-form');
         if (rejectForm) {
             rejectForm.addEventListener('submit', (e) => {
+                const reasonInput = rejectForm.querySelector('input[name="reason"]');
+
                 if (!textarea || !textarea.value.trim()) {
                     e.preventDefault();
                     const reason = prompt('Please provide a reason for rejection:');
                     if (!reason) return;
-                    rejectForm.querySelector('input[name="reason"]').value = reason;
+                    reasonInput.value = reason;
                     rejectForm.submit();
                 } else {
-                    rejectForm.querySelector('input[name="reason"]').value = textarea.value;
+                    reasonInput.value = textarea.value;
                 }
             });
         }
+
+        // --- ⭐ Worker rating inside each card ---
+        const ratingBlock  = card.querySelector('.worker-rating');
+        if (!ratingBlock) return;
+
+        const stars        = ratingBlock.querySelectorAll('.star');
+        const ratingFields = card.querySelectorAll('input.worker-rating-field');
+        const canRate      = ratingBlock.dataset.canRate === '1';
+
+        let currentRating  = parseInt(ratingBlock.dataset.workerRating || '0', 10);
+
+        const syncRatingUI = () => {
+            stars.forEach(star => {
+                const v = parseInt(star.dataset.value, 10);
+                if (v <= currentRating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            ratingFields.forEach(input => {
+                input.value = currentRating || '';
+            });
+        };
+
+        if (canRate && stars.length) {
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const v = parseInt(star.dataset.value, 10) || 0;
+                    // click same star again to clear
+                    currentRating = (currentRating === v ? 0 : v);
+                    syncRatingUI();
+                });
+            });
+        }
+
+        // initial state from DB
+        syncRatingUI();
     });
 });
 

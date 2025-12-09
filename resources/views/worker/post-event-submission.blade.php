@@ -188,6 +188,24 @@
                            readonly
                            placeholder="Choose an event first…">
                 </div>
+                {{-- EVENT OWNER RATING (frontend only) --}}
+                <div class="form-group">
+                    <label id="ownerRatingLabel">Rate event owner (1–5)</label>
+                    <div class="rating-stars" id="ownerRatingStars" data-value="0">
+                        <button type="button" class="star" data-value="1" aria-label="1 star">★</button>
+                        <button type="button" class="star" data-value="2" aria-label="2 stars">★</button>
+                        <button type="button" class="star" data-value="3" aria-label="3 stars">★</button>
+                        <button type="button" class="star" data-value="4" aria-label="4 stars">★</button>
+                        <button type="button" class="star" data-value="5" aria-label="5 stars">★</button>
+                    </div>
+                    <small id="ownerRatingHint" style="display:block;margin-top:4px;opacity:.7;">
+    This rating will be saved with your report. Only the system administrators can see it — the event owner cannot.
+</small>
+
+
+                    {{-- hidden value just for JS (not sent in FormData) --}}
+                    <input type="hidden" id="ownerRatingValue" value="0">
+                </div>
 
                 {{-- ROLE-SPECIFIC FORMS --}}
                 <div id="roleForms">
@@ -515,6 +533,7 @@ $submissionsPayload = $submissions->map(function ($sub) {
         'status_label'          => $statusLabel,
         'chip_class'            => $chipClass,
         'can_edit'              => $canEdit,
+        'owner_rating'          => $sub->owner_rating, 
         'data'                  => $sub->data ?? [],
         'civil_cases'           => $sub->civilCases->map(function ($c) {
             return [

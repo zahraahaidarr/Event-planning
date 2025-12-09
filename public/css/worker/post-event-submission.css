@@ -311,3 +311,47 @@ fieldset.role-set legend {
     background: rgba(255,107,107,0.15);
     color: #ff6b6b;
 }
+/* Rating stars */
+.rating-stars {
+    display: inline-flex;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--muted);             /* default (unselected) color */
+}
+
+.rating-stars .star {
+    background: none;
+    border: none;
+    padding: 0 3px;
+    cursor: pointer;
+        font-size: 28px !important;   /* ⭐ force bigger size */
+    opacity: 0.45;
+    transition:
+        transform 0.1s ease,
+        opacity 0.1s ease,
+        color 0.1s ease;
+}
+
+/* When a star is selected (active) */
+.rating-stars .star.active {
+    opacity: 1;
+    transform: scale(1.12);
+    color: var(--primary);           /* ⭐ blue from project tokens */
+}
+
+/* Optional: hover preview color */
+.rating-stars .star:hover {
+    opacity: 0.8;
+}
+
+/* Focus outline for keyboard accessibility */
+.rating-stars .star:focus {
+    outline: 1px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.form-group label {
+    color: var(--text-primary);   /* force visible in dark mode */
+    font-size: 14px;
+    margin-bottom: 6px;
+}

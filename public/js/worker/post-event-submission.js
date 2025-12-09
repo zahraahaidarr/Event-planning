@@ -16,7 +16,10 @@ const STRINGS = {
     chooseEventRole:"Please choose an event first.",
     submitOk:"Report submitted successfully!",
     submitFail:(st)=>`Failed to submit report (status ${st}).`,
-    submitError:"Error submitting report."
+    submitError:"Error submitting report.",
+    ownerRatingLabel: "Rate event owner (1–5)",
+    ownerRatingHint:" This rating will be saved with your report. Only the system administrators can see it — the event owner cannot."
+
   },
   ar: {
     brand:"متطوّع", dashboard:"لوحة التحكم", discover:"استكشف الفعاليات",
@@ -71,9 +74,13 @@ const resetBtn        = document.getElementById('resetBtn');
 const cdCasesList    = document.getElementById('cd_cases_list');
 const cdAddBtn       = document.getElementById('cd_add_case');
 
+// ⭐ add:
+const ownerRatingStars = document.getElementById('ownerRatingStars');
+const ownerRatingValue = document.getElementById('ownerRatingValue');
+
 let currentRoleSlugDb = null;   // from DB, e.g. "civil_defense"
 let currentEditable   = true;   // track if current loaded submission is editable
-
+let ownerRating       = 0; 
 // =========================
 // i18n on static elements
 // =========================
@@ -136,46 +143,49 @@ function renderSubmissionsFromJson() {
     return;
   }
 
-  items.forEach(sub => {
-    const card = document.createElement('article');
-    card.className = 'card';
-    card.dataset.subId   = sub.id;
-    card.dataset.resId   = sub.worker_reservation_id;
-    card.dataset.roleSlug= sub.role_slug;
-    card.dataset.canEdit = sub.can_edit ? '1' : '0';
-    card.dataset.data    = JSON.stringify(sub.data || {});
-    card.dataset.civil   = JSON.stringify(sub.civil_cases || []);
+items.forEach(sub => {
+  const ratingText = sub.owner_rating ? `⭐ ${sub.owner_rating}/5` : '⭐ —';
 
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="card-title">${sub.event_name}</div>
-        <span class="chip-status ${sub.chip_class}">
-          ${sub.status_label}
-        </span>
-      </div>
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.dataset.subId    = sub.id;
+  card.dataset.resId    = sub.worker_reservation_id;
+  card.dataset.roleSlug = sub.role_slug;
+  card.dataset.canEdit  = sub.can_edit ? '1' : '0';
+  card.dataset.data     = JSON.stringify(sub.data || {});
+  card.dataset.civil    = JSON.stringify(sub.civil_cases || []);
+  card.dataset.rating   = sub.owner_rating ?? '';
 
-      <div class="meta">
-        <span>📅 Submitted: ${sub.submitted_at}</span>
-        ${sub.can_edit ? '<span>🕒 Editable for 24h</span>' : ''}
-      </div>
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title">${sub.event_name}</div>
+      <span class="chip-status ${sub.chip_class}">
+        ${sub.status_label}
+      </span>
+    </div>
 
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn small ghost"
-                type="button"
-                data-act="view"
-                data-id="${sub.id}">
-          ${STRINGS[lang].viewReport}
-        </button>
-        ${
-          sub.can_edit
-            ? '<span class="hint-editable">You can still edit this report.</span>'
-            : '<span class="hint-locked">View only (locked).</span>'
-        }
-      </div>
-    `;
+    <div class="meta">
+      <span>📅 Submitted: ${sub.submitted_at}</span>
+      <span>${ratingText}</span>
+      ${sub.can_edit ? '<span>🕒 Editable for 24h</span>' : ''}
+    </div>
 
-    list.appendChild(card);
-  });
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn small ghost"
+              type="button"
+              data-act="view"
+              data-id="${sub.id}">
+        ${STRINGS[lang].viewReport}
+      </button>
+      ${
+        sub.can_edit
+          ? '<span class="hint-editable">You can still edit this report.</span>'
+          : '<span class="hint-locked">View only (locked).</span>'
+      }
+    </div>
+  `;
+  list.appendChild(card);
+});
 }
 
 function i18nApply(){
@@ -194,6 +204,8 @@ function i18nApply(){
   $('#pageTitle')        && ($('#pageTitle').textContent        = s.pageTitle);
   $('#pageSubtitle')     && ($('#pageSubtitle').textContent     = s.pageSubtitle);
   $('#globalSearch')     && ($('#globalSearch').placeholder     = s.search);
+    $('#ownerRatingLabel') && ($('#ownerRatingLabel').textContent = s.ownerRatingLabel);
+  $('#ownerRatingHint')  && ($('#ownerRatingHint').textContent  = s.ownerRatingHint);
 }
 
 // =========================
@@ -231,6 +243,43 @@ function bindSearch(){
       msg.remove();
     }
   });
+}
+// =========================
+// Event owner rating (frontend only)
+// =========================
+function updateOwnerRatingUI(){
+  if (!ownerRatingStars) return;
+  const stars = ownerRatingStars.querySelectorAll('.star');
+  stars.forEach(star => {
+    const v = parseInt(star.dataset.value, 10);
+    if (v <= ownerRating) {
+      star.classList.add('active');
+    } else {
+      star.classList.remove('active');
+    }
+  });
+  if (ownerRatingValue) {
+    ownerRatingValue.value = ownerRating;
+  }
+}
+
+function resetOwnerRating(){
+  ownerRating = 0;
+  updateOwnerRatingUI();
+}
+
+function bindOwnerRating(){
+  if (!ownerRatingStars) return;
+  const stars = ownerRatingStars.querySelectorAll('.star');
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      const v = parseInt(star.dataset.value, 10) || 0;
+      ownerRating = (ownerRating === v ? 0 : v); // click again to clear
+      updateOwnerRatingUI();
+    });
+  });
+  // initial render
+  updateOwnerRatingUI();
 }
 
 // =========================
@@ -276,7 +325,7 @@ if (eventSelect) {
     setFormEditable(true);
     if (formTitle) formTitle.textContent = 'Submit New Report';
     if (submitBtn) submitBtn.textContent = 'Submit Report';
-
+    resetOwnerRating();          // ⭐ add this line
     applyRoleFromEvent();
   });
 
@@ -527,6 +576,9 @@ function bindForm(){
     fd.append('general_notes', payload.general_notes);
     fd.append('data', JSON.stringify(payload.data));
     fd.append('civil_cases', JSON.stringify(payload.civil_cases));
+if (ownerRating > 0) {
+  fd.append('owner_rating', ownerRating);
+}
 
     if (submissionIdInp && submissionIdInp.value) {
       fd.append('submission_id', submissionIdInp.value);
@@ -608,6 +660,7 @@ function bindForm(){
     setFormEditable(true);
     if (formTitle) formTitle.textContent = 'Submit New Report';
     if (submitBtn) submitBtn.textContent = 'Submit Report';
+        resetOwnerRating();
   });
 }
 
@@ -729,6 +782,10 @@ function bindActions(){
 
     currentRoleSlugDb = roleSlugDb || null;
     const domRole = ROLE_SLUG_MAP[currentRoleSlugDb] || currentRoleSlugDb;
+    const ratingFromCard = parseInt(card.dataset.rating || '0', 10) || 0;
+ownerRating = ratingFromCard;
+updateOwnerRatingUI();
+
 
     if (roleLabelInput && domRole) {
       // role label is already from reservation; keep as is
@@ -782,6 +839,7 @@ function toast(msg){
 i18nApply();
 renderSubmissionsFromJson();
 populateEventsFromJson();
+bindOwnerRating();   // ⭐ rating widget
 bindForm();
 bindActions();
 bindSearch();

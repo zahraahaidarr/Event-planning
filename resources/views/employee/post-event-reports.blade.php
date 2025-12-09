@@ -42,66 +42,64 @@
         </div>
 
         <nav>
-    <div class="nav-section">
-        <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
-           class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
-            <span class="nav-icon">📊</span><span>Dashboard</span>
-        </a>
+            <div class="nav-section">
+                <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
+                   class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">📊</span><span>Dashboard</span>
+                </a>
 
-        <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
-           class="nav-item {{ request()->routeIs('events.*') ? 'active' : '' }}">
-            <span class="nav-icon">📅</span><span>Event Management</span>
-        </a>
+                <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('events.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📅</span><span>Event Management</span>
+                </a>
 
-        <a href="{{ route('employee.volunteer.assignment') }}"
-           class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
-            <span class="nav-icon">👥</span>
-            <span>Volunteer Assignment</span>
-        </a>
+                <a href="{{ route('employee.volunteer.assignment') }}"
+                   class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
+                    <span class="nav-icon">👥</span>
+                    <span>Volunteer Assignment</span>
+                </a>
 
-        {{-- 🔹 HERE: keep Post-Event Reports highlighted on all its routes --}}
-        <a href="{{ route('employee.postEventReports.index') }}"
-           class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
-            <span class="nav-icon">📝</span><span>Post-Event Reports</span>
-        </a>
-    </div>
+                {{-- Post-Event Reports --}}
+                <a href="{{ route('employee.postEventReports.index') }}"
+                   class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+                </a>
+            </div>
 
-    <div class="nav-section">
-        <div class="nav-label">Communication</div>
+            <div class="nav-section">
+                <div class="nav-label">Communication</div>
 
-        <a href="{{ route('employee.messages') }}"
-           class="nav-item {{ request()->routeIs('employee.messages') ? 'active' : '' }}">
-            <span class="nav-icon">💬</span><span>Messages</span>
-        </a>
+                <a href="{{ route('employee.messages') }}"
+                   class="nav-item {{ request()->routeIs('employee.messages') ? 'active' : '' }}">
+                    <span class="nav-icon">💬</span><span>Messages</span>
+                </a>
 
-        <a href="{{ route('announcements.create') }}"
-           class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
-            <span class="nav-icon">📢</span><span>Send Announcement</span>
-        </a>
+                <a href="{{ route('announcements.create') }}"
+                   class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span><span>Send Announcement</span>
+                </a>
 
-        <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}"
-           class="nav-item {{ request()->routeIs('employee.announcements.*') ? 'active' : '' }}">
-            <span class="nav-icon">📢</span><span>Announcements</span>
-        </a>
-    </div>
+                <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('employee.announcements.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span><span>Announcements</span>
+                </a>
+            </div>
 
-    <div class="nav-section">
-        <div class="nav-label">Account</div>
+            <div class="nav-section">
+                <div class="nav-label">Account</div>
 
-        <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
-           class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
-            <span class="nav-icon">⚙️</span><span>Settings</span>
-        </a>
-    </div>
-</nav>
+                <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
+                   class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                    <span class="nav-icon">⚙️</span><span>Settings</span>
+                </a>
+            </div>
+        </nav>
 
     </aside>
 
     <main class="main-content">
         <div class="header">
             <h1 class="header-title">Post-Event Reports</h1>
-
-           
         </div>
 
         @if(session('success'))
@@ -208,11 +206,11 @@
                                     📅
                                     {{ optional($submission->submitted_at)->format('Y-m-d H:i') }}
                                 </span>
-                                 <span class="role-badge">
-        🏷️ {{ $submission->workRole->role_name
-           ?? $submission->role_label
-           ?? ucfirst($submission->role_slug ?? 'Role') }}
-    </span>
+                                <span class="role-badge">
+                                    🏷️ {{ $submission->workRole->role_name
+                                       ?? $submission->role_label
+                                       ?? ucfirst($submission->role_slug ?? 'Role') }}
+                                </span>
                             </div>
                         </div>
 
@@ -295,6 +293,33 @@
                         </div>
                     @endif
 
+                    {{-- ⭐ Worker rating (employee → worker) --}}
+                    <div class="worker-rating"
+                         data-can-rate="{{ $submission->status === 'pending' ? '1' : '0' }}"
+                         data-worker-rating="{{ (int)($submission->worker_rating ?? 0) }}">
+                        <span class="worker-rating-label">Volunteer rating:</span>
+
+                        <div class="rating-stars">
+                            @for($i = 1; $i <= 5; $i++)
+                                <button type="button"
+                                        class="star {{ (int)($submission->worker_rating ?? 0) >= $i ? 'active' : '' }}"
+                                        data-value="{{ $i }}">
+                                    ★
+                                </button>
+                            @endfor
+                        </div>
+
+                        @if($submission->status === 'pending')
+                            <small class="worker-rating-hint">
+                                This rating will be saved when you approve or reject.
+                            </small>
+                        @else
+                            <small class="worker-rating-hint">
+                                Final volunteer rating for this event.
+                            </small>
+                        @endif
+                    </div>
+
                     {{-- Review notes / comments --}}
                     <div class="comment-section">
                         @if($submission->review_notes)
@@ -323,6 +348,10 @@
                                   class="inline-form approve-form">
                                 @csrf
                                 <input type="hidden" name="review_notes">
+                                <input type="hidden"
+                                       name="worker_rating"
+                                       class="worker-rating-field"
+                                       value="{{ $submission->worker_rating ?? '' }}">
                                 <button class="btn btn-primary" type="submit">✓ Approve</button>
                             </form>
 
@@ -331,6 +360,10 @@
                                   class="inline-form reject-form">
                                 @csrf
                                 <input type="hidden" name="reason">
+                                <input type="hidden"
+                                       name="worker_rating"
+                                       class="worker-rating-field"
+                                       value="{{ $submission->worker_rating ?? '' }}">
                                 <button class="btn btn-secondary" type="submit">✗ Reject</button>
                             </form>
                         @endif
@@ -354,14 +387,16 @@ document.addEventListener("DOMContentLoaded", function () {
     let typingTimer;
     const delay = 400; // milliseconds
 
-    searchInput.addEventListener("keyup", function () {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => form.submit(), delay);
-    });
+    if (searchInput && form) {
+        searchInput.addEventListener("keyup", function () {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => form.submit(), delay);
+        });
 
-    searchInput.addEventListener("keydown", function () {
-        clearTimeout(typingTimer);
-    });
+        searchInput.addEventListener("keydown", function () {
+            clearTimeout(typingTimer);
+        });
+    }
 });
 </script>
 @include('notify.widget')

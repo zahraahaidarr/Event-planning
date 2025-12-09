@@ -118,14 +118,20 @@ $filterRoles = RoleType::whereIn('role_type_id', function ($q) {
  
 public function approve(PostEventSubmission $submission, Request $request)
 {
+    // get rating from form
+    $rating = $request->integer('worker_rating');
+    if ($rating < 1 || $rating > 5) {
+        $rating = null;
+    }
+
     $submission->update([
-        'status'       => 'approved',
-        'reviewed_at'  => now(),
-        'reviewed_by'  => Auth::id(),
-        'review_notes' => $request->input('review_notes'),
+        'status'        => 'approved',
+        'reviewed_at'   => now(),
+        'reviewed_by'   => Auth::id(),
+        'review_notes'  => $request->input('review_notes'),
+        'worker_rating' => $rating,
     ]);
 
-    // make sure relations are loaded (if they exist)
     $submission->loadMissing('event', 'worker');
 
     $workerUserId = $submission->worker->user_id ?? null;
@@ -149,14 +155,19 @@ public function reject(PostEventSubmission $submission, Request $request)
         'reason' => 'required|string|max:1000',
     ]);
 
+    $rating = $request->integer('worker_rating');
+    if ($rating < 1 || $rating > 5) {
+        $rating = null;
+    }
+
     $submission->update([
-        'status'       => 'rejected',
-        'reviewed_at'  => now(),
-        'reviewed_by'  => Auth::id(),
-        'review_notes' => $request->reason,
+        'status'        => 'rejected',
+        'reviewed_at'   => now(),
+        'reviewed_by'   => Auth::id(),
+        'review_notes'  => $request->reason,
+        'worker_rating' => $rating,
     ]);
 
-    // make sure relations are loaded (if they exist)
     $submission->loadMissing('event', 'worker');
 
     $workerUserId = $submission->worker->user_id ?? null;
@@ -173,4 +184,5 @@ public function reject(PostEventSubmission $submission, Request $request)
 
     return back()->with('success', 'Report rejected and notes saved.');
 }
+
 }

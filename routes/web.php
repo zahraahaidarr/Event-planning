@@ -110,6 +110,7 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::put('/profile/personal', [ProfileController::class,'updatePersonal'])->name('profile.personal');
         Route::put('/profile/password', [ProfileController::class,'updatePassword'])->name('profile.password');
         Route::post('/profile/avatar',  [ProfileController::class,'uploadAvatar'])->name('profile.avatar');
+        Route::put('/profile/engagement', [ProfileController::class, 'updateEngagement'])->name('profile.engagement'); // 👈 NEW
 
         Route::get('/settings',  [SystemSettingController::class, 'edit'])->name('settings');
         Route::post('/settings', [SystemSettingController::class, 'update'])->name('settings.update');

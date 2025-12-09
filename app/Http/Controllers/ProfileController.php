@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
 use App\Services\Notify;
+use App\Models\Worker;
+use App\Models\WorkerReservation;
+use App\Models\Event;
+use App\Models\Employee;
+
 
 class ProfileController extends Controller
 {
@@ -154,4 +159,132 @@ class ProfileController extends Controller
             'avatar_url' => Storage::url($path),
         ]);
     }
+
+public function updateEngagement(Request $r)
+{
+    $u = Auth::user();
+
+    // Only workers are allowed to change engagement
+    if (strtoupper($u->role ?? '') !== 'WORKER') {
+        return response()->json([
+            'ok'      => false,
+            'message' => 'Only workers can change engagement.',
+        ], 403);
+    }
+
+    $data = $r->validate([
+        'is_volunteer'    => ['required','boolean'],
+        'engagement_kind' => ['required','in:VOLUNTEER,PAID'],
+        'hourly_rate'     => ['nullable','numeric','min:0'],
+    ]);
+
+    // Find worker by user_id
+    $worker = Worker::firstOrNew(['user_id' => $u->id]);
+
+    // Old values to detect change
+    $oldIsVolunteer = $worker->exists ? (int) $worker->is_volunteer : null;
+    $oldRate        = $worker->exists ? $worker->hourly_rate      : null;
+
+    if (! $worker->exists) {
+        $worker->total_hours         = 0;
+        $worker->verification_status = 'PENDING';
+    }
+
+    $worker->is_volunteer    = $data['is_volunteer'];
+    $worker->engagement_kind = $data['is_volunteer'] ? 'VOLUNTEER' : 'PAID';
+
+    // If volunteer -> null; if paid -> use provided rate
+    $worker->hourly_rate = $worker->is_volunteer
+        ? null
+        : ($data['hourly_rate'] ?? 0);
+
+    $worker->save();
+
+    /* ============ Notify event owners if it changed ============ */
+
+/* ----------------- Notify event owners if it changed ----------------- */
+
+// Did anything relevant change?
+$statusChanged = $oldIsVolunteer !== null && $oldIsVolunteer !== (int) $worker->is_volunteer;
+$rateChanged   = ! $worker->is_volunteer && $oldRate !== $worker->hourly_rate;
+
+if ($statusChanged || $rateChanged) {
+
+    // Consider all reservations that are NOT cancelled/completed
+    $reservations = WorkerReservation::where('worker_id', $worker->worker_id)
+        ->whereNotIn('status', ['CANCELLED', 'COMPLETED'])
+        ->get();
+
+    $fromStatus = $oldIsVolunteer === 1 ? 'VOLUNTEER' : 'PAID';
+    $toStatus   = $worker->is_volunteer ? 'VOLUNTEER' : 'PAID';
+
+    // Group events by owner user id
+    $ownersEvents = [];   // [ownerUserId => [event_id => title]]
+
+    foreach ($reservations as $res) {
+        $event = Event::find($res->event_id);
+        if (! $event) {
+            continue;
+        }
+
+        // events.created_by -> employees.employee_id -> employees.user_id
+        $employee    = Employee::find($event->created_by);
+        $ownerUserId = $employee?->user_id;
+
+        if (! $ownerUserId) {
+            continue;
+        }
+
+        // Use event_id as key to avoid duplicates
+        $ownersEvents[$ownerUserId][$event->event_id] = $event->title;
+    }
+
+    if (! empty($ownersEvents)) {
+
+        if ($worker->is_volunteer) {
+            $rateText = 'as a volunteer (no hourly rate).';
+        } else {
+            $rateText = 'with an hourly rate of '.$worker->hourly_rate.' per hour.';
+        }
+
+        $workerName = trim(($u->first_name ?? '').' '.($u->last_name ?? '')) ?: $u->email;
+        $title      = 'Worker engagement status changed';
+
+        foreach ($ownersEvents as $ownerUserId => $events) {
+            $titles = array_values($events);
+
+            if (count($titles) === 1) {
+                $eventsText = "for your event '".$titles[0]."'.";
+            } else {
+                $eventsText = "for your events: '".implode("', '", $titles)."'.";
+            }
+
+            $message = sprintf(
+                "%s changed their engagement from %s to %s %s This worker has reservations %s",
+                $workerName,
+                $fromStatus,
+                $toStatus,
+                $rateText,
+                $eventsText
+            );
+
+            Notify::to(
+                $ownerUserId,
+                $title,
+                $message,
+                'RESERVATION'
+            );
+        }
+    }
+}
+
+
+    return response()->json([
+        'ok'      => true,
+        'message' => 'Engagement updated successfully.',
+    ]);
+}
+
+
+
 }

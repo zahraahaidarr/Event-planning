@@ -34,6 +34,18 @@
                     ->implode('') ?: 'U';
   }
 @endphp
+@php
+  $worker      = null;
+  $isVolunteer = 0;
+  $hourlyRate  = null;
+
+  if ($role === 'WORKER') {
+      $worker      = $u->worker ?? null;   // assumes User hasOne Worker
+      $isVolunteer = $worker?->is_volunteer ? 1 : 0;
+      $hourlyRate  = $worker?->hourly_rate;
+  }
+@endphp
+
 
 <body data-theme="dark">
   <div class="wrap">
@@ -189,14 +201,55 @@
         </div>
       </article>
     </section>
+        <!-- ROW 5: Engagement (Volunteer / Paid) -->
+   {{-- ROW 5: Engagement (Volunteer / Paid) – ONLY for workers --}}
+@if ($role === 'WORKER')
+<section class="full">
+  <article class="card" aria-labelledby="engTitle">
+    <h3 id="engTitle">Engagement</h3>
+
+    <div class="form-row">
+      <div class="form-col">
+        <label for="engagementKind">Profile type</label>
+        <select id="engagementKind">
+          <option value="VOLUNTEER" {{ $isVolunteer ? 'selected' : '' }}>Volunteer</option>
+          <option value="PAID" {{ !$isVolunteer ? 'selected' : '' }}>Paid (not volunteer)</option>
+        </select>
+      </div>
+
+      <div class="form-col" id="hourlyWrap">
+        <label for="hourlyRate">Hourly rate (USD)</label>
+        <input
+          id="hourlyRate"
+          type="number"
+          min="0"
+          step="0.01"
+          value="{{ $hourlyRate !== null ? $hourlyRate : '' }}"
+          {{ $isVolunteer ? 'disabled' : '' }}
+        >
+      </div>
+    </div>
+
+    <div class="muted" style="margin-top:8px">
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="saveEngagement">Save engagement</button>
+    </div>
+  </article>
+</section>
+@endif
+
   </div>
+
 
   {{-- Pass routes for AJAX --}}
   <script>
     window.ROUTES = {
       account:  "{{ route('profile.account') }}",
       personal: "{{ route('profile.personal') }}",
-      password: "{{ route('profile.password') }}"
+      password: "{{ route('profile.password') }}",
+      engagement: "{{ route('profile.engagement') }}"   
     };
   </script>
 

@@ -205,3 +205,66 @@ if(dobInput){
     }
   });
 }
+// ---- Engagement: toggle hourlyRate enable/disable ----
+// ---- Engagement: toggle hourlyRate visibility ----
+const engagementSelect = document.getElementById('engagementKind');
+const hourlyWrap       = document.getElementById('hourlyWrap');
+const hourlyInput      = document.getElementById('hourlyRate');
+
+function refreshHourlyState() {
+  if (!engagementSelect || !hourlyWrap || !hourlyInput) return;
+
+  const isVolunteer = engagementSelect.value === 'VOLUNTEER';
+
+  // Hide the whole column when volunteer
+  hourlyWrap.style.display = isVolunteer ? 'none' : 'flex';
+
+  // Enable only when paid
+  hourlyInput.disabled = isVolunteer;
+
+  // Optional: clear when switching to volunteer
+  if (isVolunteer) {
+    // hourlyInput.value = '';
+  }
+}
+
+if (engagementSelect) {
+  engagementSelect.addEventListener('change', refreshHourlyState);
+  // run once on load
+  refreshHourlyState();
+}
+// ---- Save Engagement ----
+const saveEngBtn = document.getElementById('saveEngagement');
+if (saveEngBtn && engagementSelect) {
+  saveEngBtn.addEventListener('click', async () => {
+    const engagement_kind = engagementSelect.value;               // VOLUNTEER or PAID
+    const is_volunteer    = engagement_kind === 'VOLUNTEER' ? 1 : 0;
+    const hourly_rate     =
+      hourlyInput && !hourlyInput.disabled && hourlyInput.value !== ''
+        ? hourlyInput.value
+        : null;
+
+    try {
+      const res = await fetch(window.ROUTES.engagement, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': CSRF,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ is_volunteer, engagement_kind, hourly_rate })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || 'Save failed');
+      }
+
+      toast('Engagement updated.');
+    } catch (err) {
+      console.error(err);
+      toast(err.message || 'Error saving engagement');
+    }
+  });
+}
+

@@ -194,6 +194,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="date"],
+input[type="number"],        
 .input,
 select{
   width:100%;
@@ -204,10 +205,7 @@ select{
   color:var(--text);
   outline:1px solid var(--border);
 }
-input[type="date"]{
-  /* Make native picker blend better; optional tweaks */
-  /* appearance:none; */
-}
+
 input[type="file"]{
   background:transparent;
   color:var(--text);
@@ -274,4 +272,18 @@ input[type="file"]{
   color:var(--success);
   font-size:12px;
   font-weight:700;
+}
+/* Make disabled inputs look consistent with theme */
+input[disabled],
+select[disabled],
+textarea[disabled]{
+  background: var(--surface-2);
+  color: var(--muted);
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+/* When we hide the hourly column via JS */
+#hourlyWrap{
+  align-items: stretch;   /* keep label + input aligned nicely */
 }

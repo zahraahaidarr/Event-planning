@@ -50,12 +50,12 @@
 
     <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
        class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
-        <span class="nav-icon">👔</span><span>Employees</span>
+        <span class="nav-icon">👔</span><span>Clients</span>
     </a>
 
     <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
        class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
-        <span class="nav-icon">👥</span><span>Volunteers</span>
+        <span class="nav-icon">👥</span><span>Workers</span>
     </a>
 
     <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
@@ -89,8 +89,8 @@
   <main class="main-content">
     <div class="header">
       <div class="header-left">
-        <h1>Employee Management</h1>
-        <p>Manage employee accounts and permissions</p>
+        <h1>Client Management</h1>
+        <p>Manage Client accounts and permissions</p>
       </div>
 
     </div>
@@ -113,7 +113,7 @@
     <div class="search-section">
       <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="Search employees by name, email, or role..." id="searchInput">
+        <input type="text" class="search-input" placeholder="Search client by name, email, or role..." id="searchInput">
       </div>
     </div>
 

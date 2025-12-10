@@ -2,7 +2,7 @@
   const STRINGS = {
     en: {
       pageTitle: "Announcements",
-      pageSubtitle: "Important updates and news for the volunteer community.",
+      pageSubtitle: "Important updates and news.",
       search: "Search announcements…",
       important: "Important",
       info: "Info",

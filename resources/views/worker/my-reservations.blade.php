@@ -113,7 +113,7 @@
         <div class="header">
             <div class="header-left">
                 <h1>My Reservations</h1>
-                <p>Track your volunteer applications and commitments</p>
+                <p>Track your worker applications and commitments</p>
             </div>
 
             

@@ -58,7 +58,7 @@
         <a href="{{ route('employee.volunteer.assignment') }}"
            class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
             <span class="nav-icon">👥</span>
-            <span>Volunteer Assignment</span>
+            <span>Worker Assignment</span>
         </a>
 
         {{-- 🔹 HERE: keep Post-Event Reports highlighted on all its routes --}}
@@ -103,8 +103,8 @@
     <main class="main-content">
         <div class="header">
             <div class="header-left">
-                <h1>Volunteer Assignment</h1>
-                <p>Review and manage volunteer applications</p>
+                <h1>Worker Assignment</h1>
+                <p>Review and manage Worker applications</p>
             </div>
             
         </div>
@@ -112,7 +112,7 @@
         <!-- Event Selection (cards instead of dropdown) -->
         <div class="event-selection">
             <h2 class="section-title">Select Event</h2>
-            <p class="event-hint">Click an event to view and manage its volunteer applications.</p>
+            <p class="event-hint">Click an event to view and manage its worker applications.</p>
 
             <div class="event-list" id="eventList">
                 @forelse($events as $event)

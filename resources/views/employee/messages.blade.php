@@ -27,7 +27,7 @@
       <header class="messages-title-bar">
         <div class="messages-title-wrapper">
           <h1>Messages</h1>
-          <p>Chat with coordinators and volunteers, and keep track of your conversations.</p>
+          <p>Chat with coordinators and workers, and keep track of your conversations.</p>
         </div>
       </header>
 

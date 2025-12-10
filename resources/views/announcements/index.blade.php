@@ -62,7 +62,7 @@
 
                     <a href="{{ route('employee.volunteer.assignment') }}"
                        class="nav-item {{ request()->routeIs('volunteers.assign') ? 'active' : '' }}">
-                        <span class="nav-icon">👥</span><span>Volunteer Assignment</span>
+                        <span class="nav-icon">👥</span><span>Worker Assignment</span>
                     </a>
 
                     <a href="{{ route('employee.postEventReports.index') }}"
@@ -200,7 +200,7 @@
         <section class="card" style="margin-bottom:20px;">
             <div class="card-header">
                 <h2 class="card-title" id="pageSubtitle">
-                    Important updates and news for the volunteer community.
+                    Important updates and news for the Worker community.
                 </h2>
             </div>
         </section>

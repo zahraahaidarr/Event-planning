@@ -56,7 +56,7 @@
                 <a href="{{ route('employee.volunteer.assignment') }}"
                    class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
                     <span class="nav-icon">👥</span>
-                    <span>Volunteer Assignment</span>
+                    <span>Worker Assignment</span>
                 </a>
 
                 {{-- Post-Event Reports --}}
@@ -297,7 +297,7 @@
                     <div class="worker-rating"
                          data-can-rate="{{ $submission->status === 'pending' ? '1' : '0' }}"
                          data-worker-rating="{{ (int)($submission->worker_rating ?? 0) }}">
-                        <span class="worker-rating-label">Volunteer rating:</span>
+                        <span class="worker-rating-label">Worker rating:</span>
 
                         <div class="rating-stars">
                             @for($i = 1; $i <= 5; $i++)
@@ -315,7 +315,7 @@
                             </small>
                         @else
                             <small class="worker-rating-hint">
-                                Final volunteer rating for this event.
+                                Final worker rating for this event.
                             </small>
                         @endif
                     </div>

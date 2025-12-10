@@ -53,12 +53,12 @@
 
     <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
        class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
-        <span class="nav-icon">👔</span><span>Employees</span>
+        <span class="nav-icon">👔</span><span>Clients</span>
     </a>
 
     <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
        class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
-        <span class="nav-icon">👥</span><span>Volunteers</span>
+        <span class="nav-icon">👥</span><span>Workers</span>
     </a>
 
     <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
@@ -92,7 +92,7 @@
         <div class="header">
             <div class="header-left">
                 <h1>Volunteer Oversight</h1>
-                <p>Monitor and manage volunteer accounts</p>
+                <p>Monitor and manage Worker accounts</p>
             </div>
            
         </div>
@@ -161,7 +161,7 @@
     <div class="modal-dialog">
         <div class="modal-header">
             <div class="modal-title-group">
-                <h2 id="vm-name">Volunteer details</h2>
+                <h2 id="vm-name">Workers details</h2>
                 <p id="vm-email" class="modal-subtitle"></p>
             </div>
             <button type="button" class="icon-btn modal-close-btn" onclick="closeVolunteerModal()">✕</button>

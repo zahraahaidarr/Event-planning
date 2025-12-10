@@ -105,7 +105,7 @@
         <div class="header">
             <div class="header-left">
                 <h1>Discover Events</h1>
-                <p>Find volunteer opportunities that match your interests and skills.</p>
+                <p>Find worker opportunities that match your interests and skills.</p>
                 @if(!empty($workerRoleName))
     <p>Your primary role: <strong>{{ $workerRoleName }}</strong></p>
 @endif

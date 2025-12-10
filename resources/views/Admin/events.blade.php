@@ -77,12 +77,12 @@
 
                 <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
                    class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
-                    <span class="nav-icon">👔</span><span>Employees</span>
+                    <span class="nav-icon">👔</span><span>Clients</span>
                 </a>
 
                 <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
                    class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span><span>Volunteers</span>
+                    <span class="nav-icon">👥</span><span>Workers</span>
                 </a>
 
                 <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
@@ -153,7 +153,7 @@
 
                 <a href="{{ route('employee.volunteer.assignment') }}"
                    class="nav-item">
-                    <span class="nav-icon">👥</span><span>Volunteer Assignment</span>
+                    <span class="nav-icon">👥</span><span>Worker Assignment</span>
                 </a>
 
                 <a href="{{ route('employee.postEventReports.index') }}"
@@ -198,7 +198,7 @@
       <div class="header">
         <div class="header-left">
           <h1>Event Management</h1>
-          <p>Create and manage volunteer events</p>
+          <p>Create and manage worker events</p>
         </div>
         <div class="header-actions">
           <button class="btn btn-primary" id="btn_open_create">
@@ -274,7 +274,7 @@
           <!-- STEP 2 -->
           <section id="step2" class="step">
             <h3 class="h3">Role Capacities</h3>
-            <p class="muted">Set how many volunteers/employees per role.</p>
+            <p class="muted">Set how many workers/employees per role.</p>
             <div class="table-container">
               <table class="table table-min">
                 <thead>

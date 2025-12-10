@@ -124,12 +124,12 @@
 
     <a href="{{ Route::has('employees.index') ? route('employees.index') : '#' }}"
        class="nav-item {{ request()->routeIs('employees.index') ? 'active' : '' }}">
-        <span class="nav-icon">👔</span><span>Employees</span>
+        <span class="nav-icon">👔</span><span>Clients</span>
     </a>
 
     <a href="{{ Route::has('volunteers.index') ? route('volunteers.index') : '#' }}"
        class="nav-item {{ request()->routeIs('volunteers.index') ? 'active' : '' }}">
-        <span class="nav-icon">👥</span><span>Volunteers</span>
+        <span class="nav-icon">👥</span><span>Workers</span>
     </a>
 
     <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"

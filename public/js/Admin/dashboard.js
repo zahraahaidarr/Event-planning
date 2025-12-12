@@ -65,3 +65,53 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+function drawBarChart(canvasId, labels, data, color) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const max = Math.max(...data, 5);
+
+    const barHeight = 22;
+    const gap = 14;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    labels.forEach((label, i) => {
+        const y = i * (barHeight + gap);
+
+        // Label
+        ctx.fillStyle = '#cbd5ff';
+        ctx.font = '13px sans-serif';
+        ctx.fillText(label, 0, y + barHeight - 6);
+
+        // Bar
+        const barWidth = (data[i] / max) * (canvas.width - 160);
+        ctx.fillStyle = color;
+        ctx.fillRect(150, y, barWidth, barHeight);
+
+        // Value
+        ctx.fillStyle = '#fff';
+        ctx.fillText(data[i].toFixed(2), 150 + barWidth + 8, y + barHeight - 6);
+    });
+}
+
+// ===== Render charts =====
+document.addEventListener('DOMContentLoaded', () => {
+    const w = window.dashboardData.topWorkersRating || [];
+    const c = window.dashboardData.topClientsRating || [];
+
+    drawBarChart(
+        'workersRatingChart',
+        w.map(x => `${x.name} (${x.ratings_count})`),
+        w.map(x => parseFloat(x.avg_rating)),
+        '#4f7cff'
+    );
+
+    drawBarChart(
+        'clientsRatingChart',
+        c.map(x => `${x.name} (${x.ratings_count})`),
+        c.map(x => parseFloat(x.avg_rating)),
+        '#9c6cff'
+    );
+});

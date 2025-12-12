@@ -143,18 +143,23 @@
             </div>
         </div>
 
-        {{-- Charts (still static / ignored logically) --}}
-        <div class="charts-section">
-            <div class="chart-card">
-                <h2 class="chart-title">Volunteer Growth</h2>
-                <div class="chart-placeholder">Chart: Monthly volunteer registrations</div>
-            </div>
+        {{-- Performance Insights --}}
+<div class="charts-section">
 
-            <div class="chart-card">
-                <h2 class="chart-title">Event Categories</h2>
-                <div class="chart-placeholder">Chart: Events by category distribution</div>
-            </div>
-        </div>
+    {{-- Top Workers & Volunteers --}}
+    <div class="chart-card">
+        <h2 class="chart-title">Top Workers & Volunteers Rating</h2>
+        <canvas id="workersRatingChart" height="180"></canvas>
+    </div>
+
+    {{-- Top Clients --}}
+    <div class="chart-card">
+        <h2 class="chart-title">Top Clients Rating</h2>
+        <canvas id="clientsRatingChart" height="180"></canvas>
+    </div>
+
+</div>
+
 
         {{-- Recent Activity --}}
         <div class="recent-section">
@@ -191,6 +196,9 @@
         totalEvents: {{ (int) $totalEvents }},
         recentEmployees: @json($recentEmployees),
         recentEvents: @json($recentEvents),
+
+        topWorkersRating: @json($topWorkersRating),
+        topClientsRating: @json($topClientsRating),
     };
 </script>
 

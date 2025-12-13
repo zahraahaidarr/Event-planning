@@ -4,13 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard - VolunteerHub</title>
+    <title>Client Dashboard - VolunteerHub</title>
 
     <script src="{{ asset('js/preferences.js') }}" defer></script>
     <link rel="stylesheet" href="{{ asset('css/employee/dashboard.css') }}">
 
     @php
-        // Build ONE object, then export it safely to JS
         $dashboardData = [
             'totalEvents'          => $totalEvents ?? 0,
             'completedEvents'      => $completedEvents ?? 0,
@@ -26,7 +25,6 @@
     @endphp
 
     <script>
-        // SAFE: no Blade parsing issues, no broken brackets
         window.dashboardData = {{ \Illuminate\Support\Js::from($dashboardData) }};
     </script>
 
@@ -35,7 +33,7 @@
 <body>
 <div class="app-container">
 
-    {{-- Sidebar (copied from Post-Event Reports page) --}}
+    {{-- Sidebar --}}
     <aside class="sidebar">
         @php($user = Auth::user())
 
@@ -57,7 +55,7 @@
                     <div class="logo-name">
                         {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                     </div>
-                    <div class="logo-role">EMPLOYEE</div>
+                    <div class="logo-role">Client</div>
                 </div>
             </a>
         </div>
@@ -116,10 +114,9 @@
 
     <main class="main-content">
         <div class="header">
-            <h1 class="header-title">Employee Dashboard</h1>
+            <h1 class="header-title">Client Dashboard</h1>
 
             <div class="header-actions">
-                {{-- You asked: link Create Event to Event Management page --}}
                 <button class="btn btn-primary"
                         @if(Route::has('events.index'))
                             onclick="window.location.href='{{ route('events.index') }}'"
@@ -146,9 +143,7 @@
                     <div class="stat-icon" style="background:rgba(79,124,255,.15);color:var(--primary)">📅</div>
                 </div>
                 <div class="stat-value">{{ $totalEvents }}</div>
-                <div class="stat-change positive">
-                    <span>•</span><span>All events created by you</span>
-                </div>
+                <div class="stat-change positive"><span>•</span><span>All events created by you</span></div>
             </div>
 
             <div class="stat-card">
@@ -157,9 +152,7 @@
                     <div class="stat-icon" style="background:rgba(54,211,153,.15);color:var(--success)">✅</div>
                 </div>
                 <div class="stat-value">{{ $completedEvents }}</div>
-                <div class="stat-change positive">
-                    <span>•</span><span>Events Done</span>
-                </div>
+                <div class="stat-change positive"><span>•</span><span>Events Done</span></div>
             </div>
 
             <div class="stat-card">
@@ -181,9 +174,7 @@
                     <div class="stat-icon" style="background:rgba(244,191,80,.15);color:var(--warning)">📝</div>
                 </div>
                 <div class="stat-value">{{ $pendingReports }}</div>
-                <div class="stat-change negative">
-                    <span>•</span><span>Pending submissions for your events</span>
-                </div>
+                <div class="stat-change negative"><span>•</span><span>Pending submissions for your events</span></div>
             </div>
         </div>
 
@@ -196,7 +187,6 @@
                         <a href="{{ route('events.index') }}" class="view-all-link">View All →</a>
                     @endif
                 </div>
-
                 <div class="event-list" id="upcoming-events-list"></div>
             </div>
 
@@ -205,15 +195,19 @@
                     <h2 class="card-title">Pending Tasks</h2>
                     <span class="muted" id="tasks-count">0 tasks</span>
                 </div>
-
                 <div class="task-list" id="tasks-list"></div>
             </div>
         </div>
 
-        {{-- Recent Activity --}}
-        <div class="card">
-            <div class="card-header"><h2 class="card-title">Recent Activity</h2></div>
-            <div class="event-list" id="recent-activity-list"></div>
+        {{-- ✅ Recent Activity (half width) --}}
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Recent Activity</h2></div>
+                <div class="event-list" id="recent-activity-list"></div>
+            </div>
+
+            {{-- empty right side to keep same grid width --}}
+            <div class="card recent-activity-placeholder"></div>
         </div>
 
     </main>

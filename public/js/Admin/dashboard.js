@@ -104,14 +104,70 @@ document.addEventListener('DOMContentLoaded', () => {
     drawBarChart(
         'workersRatingChart',
         w.map(x => `${x.name} (${x.ratings_count})`),
-        w.map(x => parseFloat(x.avg_rating)),
+w.map(x => Number(x.avg_rating || 0)),
         '#4f7cff'
     );
 
     drawBarChart(
         'clientsRatingChart',
         c.map(x => `${x.name} (${x.ratings_count})`),
-        c.map(x => parseFloat(x.avg_rating)),
+c.map(x => Number(x.avg_rating || 0)),
         '#9c6cff'
     );
+});
+function renderReliability(listId, items) {
+    const wrap = document.getElementById(listId);
+    if (!wrap) return;
+
+    if (!items.length) {
+        wrap.innerHTML = `<p class="placeholder">No reliability data yet.</p>`;
+        return;
+    }
+
+    wrap.innerHTML = items.map(x => {
+        const name = escapeHtml(x.name || 'Client');
+        const pct = Number(x.reliability_pct ?? 0);
+        const safePct = isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
+
+        const total = Number(x.total_events ?? 0) || 0;
+        const completed = Number(x.completed_events ?? 0) || 0;
+        const cancelled = Number(x.cancelled_events ?? 0) || 0;
+
+        return `
+            <div class="reliability-item">
+                <div class="reliability-ring" style="--p:${safePct}">
+                    <div class="reliability-ring-inner">
+                        <div class="reliability-pct">${safePct}%</div>
+                    </div>
+                </div>
+
+                <div class="reliability-info">
+                    <div class="reliability-name">${name}</div>
+                    <div class="reliability-meta">
+                        <span>✅ ${completed} completed</span>
+                        <span>•</span>
+                        <span>❌ ${cancelled} cancelled</span>
+                        <span>•</span>
+                        <span>📦 ${total} total</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const data = window.dashboardData || {};
+
+    // keep your workers chart
+    const w = data.topWorkersRating || [];
+    drawBarChart(
+        'workersRatingChart',
+        w.map(x => `${x.name} (${x.ratings_count})`),
+        w.map(x => parseFloat(x.avg_rating)),
+        '#4f7cff'
+    );
+
+    // ✅ NEW reliability circles
+    renderReliability('clientsReliabilityList', data.topClientsReliability || []);
 });

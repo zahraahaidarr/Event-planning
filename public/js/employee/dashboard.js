@@ -93,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tasks.length) {
             tasksList.innerHTML = `
                 <div class="task-item">
-                    <div class="task-checkbox"></div>
                     <div class="task-text">No pending tasks</div>
                     <span class="badge badge-success">Ready</span>
                 </div>
@@ -106,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return `
                     <div class="task-item">
-                        <div class="task-checkbox"></div>
                         <div class="task-text">${text}</div>
                         <span class="badge ${badgeClass}">${priority}</span>
                     </div>

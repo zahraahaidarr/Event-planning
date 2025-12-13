@@ -24,6 +24,7 @@ use App\Http\Controllers\Worker\MessageController as WorkerMessageController;
 use App\Http\Controllers\Employee\PostEventReportController;
 use App\Http\Controllers\EventStaffingController;
 use App\Http\Controllers\worker\PaymentController;
+use App\Http\Controllers\Worker\WorkerDashboardController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -146,7 +147,7 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
 
 Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->group(function () {
 
-        Route::view('/dashboard', 'worker.dashboard')->name('dashboard');
+        Route::get('/dashboard', [WorkerDashboardController::class, 'index'])->name('dashboard');
 
 
         Route::get('/events/discover', [EventDiscoveryController::class, 'index'])->name('events.discover');

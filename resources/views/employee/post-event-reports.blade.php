@@ -35,7 +35,7 @@
                         {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                     </div>
                     <div class="logo-role">
-                        EMPLOYEE
+                        Client
                     </div>
                 </div>
             </a>

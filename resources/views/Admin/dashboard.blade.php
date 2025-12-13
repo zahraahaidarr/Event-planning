@@ -109,7 +109,7 @@
                     <div class="stat-icon" style="background:rgba(79,124,255,.18);color:var(--primary)">👥</div>
                 </div>
                 <div class="stat-value">{{ number_format($totalVolunteers) }}</div>
-                <div class="stat-change positive">workers where is_volunteer = 1</div>
+                <div class="stat-change positive">Active registered volunteers</div>
             </div>
 
             {{-- Total Paid Workers --}}
@@ -119,7 +119,7 @@
                     <div class="stat-icon" style="background:rgba(54,211,153,.18);color:var(--success)">💼</div>
                 </div>
                 <div class="stat-value">{{ number_format($totalPaidWorkers) }}</div>
-                <div class="stat-change">workers where is_volunteer = 0</div>
+                <div class="stat-change">Paid staff members</div>
             </div>
 
             {{-- Total Employees --}}
@@ -129,7 +129,7 @@
                     <div class="stat-icon" style="background:rgba(156,108,255,.18);color:var(--accent)">👔</div>
                 </div>
                 <div class="stat-value">{{ number_format($totalEmployees) }}</div>
-                <div class="stat-change positive">all rows in employees table</div>
+                <div class="stat-change positive">Registered clients</div>
             </div>
 
             {{-- Total Events --}}
@@ -139,7 +139,7 @@
                     <div class="stat-icon" style="background:rgba(244,191,80,.18);color:var(--warning)">📅</div>
                 </div>
                 <div class="stat-value">{{ number_format($totalEvents) }}</div>
-                <div class="stat-change positive">from events table</div>
+                <div class="stat-change positive">All events created</div>
             </div>
         </div>
 
@@ -154,9 +154,14 @@
 
     {{-- Top Clients --}}
     <div class="chart-card">
-        <h2 class="chart-title">Top Clients Rating</h2>
-        <canvas id="clientsRatingChart" height="180"></canvas>
+    <h2 class="chart-title">Top Reliable Clients</h2>
+    <p class="chart-subtitle">Completed vs Cancelled events</p>
+
+    <div id="clientsReliabilityList" class="reliability-list">
+        <p class="placeholder">Loading...</p>
     </div>
+</div>
+
 
 </div>
 
@@ -198,7 +203,7 @@
         recentEvents: @json($recentEvents),
 
         topWorkersRating: @json($topWorkersRating),
-        topClientsRating: @json($topClientsRating),
+topClientsReliability: @json($topClientsReliability),
     };
 </script>
 

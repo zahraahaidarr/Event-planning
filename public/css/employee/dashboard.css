@@ -258,3 +258,10 @@ body::before{
   .content-grid{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:1fr}
 }
+.recent-activity-placeholder{
+  opacity: 0;
+  pointer-events: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}

@@ -66,36 +66,17 @@ class DashboardController extends Controller
 $topWorkersRating = DB::table('post_event_submissions as pes')
     ->join('workers as w', 'w.worker_id', '=', 'pes.worker_id')
     ->join('users as u', 'u.id', '=', 'w.user_id')
-    ->whereNotNull('pes.owner_rating')
+    ->where('pes.status', 'approved')                 // ✅ recommended
+    ->whereNotNull('pes.worker_rating')              // ✅ client -> worker
     ->select(
         'w.worker_id',
         'w.user_id',
         'w.is_volunteer',
-        DB::raw('AVG(pes.owner_rating) as avg_rating'),
-        DB::raw('COUNT(pes.owner_rating) as ratings_count'),
+        DB::raw('AVG(pes.worker_rating) as avg_rating'),
+        DB::raw('COUNT(pes.worker_rating) as ratings_count'),
         DB::raw("MAX(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,'')))) as name")
     )
     ->groupBy('w.worker_id', 'w.user_id', 'w.is_volunteer')
-    ->orderByDesc('avg_rating')
-    ->orderByDesc('ratings_count') // tie breaker: more ratings first
-    ->limit(5)
-    ->get();
-
-
-// ===== Top Clients / Employees Rating =====
-$topClientsRating = DB::table('post_event_submissions as pes')
-    ->join('events as e', 'e.event_id', '=', 'pes.event_id')
-    ->join('users as u', 'u.id', '=', 'e.created_by')   // ✅ creator user
-    ->whereNotNull('pes.owner_rating')
-    // Optional: if you ONLY want employees as clients:
-     ->where('u.role', 'EMPLOYEE')
-    ->select(
-        'e.created_by as user_id',
-        DB::raw('AVG(pes.owner_rating) as avg_rating'),
-        DB::raw('COUNT(pes.owner_rating) as ratings_count'),
-        DB::raw("MAX(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,'')))) as name")
-    )
-    ->groupBy('e.created_by')
     ->orderByDesc('avg_rating')
     ->orderByDesc('ratings_count')
     ->limit(5)
@@ -103,9 +84,43 @@ $topClientsRating = DB::table('post_event_submissions as pes')
 
 
 
+// ===== Top Clients / Employees Rating =====
+// ===== Top Reliable Clients (completed vs cancelled) =====
+// ===== Top Reliable Clients (based on workers_reservations COMPLETED) =====
+$topClientsReliability = DB::table('events as e')
+    ->join('users as u', 'u.id', '=', 'e.created_by')
+    ->leftJoin('workers_reservations as wr', 'wr.event_id', '=', 'e.event_id')
+    ->where('u.role', 'EMPLOYEE') // clients
+    ->select(
+        'e.created_by as user_id',
+        DB::raw("MAX(TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,'')))) as name"),
+
+        // total events created by this client
+        DB::raw('COUNT(DISTINCT e.event_id) as total_events'),
+
+        // cancelled events (if you keep event.status)
+        DB::raw("COUNT(DISTINCT CASE WHEN e.status = 'CANCELLED' THEN e.event_id END) as cancelled_events"),
+
+        // completed events = event has at least ONE reservation COMPLETED
+        DB::raw("COUNT(DISTINCT CASE WHEN wr.status = 'COMPLETED' THEN e.event_id END) as completed_events")
+    )
+    ->groupBy('e.created_by')
+    ->havingRaw('COUNT(DISTINCT e.event_id) > 0')
+    ->orderByRaw("
+        (COUNT(DISTINCT CASE WHEN wr.status = 'COMPLETED' THEN e.event_id END) / COUNT(DISTINCT e.event_id)) DESC
+    ")
+    ->limit(5)
+    ->get()
+    ->map(function ($row) {
+        $total = (int) $row->total_events;
+        $completed = (int) $row->completed_events;
+
+        $row->reliability_pct = $total > 0 ? round(($completed / $total) * 100) : 0;
+        return $row;
+    });
 
 
-return view('Admin.dashboard', compact(
+    return view('Admin.dashboard', compact(
     'totalVolunteers',
     'totalPaidWorkers',
     'totalEmployees',
@@ -113,7 +128,7 @@ return view('Admin.dashboard', compact(
     'recentEmployees',
     'recentEvents',
     'topWorkersRating',
-    'topClientsRating'
+    'topClientsReliability'
 ));
 
 

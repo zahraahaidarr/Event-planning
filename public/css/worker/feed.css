@@ -1,0 +1,304 @@
+/* =========================================================
+   Feed — Homogenous with Event Discover + Follow Employees
+   File: public/css/worker/feed.css
+========================================================= */
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#0f1222;--surface:#14183a;--surface-2:#0e1330;--card:#171c42;
+  --text:#eaf0ff;--muted:#aab3d6;--primary:#4f7cff;--primary-2:#7aa0ff;
+  --accent:#9c6cff;--success:#36d399;--warning:#f4bf50;--danger:#ff6b6b;
+  --ring:rgba(111,140,255,.55);--radius:18px;--shadow:0 10px 30px rgba(0,0,0,.25);
+
+  --bg-primary:var(--surface);
+  --bg-secondary:var(--surface-2);
+  --bg-tertiary:var(--card);
+
+  --text-primary:var(--text);
+  --text-secondary:var(--muted);
+  --text-tertiary:#7a84b0;
+
+  --border-color:rgba(255,255,255,.08);
+  --accent-primary:var(--primary);
+  --accent-secondary:var(--accent);
+
+  --shadow-sm:0 4px 12px rgba(0,0,0,.15);
+  --shadow-md:0 8px 20px rgba(0,0,0,.2);
+  --shadow-lg:var(--shadow);
+
+  --radius-sm:10px;
+  --radius-md:14px;
+  --radius-lg:var(--radius);
+}
+
+[data-theme="light"]{
+  --bg:#f6f7fb;--surface:#ffffff;--surface-2:#f2f5ff;--card:#ffffff;
+  --text:#12152b;--muted:#5a6387;--primary:#3a66ff;--primary-2:#6f90ff;
+  --accent:#7b5cff;--success:#16a34a;--warning:#d97706;--danger:#ef4444;
+  --ring:rgba(58,102,255,.35);--shadow:0 10px 24px rgba(13,24,61,.10);
+
+  --bg-primary:var(--surface);
+  --bg-secondary:var(--surface-2);
+  --bg-tertiary:var(--card);
+
+  --text-primary:var(--text);
+  --text-secondary:var(--muted);
+  --text-tertiary:#7a84b0;
+
+  --border-color:#e0e5f5;
+  --accent-primary:var(--primary);
+  --accent-secondary:var(--accent);
+
+  --shadow-sm:0 2px 8px rgba(13,24,61,.08);
+  --shadow-md:0 4px 16px rgba(13,24,61,.12);
+  --shadow-lg:var(--shadow);
+}
+
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 800px at -10% -10%,#1a2050 0%,var(--bg) 55%),
+    radial-gradient(1200px 700px at 110% -10%,#281a55 0%,transparent 50%),
+    var(--bg);
+  color:var(--text-primary);
+  line-height:1.6;
+  overflow-x:hidden;
+
+  /* ✅ layout fix: sidebar + content side-by-side */
+  display:flex;
+  min-height:100vh;
+}
+
+/* =========================================================
+   Sidebar (same as Event Discover)
+========================================================= */
+.sidebar{
+  flex:0 0 260px;
+  width:260px;
+  background:var(--bg-primary);
+  border-right:1px solid var(--border-color);
+  padding:24px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  padding:10px 8px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.logo-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:inherit;
+}
+
+.logo-avatar,.logo-icon{width:40px;height:40px;border-radius:50%}
+
+.logo-avatar{
+  object-fit:cover;
+  border:2px solid var(--border-color);
+  box-shadow:0 0 6px rgba(0,0,0,0.25);
+}
+
+.logo-icon{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:18px;
+}
+
+.logo-id{display:flex;flex-direction:column;gap:2px}
+.logo-name{
+  font-size:18px;font-weight:700;color:var(--text-primary);
+  letter-spacing:.3px;text-transform:capitalize;
+}
+.logo-role{
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:1px;color:var(--text-secondary);
+}
+
+.nav-section{display:flex;flex-direction:column;gap:4px}
+.nav-label{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-tertiary);padding:0 12px;margin-bottom:8px
+}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:var(--radius-sm);
+  color:var(--text-secondary);text-decoration:none;
+  font-size:14px;font-weight:500;
+  transition:all .2s ease;cursor:pointer
+}
+.nav-item:hover{background:var(--bg-secondary);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-secondary);color:#fff}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+
+/* =========================================================
+   Page container (right of sidebar)
+========================================================= */
+#feedPage{
+  flex:1;
+  min-width:0;
+  padding:32px;
+
+  /* ✅ no auto centering that breaks alignment */
+  margin:0;
+  max-width:none;
+}
+
+/* Center content inside */
+#feedPage{
+  display:block;
+}
+#feedPage > *{
+  max-width:1400px;
+  width:100%;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* Header */
+#feedHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:18px;
+}
+
+#feedHeader h2{
+  font-size:32px;
+  font-weight:700;
+}
+
+#goFollowBtn{
+  padding:10px 20px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-color);
+  background:var(--bg-tertiary);
+  color:var(--text-primary);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s ease;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+#goFollowBtn:hover{background:var(--border-color);transform:translateY(-1px)}
+
+/* Tabs wrapper (inside a card style) */
+#feedTabs{
+  background:var(--bg-primary);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  padding:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.feedTab{
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-color);
+  background:var(--bg-secondary);
+  color:var(--text-primary);
+  cursor:pointer;
+  font-weight:800;
+  transition:all .2s ease;
+}
+.feedTab:hover{transform:translateY(-1px)}
+.feedTab.active{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  border-color:transparent;
+  color:#fff;
+}
+
+/* Content card */
+#feedContent{
+  background:var(--bg-primary);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  padding:18px;
+}
+
+/* Sections */
+.tabPane.hidden{display:none}
+
+/* Feed cards */
+.feedCard{
+  background:var(--bg-primary);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  padding:16px 18px;
+  margin-bottom:12px;
+  transition:all .3s ease;
+}
+.feedCard:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+
+.feedCardTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.feedTitle{
+  font-weight:900;
+  font-size:18px;
+  color:var(--text-primary);
+}
+
+.feedDate{
+  color:var(--text-secondary);
+  font-size:13px;
+}
+
+.feedBody{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  color:var(--text-secondary);
+}
+.feedBody strong{color:var(--text-primary)}
+.muted{color:var(--text-secondary);font-weight:700}
+
+/* Empty / placeholder */
+.emptyBox{
+  border:1px dashed var(--border-color);
+  border-radius:var(--radius-lg);
+  padding:16px;
+  color:var(--text-secondary);
+  background:rgba(255,255,255,.03);
+}
+
+/* Pagination */
+.pagerBox{margin-top:14px}
+
+/* Responsive */
+@media (max-width:768px){
+  body{display:block}
+  .sidebar{display:none}
+  #feedPage{padding:16px}
+  #feedHeader{flex-direction:column;align-items:flex-start}
+}

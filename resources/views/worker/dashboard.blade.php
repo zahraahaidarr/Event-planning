@@ -54,6 +54,11 @@
         <a href="{{ route('worker.events.discover') }}" class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
           <span class="nav-icon">🗓️</span><span>Discover Events</span>
         </a>
+        <a href="{{ route('worker.follow.index') }}"
+   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
+  <span class="nav-icon">👥</span><span>Follow Employees</span>
+</a>
+
         <a href="{{ route('worker.reservations') }}" class="nav-item {{ request()->routeIs('worker.reservations*') ? 'active' : '' }}">
           <span class="nav-icon">✅</span><span>My Reservations</span>
         </a>
@@ -87,7 +92,7 @@
           <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
             @csrf
             <button type="submit" class="nav-item" style="border:none;background:transparent;width:100%;text-align:left;">
-              <span class="nav-icon">🚪</span><span>Logout</span>
+              
             </button>
           </form>
         @endif

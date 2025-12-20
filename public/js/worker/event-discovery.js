@@ -15,6 +15,20 @@ function getCurrentView() {
     return gridBtn && gridBtn.classList.contains('active') ? 'grid' : 'list';
 }
 
+function getOwnerName(ev) {
+  // support multiple possible shapes coming from backend
+  return (
+    ev.owner_name ||
+    ev.ownerName ||
+    (ev.owner && ev.owner.name) ||
+    (ev.creator && ev.creator.name) ||
+    ev.created_by_name ||
+    ev.createdByName ||
+    ev.created_by || // fallback (id)
+    '—'
+  );
+}
+
 /* ========= Rendering ========= */
 
 function renderEvents(view = 'grid') {
@@ -76,6 +90,7 @@ function renderEvents(view = 'grid') {
         }
 
         card.onclick = () => openEventModal(ev);
+const ownerName = getOwnerName(ev);
 
         card.innerHTML = `
             <img src="${ev.image}" alt="${ev.title}" class="event-image">
@@ -95,6 +110,11 @@ function renderEvents(view = 'grid') {
                         <span class="meta-icon">📍</span>
                         <span>${ev.location || ''}</span>
                     </div>
+                    <div class="meta-item">
+  <span class="meta-icon">👤</span>
+  <span>${ownerName}</span>
+</div>
+
                     <div class="meta-item">
                         <span class="meta-icon">⏱️</span>
                         <span>${ev.duration || '—'}</span>
@@ -291,6 +311,8 @@ function openEventModal(eventOrId) {
 
     const modal = $('#eventModal');
     const body  = $('#modalBody');
+    const ownerName = getOwnerName(selectedEvent);
+
 
     if (!modal || !body || !selectedEvent) return;
 
@@ -324,12 +346,16 @@ function openEventModal(eventOrId) {
             <span><strong>Category:</strong> ${selectedEvent.category || 'General'}</span>
         </div>
         <div class="meta-item">
+      <span class="meta-icon">👤</span>
+      <span><strong>Event Owner:</strong> ${ownerName}</span>
+  </div>
+        <div class="meta-item">
             <span class="meta-icon">⏱️</span>
             <span><strong>Duration:</strong> ${selectedEvent.duration}</span>
         </div>
         <div class="meta-item">
             <span class="meta-icon">👥</span>
-            <span><strong>Available Spots (your role):</strong> ${selectedEvent.spotsRemaining} / ${selectedEvent.spotsTotal}</span>
+            <span><strong>Available Spots (your role):</strong> ${selectedEvent.spotsRemaining}</span>
         </div>
         ${workerRoleHtml}
 

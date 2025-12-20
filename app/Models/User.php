@@ -105,4 +105,22 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class, 'user_id', 'id');
     }
+
+    // app/Models/User.php
+public function followingEmployees()
+{
+    return $this->belongsToMany(
+        \App\Models\User::class,
+        'employee_follows',
+        'follower_id',
+        'followed_id'
+    )->withTimestamps();
 }
+
+
+public function employeeFollowers()
+{
+  return $this->belongsToMany(User::class, 'employee_follows', 'followed_id', 'follower_id')
+              ->withTimestamps();
+}
+}   

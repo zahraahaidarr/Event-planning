@@ -38,7 +38,7 @@ class EventDiscoveryController extends Controller
 
         // initial events batch, including roles
         $events = Event::publishedFuture()
-            ->with(['category', 'workRoles'])
+            ->with(['category', 'workRoles', 'creatorEmployee.user'])
             ->orderBy('starts_at')
             ->take(60)
             ->get()
@@ -85,7 +85,7 @@ class EventDiscoveryController extends Controller
         $perPage      = (int) $request->input('per_page', 12);
 
         $builder = Event::publishedFuture()
-            ->with(['category', 'workRoles']);
+              ->with(['category', 'workRoles', 'creatorEmployee.user']);
 
         if ($q !== '') {
             $builder->where(function ($query) use ($q) {

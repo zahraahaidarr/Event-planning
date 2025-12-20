@@ -167,35 +167,29 @@ public function toWorkerCard(?int $workerRoleTypeId = null): array
     $spotsTaken = $roleSpots['taken'] ?? 0;
     $spotsRemaining = max(0, $spotsTotal - $spotsTaken);
 
-    return [
+    $card = [
         'id'             => $this->event_id,
         'title'          => $this->title,
         'description'    => Str::limit(strip_tags((string) $this->description), 260),
-
         'category'       => optional($this->category)->name ?? 'General',
         'location'       => $this->location ?? 'TBD',
-
         'date'           => $this->safeFormatDate($this->starts_at, 'Y-m-d'),
         'time'           => $this->safeFormatDate($this->starts_at, 'H:i'),
-
-        'duration'       => $this->duration_hours
-                            ? $this->duration_hours . ' hours'
-                            : '—',
-
-        // JS can now do:
-        //   used = spotsTotal - spotsRemaining
-        // or use spotsUsed directly.
+        'duration'       => $this->duration_hours ? $this->duration_hours . ' hours' : '—',
         'spotsTotal'     => $spotsTotal,
-        'spotsRemaining' => $spotsRemaining,   // ✅ true remaining
-        'spotsUsed'      => $spotsTaken,       // ✅ true taken (RESERVED + CHECKED_IN)
-
+        'spotsRemaining' => $spotsRemaining,
+        'spotsUsed'      => $spotsTaken,
         'status'         => $roleSpots['status'] ?? 'open',
-
-        'image'          => $this->image_url
-                            ?? asset('images/events/default.jpg'),
-
+        'image'          => $this->image_url ?? asset('images/events/default.jpg'),
         'roles'          => $allRoles ?: ['General Volunteer'],
     ];
+
+    // ✅ ADD THESE LINES HERE (below the card array)
+    $u = $this->creatorEmployee?->user;
+    $ownerName = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
+    $card['owner_name'] = $ownerName !== '' ? $ownerName : '—';
+
+    return $card;
 }
 
 public function getImageUrlAttribute(): string
@@ -207,5 +201,13 @@ public function getImageUrlAttribute(): string
     return asset('images/events/default.jpg');
 }
 
+public function creatorEmployee()
+{
+    return $this->belongsTo(
+        \App\Models\Employee::class,
+        'created_by',      // FK in events table
+        'employee_id'      // PK in employees table
+    );
+}
 
 }

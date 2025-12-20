@@ -27,9 +27,15 @@ class EventsController extends Controller
     $user = $request->user();
 
     // Base query: load category + count reservations
-    $eventsQuery = Event::with('category')        // relation: category()
-        ->withCount('reservations')               // relation: reservations()
-        ->orderByDesc('created_at');
+    $eventsQuery = Event::with('category')
+    ->withCount('reservations')
+    ->withCount([
+        'reservations as completed_count' => fn($q) => $q->where('status', 'COMPLETED'),
+        'reservations as cancelled_count' => fn($q) => $q->where('status', 'CANCELLED'),
+    ])
+    ->orderByDesc('created_at');
+
+
 
     // If user is EMPLOYEE, limit to events he created
     if ($user && $user->role === 'EMPLOYEE') {
@@ -61,20 +67,37 @@ class EventsController extends Controller
     $roleTypes = RoleType::orderBy('name')
         ->get(['role_type_id', 'name']);
 
-    $eventsPayload = $events->map(function ($e) {
-        return [
-            'id'         => $e->event_id,
-            'title'      => $e->title,
-            // category NAME instead of id
-            'category'   => optional($e->category)->name ?? '-',
-            'date'       => optional($e->starts_at)->format('Y-m-d'),
-            'location'   => $e->location,
-            'status'     => $e->status ?? 'PUBLISHED',
-            'totalSpots' => $e->total_spots ?? 0,
-            // count from workers_reservations
-            'applicants' => (int) $e->reservations_count,
-        ];
-    });
+$eventsPayload = $events->map(function ($e) {
+
+    // ✅ Default: Published
+    $derivedStatus = 'PUBLISHED';
+
+    // ✅ Rule 1: if event ended (time passed) AND no reservations -> CANCELLED
+    if ($e->ends_at && now()->gt($e->ends_at) && (int) $e->reservations_count === 0) {
+        $derivedStatus = 'CANCELLED';
+    }
+    // ✅ Rule 2: if reservations has CANCELLED -> CANCELLED
+    elseif ((int) $e->cancelled_count > 0) {
+        $derivedStatus = 'CANCELLED';
+    }
+    // ✅ Rule 3: if reservations has COMPLETED -> COMPLETED
+    elseif ((int) $e->completed_count > 0) {
+        $derivedStatus = 'COMPLETED';
+    }
+
+    return [
+        'id'         => $e->event_id,
+        'title'      => $e->title,
+        'category'   => optional($e->category)->name ?? '-',
+        'date'       => optional($e->starts_at)->format('Y-m-d'),
+        'location'   => $e->location,
+        'status'     => $derivedStatus,
+        'totalSpots' => $e->total_spots ?? 0,
+        'applicants' => (int) $e->reservations_count,
+    ];
+});
+
+
 
     $categoriesPayload = $categories->map(fn ($c) => [
         'id'   => $c->category_id,

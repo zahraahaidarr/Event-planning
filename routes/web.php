@@ -25,6 +25,8 @@ use App\Http\Controllers\Employee\PostEventReportController;
 use App\Http\Controllers\EventStaffingController;
 use App\Http\Controllers\worker\PaymentController;
 use App\Http\Controllers\Worker\WorkerDashboardController;
+use App\Http\Controllers\Worker\FollowEmployeesController;
+use App\Http\Controllers\Worker\FeedController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -168,5 +170,21 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         Route::post('/messages/thread/{user}', [WorkerMessageController::class, 'send'])->name('messages.send');
 
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    
+      // ✅ Follow Employees Page + APIs
+       Route::get('/follow-employees', [FollowEmployeesController::class, 'index'])
+        ->name('follow.index');
+
+    Route::get('/follow-employees/search', [FollowEmployeesController::class, 'search'])
+        ->name('follow.search');
+
+    Route::post('/follow-employees/{employeeId}/toggle', [FollowEmployeesController::class, 'toggleFollow'])
+        ->name('follow.toggle');
+
+    Route::get('/feed', [FeedController::class, 'index'])
+        ->name('feed.index');
+    Route::get('/employees/following', [FollowEmployeesController::class, 'index'])
+    ->name('employees.following');
+
     });
 

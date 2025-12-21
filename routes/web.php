@@ -27,6 +27,7 @@ use App\Http\Controllers\worker\PaymentController;
 use App\Http\Controllers\Worker\WorkerDashboardController;
 use App\Http\Controllers\Worker\FollowEmployeesController;
 use App\Http\Controllers\Worker\FeedController;
+use App\Http\Controllers\Employee\ContentController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -86,6 +87,18 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::post('/employee/post-event-reports/{submission}/approve', [PostEventReportController::class, 'approve'])->name('employee.postEventReports.approve');
         Route::post('/employee/post-event-reports/{submission}/reject', [PostEventReportController::class, 'reject'])->name('employee.postEventReports.reject');
 
+
+          Route::get('/employee/content', [ContentController::class, 'index'])->name('content.index');
+
+    // Create
+    Route::post('/employee/content/posts',   [ContentController::class, 'storePost'])->name('content.posts.store');
+    Route::post('/employee/content/reels',   [ContentController::class, 'storeReel'])->name('content.reels.store');
+    Route::post('/employee/content/stories', [ContentController::class, 'storeStory'])->name('content.stories.store');
+
+    // Delete
+    Route::delete('/employee/content/posts/{post}',   [ContentController::class, 'destroyPost'])->name('content.posts.destroy');
+    Route::delete('/employee/content/reels/{reel}',   [ContentController::class, 'destroyReel'])->name('content.reels.destroy');
+    Route::delete('/employee/content/stories/{story}',[ContentController::class, 'destroyStory'])->name('content.stories.destroy');
     });
 
     Route::middleware(['auth', 'role:ADMIN|EMPLOYEE'])->group(function () {

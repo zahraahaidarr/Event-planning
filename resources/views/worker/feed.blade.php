@@ -1,193 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Feed</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>My Feed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {{-- CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/worker/feed.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/worker/feed.css') }}?v={{ filemtime(public_path('css/worker/feed.css')) }}">
+  <script defer src="{{ asset('js/worker/feed.js') }}?v={{ filemtime(public_path('js/worker/feed.js')) }}"></script>
 </head>
+
 <body>
-    <aside class="sidebar">
-      @php
-        $user   = Auth::user();
-        $worker = optional($user)->worker;
-        $roleLabel = $worker ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER') : 'WORKER';
-      @endphp
+  <aside class="sidebar">
+    @php
+      $user   = Auth::user();
+      $worker = optional($user)->worker;
+      $roleLabel = $worker ? ($worker->is_volunteer ? 'VOLUNTEER' : 'WORKER') : 'WORKER';
+    @endphp
 
-      <div class="logo">
-        <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
-          @if($user && $user->avatar_path)
-            <img
-              src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
-              alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
-              class="logo-avatar"
-            >
-          @else
-            <div class="logo-icon">
-              {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
-            </div>
-          @endif
-
-          <div class="logo-id">
-            <div class="logo-name">
-              {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
-            </div>
-            <div class="logo-role">{{ $roleLabel }}</div>
+    <div class="logo">
+      <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+        @if($user && $user->avatar_path)
+          <img
+            src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+            alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+            class="logo-avatar"
+          >
+        @else
+          <div class="logo-icon">
+            {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
           </div>
-        </a>
-      </div>
-
-      <nav class="nav-section">
-        <a href="{{ route('worker.dashboard') }}" class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
-          <span class="nav-icon">🏠</span><span>Dashboard</span>
-        </a>
-        <a href="{{ route('worker.events.discover') }}" class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
-          <span class="nav-icon">🗓️</span><span>Discover Events</span>
-        </a>
-        <a href="{{ route('worker.follow.index') }}"
-   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
-  <span class="nav-icon">👥</span><span>Follow Employees</span>
-</a>
-
-        <a href="{{ route('worker.reservations') }}" class="nav-item {{ request()->routeIs('worker.reservations*') ? 'active' : '' }}">
-          <span class="nav-icon">✅</span><span>My Reservations</span>
-        </a>
-        <a href="{{ route('worker.submissions') }}" class="nav-item {{ request()->routeIs('worker.submissions*') ? 'active' : '' }}">
-          <span class="nav-icon">📝</span><span>Post-Event Submissions</span>
-        </a>
-      </nav>
-
-      <nav class="nav-section">
-        <div class="nav-label">Account</div>
-
-        @if($worker && !$worker->is_volunteer)
-          <a href="{{ route('worker.payments.index') }}" class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
-            <span class="nav-icon">💰</span><span>Payments</span>
-          </a>
         @endif
 
-        <a href="{{ route('worker.messages') }}" class="nav-item {{ request()->routeIs('worker.messages*') ? 'active' : '' }}">
-          <span class="nav-icon">💬</span><span>Chat</span>
+        <div class="logo-id">
+          <div class="logo-name">
+            {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+          </div>
+          <div class="logo-role">{{ $roleLabel }}</div>
+        </div>
+      </a>
+    </div>
+
+    <nav class="nav-section">
+      <a href="{{ route('worker.dashboard') }}" class="nav-item {{ request()->routeIs('worker.dashboard') ? 'active' : '' }}">
+        <span class="nav-icon">🏠</span><span>Dashboard</span>
+      </a>
+      <a href="{{ route('worker.events.discover') }}" class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
+        <span class="nav-icon">🗓️</span><span>Discover Events</span>
+      </a>
+      <a href="{{ route('worker.follow.index') }}" class="nav-item {{ request()->routeIs('worker.follow.*') ? 'active' : '' }}">
+        <span class="nav-icon">👥</span><span>Follow Employees</span>
+      </a>
+      <a href="{{ route('worker.reservations') }}" class="nav-item {{ request()->routeIs('worker.reservations*') ? 'active' : '' }}">
+        <span class="nav-icon">✅</span><span>My Reservations</span>
+      </a>
+      <a href="{{ route('worker.submissions') }}" class="nav-item {{ request()->routeIs('worker.submissions*') ? 'active' : '' }}">
+        <span class="nav-icon">📝</span><span>Post-Event Submissions</span>
+      </a>
+    </nav>
+
+    <nav class="nav-section">
+      <div class="nav-label">Account</div>
+
+      @if($worker && !$worker->is_volunteer)
+        <a href="{{ route('worker.payments.index') }}" class="nav-item {{ request()->routeIs('worker.payments.index') ? 'active' : '' }}">
+          <span class="nav-icon">💰</span><span>Payments</span>
         </a>
+      @endif
 
-        <a href="{{ route('worker.announcements.index') }}" class="nav-item {{ request()->routeIs('worker.announcements.*') ? 'active' : '' }}">
-          <span class="nav-icon">📢</span><span>Announcements</span>
-        </a>
+      <a href="{{ route('worker.messages') }}" class="nav-item {{ request()->routeIs('worker.messages*') ? 'active' : '' }}">
+        <span class="nav-icon">💬</span><span>Chat</span>
+      </a>
 
-        <a href="{{ route('settings') }}" class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
-          <span class="nav-icon">⚙️</span><span>Settings</span>
-        </a>
+      <a href="{{ route('worker.announcements.index') }}" class="nav-item {{ request()->routeIs('worker.announcements.*') ? 'active' : '' }}">
+        <span class="nav-icon">📢</span><span>Announcements</span>
+      </a>
 
-        @if(Route::has('logout'))
-          <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
-            @csrf
-            <button type="submit" class="nav-item" style="border:none;background:transparent;width:100%;text-align:left;">
-              
-            </button>
-          </form>
-        @endif
-      </nav>
-    </aside>
-<div id="feedPage">
+      <a href="{{ route('settings') }}" class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+        <span class="nav-icon">⚙️</span><span>Settings</span>
+      </a>
+    </nav>
+  </aside>
 
+  <div id="feedPage">
     <header id="feedHeader">
-        <h2>Feed (From Employees You Follow)</h2>
-
-        <a id="goFollowBtn" href="{{ route('worker.follow.index') }}">
-            Follow Employees
-        </a>
+      <h2>Feed (From Employees You Follow)</h2>
+      <a id="goFollowBtn" href="{{ route('worker.follow.index') }}">Follow Employees</a>
     </header>
 
     <nav id="feedTabs">
-        <button class="feedTab active" data-tab="events">Events</button>
-        <button class="feedTab" data-tab="posts">Posts</button>
-        <button class="feedTab" data-tab="reels">Reels</button>
-        <button class="feedTab" data-tab="stories">Stories</button>
+      <button type="button" class="feedTab active" data-tab="events">Events</button>
+      <button type="button" class="feedTab" data-tab="posts">Posts</button>
+      <button type="button" class="feedTab" data-tab="reels">Reels</button>
+      <button type="button" class="feedTab" data-tab="stories">Stories</button>
     </nav>
 
     <main id="feedContent">
 
-        {{-- EVENTS --}}
-        <section class="tabPane" id="tab-events">
-            @forelse($events as $event)
-                <article class="feedCard">
-                    <div class="feedCardTop">
-                        <div class="feedTitle">
-                            {{ $event->title ?? 'Event' }}
-                        </div>
-                        <div class="feedDate">
-                            {{ optional($event->created_at)->format('Y-m-d H:i') }}
-                        </div>
-                    </div>
+      {{-- EVENTS --}}
+      <section class="tabPane" id="tab-events">
+        @forelse($events as $event)
+          <article class="feedCard">
+            <div class="feedCardTop">
+              <div class="feedTitle">{{ $event->title ?? 'Event' }}</div>
+              <div class="feedDate">{{ optional($event->created_at)->format('Y-m-d H:i') }}</div>
+            </div>
 
-                    <div class="feedBody">
-                        <div>
-                            <strong>Location:</strong>
-                            {{ $event->location ?? '-' }}
-                        </div>
-                        <div>
-                            <strong>Description:</strong>
-                            {{ $event->description ?? '-' }}
-                        </div>
-                    </div>
-                </article>
-            @empty
-                <div class="emptyBox">
-                    No events yet. Follow employees to see their events.
+            <div class="feedBody">
+              <div><strong>Location:</strong> {{ $event->location ?? '-' }}</div>
+              <div><strong>Description:</strong> {{ $event->description ?? '-' }}</div>
+            </div>
+          </article>
+        @empty
+          <div class="emptyBox">No events yet. Follow employees to see their events.</div>
+        @endforelse
+      </section>
+
+      {{-- POSTS (IG STYLE SLIDER) --}}
+      <section class="tabPane hidden" id="tab-posts">
+        <div class="igStage" data-stage="posts">
+          <button type="button" class="igArrow left" data-prev="posts" aria-label="Previous post">‹</button>
+
+          <div class="igViewport" data-viewport="posts">
+            @forelse($posts as $i => $p)
+              <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="posts" data-index="{{ $i }}">
+                <div class="igTop">
+                  <div class="igTitle">{{ $p->title }}</div>
+                  <div class="igMeta">{{ $p->created_at?->format('Y-m-d H:i') }}</div>
                 </div>
+
+                <div class="igMedia">
+                  @if($p->media_path)
+                    <img src="{{ asset('storage/' . ltrim($p->media_path, '/')) }}" alt="post media" loading="lazy">
+                  @else
+                    <div class="igMediaEmpty">No image</div>
+                  @endif
+                </div>
+
+                <div class="igBody">
+                  <div class="igText">{{ $p->content }}</div>
+                </div>
+              </article>
+            @empty
+              <div class="emptyBox">No posts yet.</div>
             @endforelse
+          </div>
 
-            <div class="pagerBox">
-                {{ $events->links() }}
-            </div>
-        </section>
+          <button type="button" class="igArrow right" data-next="posts" aria-label="Next post">›</button>
+        </div>
 
-        {{-- POSTS --}}
-        <section class="tabPane hidden" id="tab-posts">
-            <div class="emptyBox">
-                Posts will appear here (employee_posts).
-            </div>
-        </section>
+        @if($posts->count())
+          <div class="igDots" data-dots="posts">
+            @foreach($posts as $i => $p)
+              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="posts" data-index="{{ $i }}"></button>
+            @endforeach
+          </div>
+        @endif
+      </section>
 
-        {{-- REELS --}}
-        <section class="tabPane hidden" id="tab-reels">
-            <div class="emptyBox">
-                Reels will appear here (employee_reels).
-            </div>
-        </section>
+      {{-- REELS (IG STYLE SLIDER) --}}
+      <section class="tabPane hidden" id="tab-reels">
+        <div class="igStage" data-stage="reels">
+          <button type="button" class="igArrow left" data-prev="reels" aria-label="Previous reel">‹</button>
 
-        {{-- STORIES --}}
-        <section class="tabPane hidden" id="tab-stories">
-            <div class="emptyBox">
-                Stories will appear here (employee_stories).
-            </div>
-        </section>
+          <div class="igViewport" data-viewport="reels">
+            @forelse($reels as $i => $r)
+              <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="reels" data-index="{{ $i }}">
+                <div class="igTop">
+                  <div class="igTitle">Reel</div>
+                  <div class="igMeta">{{ optional($r->created_at)->format('Y-m-d H:i') }}</div>
+                </div>
+
+                <div class="igMedia">
+                  @if($r->video_path)
+                    <video class="igVideo" controls>
+                      <source src="{{ asset('storage/' . ltrim($r->video_path,'/')) }}">
+                    </video>
+                  @else
+                    <div class="igMediaEmpty">No video</div>
+                  @endif
+                </div>
+
+                <div class="igBody">
+                  @if($r->caption)
+                    <div class="igText">{{ $r->caption }}</div>
+                  @else
+                    <div class="igText muted">No caption</div>
+                  @endif
+                </div>
+              </article>
+            @empty
+              <div class="emptyBox">No reels yet.</div>
+            @endforelse
+          </div>
+
+          <button type="button" class="igArrow right" data-next="reels" aria-label="Next reel">›</button>
+        </div>
+
+        @if($reels->count())
+          <div class="igDots" data-dots="reels">
+            @foreach($reels as $i => $r)
+              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="reels" data-index="{{ $i }}"></button>
+            @endforeach
+          </div>
+        @endif
+      </section>
+
+      {{-- STORIES (IG STYLE SLIDER) --}}
+      <section class="tabPane hidden" id="tab-stories">
+        <div class="igStage" data-stage="stories">
+          <button type="button" class="igArrow left" data-prev="stories" aria-label="Previous story">‹</button>
+
+          <div class="igViewport" data-viewport="stories">
+            @forelse($stories as $i => $s)
+              @php
+                $path = $s->media_path ?? '';
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $isVideo = in_array($ext, ['mp4','mov','webm']);
+              @endphp
+
+              <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="stories" data-index="{{ $i }}">
+                <div class="igTop">
+                  <div class="igTitle">Story</div>
+                  <div class="igMeta">{{ optional($s->created_at)->format('Y-m-d H:i') }}</div>
+                </div>
+
+                <div class="igMedia">
+                  @if($path && $isVideo)
+                    <video class="igVideo" controls>
+                      <source src="{{ asset('storage/' . ltrim($path,'/')) }}">
+                    </video>
+                  @elseif($path)
+                    <img src="{{ asset('storage/' . ltrim($path,'/')) }}" alt="story media" loading="lazy">
+                  @else
+                    <div class="igMediaEmpty">No media</div>
+                  @endif
+                </div>
+
+                <div class="igBody">
+                  @if($s->expires_at)
+                    <div class="igText muted">Expires: {{ $s->expires_at->format('Y-m-d H:i') }}</div>
+                  @else
+                    <div class="igText muted">No expiry set</div>
+                  @endif
+                </div>
+              </article>
+            @empty
+              <div class="emptyBox">No stories yet.</div>
+            @endforelse
+          </div>
+
+          <button type="button" class="igArrow right" data-next="stories" aria-label="Next story">›</button>
+        </div>
+
+        @if($stories->count())
+          <div class="igDots" data-dots="stories">
+            @foreach($stories as $i => $s)
+              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="stories" data-index="{{ $i }}"></button>
+            @endforeach
+          </div>
+        @endif
+      </section>
 
     </main>
-</div>
-
-{{-- JS --}}
-<script>
-document.querySelectorAll('.feedTab').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.feedTab').forEach(b =>
-            b.classList.remove('active')
-        );
-        btn.classList.add('active');
-
-        const tab = btn.dataset.tab;
-
-        document.querySelectorAll('.tabPane').forEach(p =>
-            p.classList.add('hidden')
-        );
-
-        document.getElementById('tab-' + tab)
-            .classList.remove('hidden');
-    });
-});
-</script>
-
+  </div>
 </body>
 </html>

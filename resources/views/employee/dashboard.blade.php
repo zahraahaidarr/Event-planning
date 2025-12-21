@@ -81,6 +81,9 @@
                    class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span><span>Post-Event Reports</span>
                 </a>
+                <a href="{{ route('content.index') }}" class="nav-item {{ request()->routeIs('employee.content.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Create Content</span>
+                </a>
             </div>
 
             <div class="nav-section">

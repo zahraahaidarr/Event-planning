@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Content</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="{{ asset('css/employee/content.css') }}">
+</head>
+<body>
+
+<div class="container">
+  {{-- Sidebar --}}
+    <aside class="sidebar">
+        @php($user = Auth::user())
+
+        <div class="logo">
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
+                    </div>
+                @endif
+
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+                    <div class="logo-role">Client</div>
+                </div>
+            </a>
+        </div>
+
+        <nav>
+            <div class="nav-section">
+                <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
+                   class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
+                    <span class="nav-icon">📊</span><span>Dashboard</span>
+                </a>
+
+                <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('events.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📅</span><span>Event Management</span>
+                </a>
+
+                <a href="{{ route('employee.volunteer.assignment') }}"
+                   class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
+                    <span class="nav-icon">👥</span><span>Worker Assignment</span>
+                </a>
+
+                <a href="{{ route('employee.postEventReports.index') }}"
+                   class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+                </a>
+                <a href="{{ route('content.index') }}" class="nav-item {{ request()->routeIs('employee.content.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Create Content</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Communication</div>
+
+                <a href="{{ route('employee.messages') }}"
+                   class="nav-item {{ request()->routeIs('employee.messages') ? 'active' : '' }}">
+                    <span class="nav-icon">💬</span><span>Messages</span>
+                </a>
+
+                <a href="{{ route('announcements.create') }}"
+                   class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span><span>Send Announcement</span>
+                </a>
+
+                <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}"
+                   class="nav-item {{ request()->routeIs('employee.announcements.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📢</span><span>Announcements</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Account</div>
+                <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
+                   class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                    <span class="nav-icon">⚙️</span><span>Settings</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+  <main class="main-content"
+        id="contentPage"
+        data-api="{{ url('/employee/content') }}"
+        data-delete-post-template="{{ url('/employee/content/posts') }}/:id"
+        data-delete-reel-template="{{ url('/employee/content/reels') }}/:id"
+        data-delete-story-template="{{ url('/employee/content/stories') }}/:id"
+  >
+    <div class="header">
+      <div class="header-left">
+        <h1>Create Content</h1>
+        <p>Publish posts, reels, and stories.</p>
+      </div>
+    </div>
+
+    {{-- Flash messages still fine --}}
+    @if(session('ok'))
+      <div class="notice success">{{ session('ok') }}</div>
+    @endif
+
+    @if($errors->any())
+      <div class="notice danger">
+        <strong>Fix these errors:</strong>
+        <ul>
+          @foreach($errors->all() as $e)
+            <li>{{ $e }}</li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
+
+    <div class="card">
+      <nav class="tabs">
+        <button class="tab active" data-tab="posts" type="button">Posts</button>
+        <button class="tab" data-tab="reels" type="button">Reels</button>
+        <button class="tab" data-tab="stories" type="button">Stories</button>
+      </nav>
+
+      {{-- POSTS --}}
+      <section class="tabPane" id="tab-posts">
+        <form class="form" method="POST" action="{{ route('content.posts.store') }}" enctype="multipart/form-data">
+          @csrf
+
+          <div class="grid">
+            <div class="field">
+              <label>Title</label>
+              <input name="title" type="text" placeholder="Post title..." required>
+            </div>
+
+            <div class="field">
+              <label>Media (optional image)</label>
+              <input name="media" type="file" accept="image/*">
+            </div>
+
+            <div class="field full">
+              <label>Content</label>
+              <textarea name="content" rows="5" placeholder="Write something..." required></textarea>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Publish Post</button>
+        </form>
+
+        <div class="listTitle">Your latest posts</div>
+        <div id="postsList" class="items"></div>
+      </section>
+
+      {{-- REELS --}}
+      <section class="tabPane hidden" id="tab-reels">
+        <form class="form" method="POST" action="{{ route('content.reels.store') }}" enctype="multipart/form-data">
+          @csrf
+
+          <div class="grid">
+            <div class="field">
+              <label>Video (mp4/mov/webm)</label>
+              <input name="video" type="file" accept="video/*" required>
+            </div>
+
+            <div class="field full">
+              <label>Caption (optional)</label>
+              <textarea name="caption" rows="3" placeholder="Write a caption..."></textarea>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Upload Reel</button>
+        </form>
+
+        <div class="listTitle">Your latest reels</div>
+        <div id="reelsList" class="items"></div>
+      </section>
+
+      {{-- STORIES --}}
+      <section class="tabPane hidden" id="tab-stories">
+        <form class="form" method="POST" action="{{ route('content.stories.store') }}" enctype="multipart/form-data">
+          @csrf
+
+          <div class="grid">
+            <div class="field">
+              <label>Story media (image/video)</label>
+              <input name="media" type="file" accept="image/*,video/*" required>
+            </div>
+
+            <div class="field">
+              <label>Expires at (optional)</label>
+              <input name="expires_at" type="datetime-local">
+            </div>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Upload Story</button>
+        </form>
+
+        <div class="listTitle">Your latest stories</div>
+        <div id="storiesList" class="items"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="{{ asset('js/employee/content.js') }}"></script>
+</body>
+</html>

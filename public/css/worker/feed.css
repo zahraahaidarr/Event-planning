@@ -1,5 +1,5 @@
 /* =========================================================
-   Feed — Homogenous with Event Discover + Follow Employees
+   Feed — Homogenous with Event Discover + IG-style stage
    File: public/css/worker/feed.css
 ========================================================= */
 
@@ -25,7 +25,6 @@
 
   --shadow-sm:0 4px 12px rgba(0,0,0,.15);
   --shadow-md:0 8px 20px rgba(0,0,0,.2);
-  --shadow-lg:var(--shadow);
 
   --radius-sm:10px;
   --radius-md:14px;
@@ -47,12 +46,9 @@
   --text-tertiary:#7a84b0;
 
   --border-color:#e0e5f5;
-  --accent-primary:var(--primary);
-  --accent-secondary:var(--accent);
 
   --shadow-sm:0 2px 8px rgba(13,24,61,.08);
   --shadow-md:0 4px 16px rgba(13,24,61,.12);
-  --shadow-lg:var(--shadow);
 }
 
 html,body{height:100%}
@@ -66,15 +62,16 @@ body{
     var(--bg);
   color:var(--text-primary);
   line-height:1.6;
-  overflow-x:hidden;
 
-  /* ✅ layout fix: sidebar + content side-by-side */
   display:flex;
   min-height:100vh;
+
+  /* ✅ Like IG desktop: no page scroll */
+  overflow:hidden;
 }
 
 /* =========================================================
-   Sidebar (same as Event Discover)
+   Sidebar
 ========================================================= */
 .sidebar{
   flex:0 0 260px;
@@ -147,24 +144,24 @@ body{
 .nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
 
 /* =========================================================
-   Page container (right of sidebar)
+   Page container
 ========================================================= */
 #feedPage{
   flex:1;
   min-width:0;
+  height:100vh;
   padding:32px;
-
-  /* ✅ no auto centering that breaks alignment */
-  margin:0;
-  max-width:none;
+  overflow:hidden; /* ✅ keep fixed */
 }
 
-/* Center content inside */
+/* center content inside */
 #feedPage{
-  display:block;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
 }
 #feedPage > *{
-  max-width:1400px;
+  max-width:1200px;
   width:100%;
   margin-left:auto;
   margin-right:auto;
@@ -176,13 +173,8 @@ body{
   justify-content:space-between;
   align-items:flex-start;
   gap:14px;
-  margin-bottom:18px;
 }
-
-#feedHeader h2{
-  font-size:32px;
-  font-weight:700;
-}
+#feedHeader h2{font-size:32px;font-weight:700}
 
 #goFollowBtn{
   padding:10px 20px;
@@ -199,9 +191,9 @@ body{
   align-items:center;
   justify-content:center;
 }
-#goFollowBtn:hover{background:var(--border-color);transform:translateY(-1px)}
+#goFollowBtn:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
 
-/* Tabs wrapper (inside a card style) */
+/* Tabs wrapper */
 #feedTabs{
   background:var(--bg-primary);
   border:1px solid var(--border-color);
@@ -211,7 +203,6 @@ body{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-bottom:14px;
 }
 
 .feedTab{
@@ -238,12 +229,16 @@ body{
   border-radius:var(--radius-lg);
   box-shadow:var(--shadow-sm);
   padding:18px;
+
+  /* ✅ take remaining height like IG */
+  flex:1;
+  min-height:0;
+  overflow:hidden;
 }
 
-/* Sections */
 .tabPane.hidden{display:none}
 
-/* Feed cards */
+/* Events cards (same as before) */
 .feedCard{
   background:var(--bg-primary);
   border:1px solid var(--border-color);
@@ -262,28 +257,12 @@ body{
   gap:10px;
   margin-bottom:10px;
 }
-
-.feedTitle{
-  font-weight:900;
-  font-size:18px;
-  color:var(--text-primary);
-}
-
-.feedDate{
-  color:var(--text-secondary);
-  font-size:13px;
-}
-
-.feedBody{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  color:var(--text-secondary);
-}
+.feedTitle{font-weight:900;font-size:18px;color:var(--text-primary)}
+.feedDate{color:var(--text-secondary);font-size:13px}
+.feedBody{display:flex;flex-direction:column;gap:6px;color:var(--text-secondary)}
 .feedBody strong{color:var(--text-primary)}
 .muted{color:var(--text-secondary);font-weight:700}
 
-/* Empty / placeholder */
 .emptyBox{
   border:1px dashed var(--border-color);
   border-radius:var(--radius-lg);
@@ -292,13 +271,234 @@ body{
   background:rgba(255,255,255,.03);
 }
 
-/* Pagination */
-.pagerBox{margin-top:14px}
+/* =========================================================
+   IG STAGE (Posts/Reels/Stories)
+========================================================= */
+.igStage{
+  position:relative;
+  height:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.igViewport{
+  position:relative;
+  width:min(520px, 92vw);      /* ✅ IG-like width on laptop */
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* Slide card */
+.igCard{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  transform:scale(.985);
+  pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+
+  background:var(--bg-primary);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+}
+
+.igCard.active{
+  opacity:1;
+  transform:scale(1);
+  pointer-events:auto;
+}
+
+/* top */
+.igTop{
+  padding:14px 16px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+}
+.igTitle{
+  font-weight:900;
+  font-size:16px;
+  color:var(--text-primary);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.igMeta{
+  font-size:13px;
+  color:var(--text-secondary);
+  white-space:nowrap;
+}
+
+/* media area */
+.igMedia{
+  flex:1;
+  min-height:0;
+  background:rgba(0,0,0,.22);
+  border-top:1px solid var(--border-color);
+  border-bottom:1px solid var(--border-color);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* ✅ show FULL image (no crop) */
+.igMedia img{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  display:block;
+}
+
+.igVideo{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+
+.igMediaEmpty{
+  color:var(--text-secondary);
+  font-weight:800;
+  opacity:.85;
+}
+
+/* body */
+.igBody{padding:12px 16px 14px}
+.igText{
+  color:var(--text-secondary);
+  font-size:14px;
+  line-height:1.55;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:4;
+  overflow:hidden;
+}
+
+/* arrows */
+.igArrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:44px;height:44px;
+  border-radius:14px;
+  border:1px solid var(--border-color);
+  background:rgba(15,18,34,.55);
+  color:var(--text-primary);
+  font-size:28px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+  transition:transform .15s ease, background .15s ease;
+}
+.igArrow:hover{
+  transform:translateY(-50%) scale(1.03);
+  background:rgba(255,255,255,.06);
+}
+.igArrow.left{left:12px}
+.igArrow.right{right:12px}
+.igArrow:disabled{opacity:.35;cursor:not-allowed}
+
+/* dots */
+.igDots{
+  margin-top:12px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+.igDots .dot{
+  width:10px;height:10px;
+  border-radius:999px;
+  border:1px solid var(--border-color);
+  background:rgba(255,255,255,.08);
+  cursor:pointer;
+}
+.igDots .dot.active{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  border-color:transparent;
+}
 
 /* Responsive */
 @media (max-width:768px){
-  body{display:block}
+  body{display:block;overflow:auto}
   .sidebar{display:none}
-  #feedPage{padding:16px}
-  #feedHeader{flex-direction:column;align-items:flex-start}
+  #feedPage{height:auto;overflow:visible;padding:16px}
+  #feedContent{overflow:visible}
+  .igViewport{height:520px}
+}
+
+
+
+
+
+
+
+/* =========================================================
+   FIX: Tab visibility + full height panes
+========================================================= */
+
+#feedContent{
+  display: flex;
+  flex-direction: column;
+}
+
+/* All panes fill the content card */
+.tabPane{
+  height: 100%;
+  min-height: 0;
+}
+
+/* Hide panes FOR REAL (must beat #tab-posts display:flex rules) */
+.tabPane.hidden{
+  display: none !important;
+}
+
+/* Events should scroll inside the card */
+#tab-events{
+  overflow: auto;
+  padding-right: 6px;
+}
+
+/* Only when NOT hidden, these become flex (so hidden works) */
+#tab-posts:not(.hidden),
+#tab-reels:not(.hidden),
+#tab-stories:not(.hidden){
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Let the stage take remaining height */
+#tab-posts .igStage,
+#tab-reels .igStage,
+#tab-stories .igStage{
+  flex: 1;
+  min-height: 0;
+}
+
+/* ✅ Force ONLY ONE slide visible */
+.igCard{
+  display: none;
+}
+.igCard.active{
+  display: flex;
 }

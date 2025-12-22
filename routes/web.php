@@ -28,6 +28,8 @@ use App\Http\Controllers\Worker\WorkerDashboardController;
 use App\Http\Controllers\Worker\FollowEmployeesController;
 use App\Http\Controllers\Worker\FeedController;
 use App\Http\Controllers\Employee\ContentController;
+use App\Http\Controllers\Social\LikeController;
+use App\Http\Controllers\Social\CommentController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -132,6 +134,14 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
         Route::post('/settings', [SystemSettingController::class, 'update'])->name('settings.update');
         Route::post('/settings/logout-all', [SystemSettingController::class, 'logoutAll'])->name('settings.logoutAll');
         Route::delete('/settings/delete-account', [SystemSettingController::class, 'destroyAccount'])->name('settings.deleteAccount');
+   
+    Route::post('/social/like', [LikeController::class, 'toggle'])->name('social.like.toggle');
+
+    // Comments
+    Route::get('/social/comments', [CommentController::class, 'index'])->name('social.comments.index');
+    Route::post('/social/comments', [CommentController::class, 'store'])->name('social.comments.store');
+   
+   
     });
 
 

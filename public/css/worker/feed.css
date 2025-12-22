@@ -502,3 +502,136 @@ body{
 .igCard.active{
   display: flex;
 }
+
+
+
+/* =========================================================
+   Likes + Comments (IG style)
+========================================================= */
+
+.igActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-top:1px solid var(--border-color);
+}
+
+.igActionBtn{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  border:1px solid var(--border-color);
+  background:rgba(255,255,255,.04);
+  color:var(--text-primary);
+  cursor:pointer;
+  font-size:18px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .15s ease, background .15s ease;
+}
+
+.igActionBtn:hover{ transform:translateY(-1px); background:rgba(255,255,255,.07); }
+
+.igLikeBtn{
+  font-size:20px;
+  line-height:1;
+}
+
+.igLikeBtn.liked{
+  color:var(--danger);
+  border-color:rgba(255,107,107,.35);
+  background:rgba(255,107,107,.10);
+}
+
+.igCounts{
+  margin-left:auto;
+  color:var(--text-secondary);
+  font-weight:800;
+  font-size:13px;
+  white-space:nowrap;
+}
+
+.igComments{
+  border-top:1px solid var(--border-color);
+  padding:10px 14px 14px;
+  background:rgba(0,0,0,.10);
+}
+
+.igComments.hidden{ display:none !important; }
+
+.igCommentsList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:180px;
+  overflow:auto;
+  padding-right:6px;
+}
+
+.igCommentRow{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.igCAvatar{
+  width:28px;height:28px;border-radius:50%;
+  object-fit:cover;
+  border:1px solid var(--border-color);
+}
+
+.igCBody{
+  flex:1;
+  color:var(--text-secondary);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.igCName{
+  color:var(--text-primary);
+  font-weight:900;
+  margin-right:6px;
+}
+
+.igCTime{
+  display:block;
+  margin-top:2px;
+  color:var(--text-tertiary);
+  font-size:12px;
+  font-weight:700;
+}
+
+.igCommentForm{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.igCommentForm input{
+  flex:1;
+  height:38px;
+  border-radius:12px;
+  border:1px solid var(--border-color);
+  background:rgba(255,255,255,.04);
+  color:var(--text-primary);
+  padding:0 12px;
+  outline:none;
+}
+
+.igCommentForm input:focus{
+  box-shadow:0 0 0 3px var(--ring);
+}
+
+.igCommentForm button{
+  height:38px;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid var(--border-color);
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}

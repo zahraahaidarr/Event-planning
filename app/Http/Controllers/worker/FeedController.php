@@ -15,33 +15,40 @@ class FeedController extends Controller
     {
         $user = $request->user();
 
-        // ✅ followingEmployees() returns followed USERS (table: users)
         $followedUserIds = $user->followingEmployees()
-            ->pluck('users.id') // you can also use ->pluck('id')
+            ->pluck('users.id')   // or ->pluck('id')
             ->filter()
             ->unique()
             ->values();
 
-        // ✅ Events (only published)
+        // Events (only published)
         $events = Event::query()
             ->whereIn('created_by', $followedUserIds)
             ->where('status', 'PUBLISHED')
             ->latest('created_at')
             ->get();
 
-        // ✅ Posts
+        // Posts (with like/comment counts + whether current user liked)
         $posts = EmployeePost::query()
             ->whereIn('employee_user_id', $followedUserIds)
+            ->withCount(['likes', 'comments'])
+            ->with(['likes' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }])
             ->latest('created_at')
             ->get();
 
-        // ✅ Reels
+        // Reels (with like/comment counts + whether current user liked)
         $reels = EmployeeReel::query()
             ->whereIn('employee_user_id', $followedUserIds)
+            ->withCount(['likes', 'comments'])
+            ->with(['likes' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }])
             ->latest('created_at')
             ->get();
 
-        // ✅ Stories
+        // Stories (only not expired)
         $stories = EmployeeStory::query()
             ->whereIn('employee_user_id', $followedUserIds)
             ->where(function ($q) {
@@ -51,6 +58,6 @@ class FeedController extends Controller
             ->latest('created_at')
             ->get();
 
-        return view('worker.feed', compact('events','posts','reels','stories'));
+        return view('worker.feed', compact('events', 'posts', 'reels', 'stories'));
     }
 }

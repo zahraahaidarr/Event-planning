@@ -5,6 +5,8 @@
   <title>My Feed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
   <link rel="stylesheet" href="{{ asset('css/worker/feed.css') }}?v={{ filemtime(public_path('css/worker/feed.css')) }}">
   <script defer src="{{ asset('js/worker/feed.js') }}?v={{ filemtime(public_path('js/worker/feed.js')) }}"></script>
 </head>
@@ -115,13 +117,21 @@
         @endforelse
       </section>
 
-      {{-- POSTS (IG STYLE SLIDER) --}}
+      {{-- POSTS --}}
       <section class="tabPane hidden" id="tab-posts">
         <div class="igStage" data-stage="posts">
           <button type="button" class="igArrow left" data-prev="posts" aria-label="Previous post">‹</button>
 
           <div class="igViewport" data-viewport="posts">
             @forelse($posts as $i => $p)
+              @php
+                // if you used eager loading: $p->likes->isNotEmpty()
+                // fallback safe:
+                $liked = isset($p->likes) && $p->likes->isNotEmpty();
+                $likesCount = $p->likes_count ?? ($p->likes->count() ?? 0);
+                $commentsCount = $p->comments_count ?? ($p->comments->count() ?? 0);
+              @endphp
+
               <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="posts" data-index="{{ $i }}">
                 <div class="igTop">
                   <div class="igTitle">{{ $p->title }}</div>
@@ -134,6 +144,40 @@
                   @else
                     <div class="igMediaEmpty">No image</div>
                   @endif
+                </div>
+
+                {{-- ❤️ + 💬 actions --}}
+                <div class="igActions">
+                  <button type="button"
+                          class="igActionBtn igLikeBtn {{ $liked ? 'liked' : '' }}"
+                          data-like-type="post"
+                          data-like-id="{{ $p->id }}"
+                          aria-label="Like">
+                    ♥
+                  </button>
+
+                  <button type="button"
+                          class="igActionBtn igCommentBtn"
+                          data-c-type="post"
+                          data-c-id="{{ $p->id }}"
+                          aria-label="Comments">
+                    💬
+                  </button>
+
+                  <div class="igCounts">
+                    <span class="igLikeCount" data-like-count="post-{{ $p->id }}">{{ $likesCount }}</span> likes ·
+                    <span class="igCommentCount" data-comment-count="post-{{ $p->id }}">{{ $commentsCount }}</span> comments
+                  </div>
+                </div>
+
+                {{-- comments panel --}}
+                <div class="igComments hidden" data-comments-box="post-{{ $p->id }}">
+                  <div class="igCommentsList" data-comments-list="post-{{ $p->id }}"></div>
+
+                  <form class="igCommentForm" data-comment-form="post-{{ $p->id }}">
+                    <input type="text" name="body" placeholder="Add a comment..." maxlength="500" required>
+                    <button type="submit">Post</button>
+                  </form>
                 </div>
 
                 <div class="igBody">
@@ -157,13 +201,19 @@
         @endif
       </section>
 
-      {{-- REELS (IG STYLE SLIDER) --}}
+      {{-- REELS --}}
       <section class="tabPane hidden" id="tab-reels">
         <div class="igStage" data-stage="reels">
           <button type="button" class="igArrow left" data-prev="reels" aria-label="Previous reel">‹</button>
 
           <div class="igViewport" data-viewport="reels">
             @forelse($reels as $i => $r)
+              @php
+                $liked = isset($r->likes) && $r->likes->isNotEmpty();
+                $likesCount = $r->likes_count ?? ($r->likes->count() ?? 0);
+                $commentsCount = $r->comments_count ?? ($r->comments->count() ?? 0);
+              @endphp
+
               <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="reels" data-index="{{ $i }}">
                 <div class="igTop">
                   <div class="igTitle">Reel</div>
@@ -178,6 +228,35 @@
                   @else
                     <div class="igMediaEmpty">No video</div>
                   @endif
+                </div>
+
+                {{-- ❤️ + 💬 actions --}}
+                <div class="igActions">
+                  <button type="button"
+                          class="igActionBtn igLikeBtn {{ $liked ? 'liked' : '' }}"
+                          data-like-type="reel"
+                          data-like-id="{{ $r->id }}"
+                          aria-label="Like">♥</button>
+
+                  <button type="button"
+                          class="igActionBtn igCommentBtn"
+                          data-c-type="reel"
+                          data-c-id="{{ $r->id }}"
+                          aria-label="Comments">💬</button>
+
+                  <div class="igCounts">
+                    <span class="igLikeCount" data-like-count="reel-{{ $r->id }}">{{ $likesCount }}</span> likes ·
+                    <span class="igCommentCount" data-comment-count="reel-{{ $r->id }}">{{ $commentsCount }}</span> comments
+                  </div>
+                </div>
+
+                <div class="igComments hidden" data-comments-box="reel-{{ $r->id }}">
+                  <div class="igCommentsList" data-comments-list="reel-{{ $r->id }}"></div>
+
+                  <form class="igCommentForm" data-comment-form="reel-{{ $r->id }}">
+                    <input type="text" name="body" placeholder="Add a comment..." maxlength="500" required>
+                    <button type="submit">Post</button>
+                  </form>
                 </div>
 
                 <div class="igBody">
@@ -205,7 +284,7 @@
         @endif
       </section>
 
-      {{-- STORIES (IG STYLE SLIDER) --}}
+      {{-- STORIES --}}
       <section class="tabPane hidden" id="tab-stories">
         <div class="igStage" data-stage="stories">
           <button type="button" class="igArrow left" data-prev="stories" aria-label="Previous story">‹</button>

@@ -8,6 +8,8 @@ use App\Models\EmployeePost;
 use App\Models\EmployeeReel;
 use App\Models\EmployeeStory;
 use Illuminate\Http\Request;
+use App\Models\EmployeeStoryView;
+use Illuminate\Http\JsonResponse;
 
 class FeedController extends Controller
 {
@@ -49,15 +51,37 @@ class FeedController extends Controller
             ->get();
 
         // Stories (only not expired)
-        $stories = EmployeeStory::query()
-            ->whereIn('employee_user_id', $followedUserIds)
-            ->where(function ($q) {
-                $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
-            })
-            ->latest('created_at')
-            ->get();
+       $stories = EmployeeStory::query()
+    ->whereIn('employee_user_id', $followedUserIds)
+    ->where(function ($q) {
+        $q->whereNull('expires_at')
+          ->orWhere('expires_at', '>', now());
+    })
+    ->with(['employeeUser:id,first_name,last_name,avatar_path'])
+    ->withExists(['views as seen_by_me' => function($q) use ($user) {
+        $q->where('viewer_user_id', $user->id);
+    }])
+    ->latest('created_at')
+    ->get();
+
 
         return view('worker.feed', compact('events', 'posts', 'reels', 'stories'));
     }
+
+    public function markStorySeen(Request $request): JsonResponse
+{
+    $request->validate([
+        'story_id' => ['required','integer','exists:employee_stories,id'],
+    ]);
+
+    $userId = $request->user()->id;
+    $storyId = (int) $request->story_id;
+
+    EmployeeStoryView::updateOrCreate(
+        ['viewer_user_id' => $userId, 'employee_story_id' => $storyId],
+        ['seen_at' => now()]
+    );
+
+    return response()->json(['ok' => true]);
+}
 }

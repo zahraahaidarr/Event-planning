@@ -217,5 +217,8 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
 Route::post('/feed/comments', [FeedCommentController::class, 'store'])
     ->name('feed.comments.store');
 
+    Route::post('/feed/stories/seen', [FeedController::class, 'markStorySeen'])
+    ->name('feed.stories.seen');
+
     });
 

@@ -263,61 +263,97 @@
         @endif
       </section>
 
-      {{-- STORIES --}}
-      <section class="tabPane hidden" id="tab-stories">
-        <div class="igStage" data-stage="stories">
-          <button type="button" class="igArrow left" data-prev="stories" aria-label="Previous story">‹</button>
+{{-- STORIES --}}
+<section class="tabPane hidden" id="tab-stories">
 
-          <div class="igViewport" data-viewport="stories">
-            @forelse($stories as $i => $s)
-              @php
-                $path = $s->media_path ?? '';
-                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                $isVideo = in_array($ext, ['mp4','mov','webm']);
-              @endphp
+  <div class="storyTray" id="storyTray">
+    @php
+      // ✅ Sort employee bubbles: unseen first, fully-seen last
+      $grouped = $stories
+        ->groupBy('employee_user_id')
+        ->sortBy(function($items){
+            return $items->every(fn($st) => (bool)($st->seen_by_me ?? false)) ? 1 : 0;
+        });
+    @endphp
 
-              <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="stories" data-index="{{ $i }}">
-                <div class="igTop">
-                  <div class="igTitle">Story</div>
-                  <div class="igMeta">{{ optional($s->created_at)->format('Y-m-d H:i') }}</div>
-                </div>
+    @forelse($grouped as $employeeId => $items)
+      @php
+        $u = optional($items->first())->employeeUser;
+        $name = trim(($u->first_name ?? '').' '.($u->last_name ?? '')) ?: 'Employee';
+        $avatar = $u && $u->avatar_path ? asset('storage/' . ltrim($u->avatar_path,'/')) : null;
 
-                <div class="igMedia">
-                  @if($path && $isVideo)
-                    <video class="igVideo" controls>
-                      <source src="{{ asset('storage/' . ltrim($path,'/')) }}">
-                    </video>
-                  @elseif($path)
-                    <img src="{{ asset('storage/' . ltrim($path,'/')) }}" alt="story media" loading="lazy">
-                  @else
-                    <div class="igMediaEmpty">No media</div>
-                  @endif
-                </div>
+        // ✅ If ALL stories for this employee are seen => gray ring
+        $allSeen = $items->every(fn($st) => (bool)($st->seen_by_me ?? false));
 
-                <div class="igBody">
-                  @if($s->expires_at)
-                    <div class="igText muted">Expires: {{ $s->expires_at->format('Y-m-d H:i') }}</div>
-                  @else
-                    <div class="igText muted">No expiry set</div>
-                  @endif
-                </div>
-              </article>
-            @empty
-              <div class="emptyBox">No stories yet.</div>
-            @endforelse
+        // ✅ payload includes seen flag per story
+        $payload = $items->map(function($s){
+          $path = $s->media_path ?? '';
+          $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+          $isVideo = in_array($ext, ['mp4','mov','webm']);
+
+          return [
+            'id' => $s->id,
+            'type' => $isVideo ? 'video' : 'image',
+            'src' => $path ? asset('storage/' . ltrim($path,'/')) : null,
+            'created_at' => optional($s->created_at)->format('Y-m-d H:i'),
+            'expires_at' => $s->expires_at ? $s->expires_at->format('Y-m-d H:i') : null,
+            'seen' => (bool)($s->seen_by_me ?? false),
+          ];
+        })->values();
+      @endphp
+
+      <button
+        type="button"
+        class="storyBubble {{ $allSeen ? 'seen' : '' }}"
+        data-story-user="{{ $name }}"
+        data-story-avatar="{{ $avatar ?? '' }}"
+        data-stories='@json($payload)'
+        aria-label="Open story for {{ $name }}"
+      >
+        <span class="storyRing"></span>
+
+        @if($avatar)
+          <img class="storyAvatar" src="{{ $avatar }}" alt="{{ $name }}">
+        @else
+          <span class="storyAvatarFallback">{{ strtoupper(substr($name,0,1)) }}</span>
+        @endif
+
+        <span class="storyName">{{ $name }}</span>
+      </button>
+    @empty
+      <div class="emptyBox">No stories yet.</div>
+    @endforelse
+  </div>
+
+  {{-- Viewer --}}
+  <div class="storyViewer hidden" id="storyViewer" aria-hidden="true">
+    <div class="svOverlay" data-sv-close></div>
+
+    <div class="svCard" role="dialog" aria-modal="true">
+      <div class="svProgress" id="svProgress"></div>
+
+      <div class="svTop">
+        <div class="svUser">
+          <img id="svAvatar" class="svAvatar" src="" alt="avatar">
+          <div class="svUserMeta">
+            <div id="svName" class="svName"></div>
+            <div id="svTime" class="svTime"></div>
           </div>
-
-          <button type="button" class="igArrow right" data-next="stories" aria-label="Next story">›</button>
         </div>
 
-        @if($stories->count())
-          <div class="igDots" data-dots="stories">
-            @foreach($stories as $i => $s)
-              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="stories" data-index="{{ $i }}"></button>
-            @endforeach
-          </div>
-        @endif
-      </section>
+        <button type="button" class="svClose" data-sv-close aria-label="Close">×</button>
+      </div>
+
+      <div class="svMedia" id="svMedia"></div>
+
+      <button type="button" class="svZone svLeft" aria-label="Previous story"></button>
+      <button type="button" class="svZone svRight" aria-label="Next story"></button>
+    </div>
+  </div>
+
+</section>
+
+
 
     </main>
   </div>

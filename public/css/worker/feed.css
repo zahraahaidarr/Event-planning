@@ -748,3 +748,229 @@ body{
 }
 
 .cmLoading,.cmEmpty{color:var(--text-secondary);font-weight:800}
+
+
+/* =========================================================
+   IG STORIES (Tray + Viewer)
+========================================================= */
+
+/* tray */
+.storyTray{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  padding:10px;
+  overflow:auto;
+  scrollbar-width: thin;
+}
+
+.storyBubble{
+  width:84px;
+  flex:0 0 84px;
+  background:transparent;
+  border:0;
+  color:inherit;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+
+.storyRing{
+  position:absolute;
+  width:66px;height:66px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  filter:saturate(1.2);
+}
+
+.storyAvatar,
+.storyAvatarFallback{
+  width:58px;height:58px;
+  border-radius:50%;
+  position:relative;
+  margin-top:4px;
+  border:3px solid var(--bg-primary); /* inner cut like IG */
+  box-shadow:0 8px 18px rgba(0,0,0,.25);
+}
+
+.storyAvatar{ object-fit:cover; display:block; }
+.storyAvatarFallback{
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;
+  background:var(--bg-secondary);
+  border:3px solid var(--bg-primary);
+}
+
+.storyBubble{
+  position:relative;
+}
+.storyName{
+  font-size:12px;
+  font-weight:800;
+  color:var(--text-secondary);
+  width:100%;
+  text-align:center;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* viewer */
+.storyViewer.hidden{ display:none !important; }
+
+.storyViewer{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.svOverlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter: blur(6px);
+}
+
+.svCard{
+  position:relative;
+  width:min(420px, 96vw);
+  height:min(760px, 92vh);
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  background:#000;
+  box-shadow:0 20px 50px rgba(0,0,0,.5);
+}
+
+/* progress */
+.svProgress{
+  position:absolute;
+  top:10px;
+  left:10px;
+  right:10px;
+  display:flex;
+  gap:6px;
+  z-index:5;
+}
+.svBar{
+  height:3px;
+  flex:1;
+  background:rgba(255,255,255,.25);
+  border-radius:999px;
+  overflow:hidden;
+}
+.svFill{
+  display:block;
+  height:100%;
+  width:0%;
+  background:#fff;
+  border-radius:999px;
+  transition:width .05s linear;
+}
+
+/* top */
+.svTop{
+  position:absolute;
+  top:20px;
+  left:12px;
+  right:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:6;
+  pointer-events:none;
+}
+
+.svUser{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  pointer-events:none;
+}
+
+.svAvatar{
+  width:34px;height:34px;border-radius:50%;
+  object-fit:cover;
+  border:1px solid rgba(255,255,255,.25);
+}
+.svName{
+  font-weight:900;
+  color:#fff;
+  font-size:14px;
+  line-height:1.1;
+}
+.svTime{
+  font-size:12px;
+  color:rgba(255,255,255,.75);
+  font-weight:700;
+}
+
+.svClose{
+  pointer-events:auto;
+  width:40px;height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+/* media */
+.svMedia{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.svImg{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+  display:block;
+}
+
+.svVideo{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+}
+
+.svEmpty{
+  color:rgba(255,255,255,.8);
+  font-weight:900;
+}
+
+/* click zones like IG */
+.svZone{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:50%;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  z-index:7;
+}
+.svLeft{ left:0; }
+.svRight{ right:0; }
+
+
+.storyBubble.seen .storyRing{
+  background: rgba(255,255,255,.25);
+}
+.storyBubble.seen .storyName{
+  color: rgba(255,255,255,.55);
+}
+
+.storyBubble.seen .storyRing{ background: rgba(255,255,255,.25); }

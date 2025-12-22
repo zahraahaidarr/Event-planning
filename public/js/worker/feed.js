@@ -1,32 +1,25 @@
 (() => {
+  // =========================================================
+  // Tabs + panes
+  // =========================================================
   const tabs = Array.from(document.querySelectorAll('.feedTab'));
   const panes = Array.from(document.querySelectorAll('.tabPane'));
 
   const pauseAllVideos = () => {
-    document.querySelectorAll('video').forEach(v => {
-      try { v.pause(); } catch(e) {}
-    });
+    document.querySelectorAll('video').forEach(v => { try { v.pause(); } catch (e) {} });
   };
 
   const openTab = (name) => {
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-
-    panes.forEach(p => {
-      const shouldShow = (p.id === `tab-${name}`);
-      p.classList.toggle('hidden', !shouldShow);
-    });
-
-    // close comment panels when switching
-    document.querySelectorAll('.igComments').forEach(x => x.classList.add('hidden'));
-
+    panes.forEach(p => p.classList.toggle('hidden', p.id !== `tab-${name}`));
     pauseAllVideos();
   };
 
   tabs.forEach(btn => btn.addEventListener('click', () => openTab(btn.dataset.tab)));
 
-  // ----------------------------
-  // Generic IG slider (posts/reels/stories)
-  // ----------------------------
+  // =========================================================
+  // Slider
+  // =========================================================
   function setupStage(stageName) {
     const pane = document.querySelector(`#tab-${stageName}`);
     if (!pane) return;
@@ -46,27 +39,19 @@
       index = Math.max(0, Math.min(slides.length - 1, i));
       slides.forEach((s, k) => s.classList.toggle('active', k === index));
       dots.forEach((d, k) => d.classList.toggle('active', k === index));
-
-      // close comment panels when changing slide
-      document.querySelectorAll('.igComments').forEach(x => x.classList.add('hidden'));
-
       if (prevBtn) prevBtn.disabled = index === 0;
       if (nextBtn) nextBtn.disabled = index === slides.length - 1;
     };
 
-    const next = () => setActive(index + 1);
-    const prev = () => setActive(index - 1);
+    prevBtn?.addEventListener('click', () => setActive(index - 1));
+    nextBtn?.addEventListener('click', () => setActive(index + 1));
 
-    prevBtn?.addEventListener('click', prev);
-    nextBtn?.addEventListener('click', next);
+    dots.forEach(d => d.addEventListener('click', () => {
+      const go = Number(d.dataset.index);
+      if (!Number.isNaN(go)) setActive(go);
+    }));
 
-    dots.forEach(d => {
-      d.addEventListener('click', () => {
-        const go = Number(d.dataset.index);
-        if (!Number.isNaN(go)) setActive(go);
-      });
-    });
-
+    // Keyboard arrows
     window.addEventListener('keydown', (e) => {
       const activePane = document.querySelector(`#tab-${stageName}`);
       if (!activePane || activePane.classList.contains('hidden')) return;
@@ -74,21 +59,21 @@
       const tag = (document.activeElement?.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
-      if (e.key === 'ArrowRight') next();
-      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') setActive(index + 1);
+      if (e.key === 'ArrowLeft') setActive(index - 1);
     });
 
+    // Swipe
     const viewport = pane.querySelector(`[data-viewport="${stageName}"]`);
     if (viewport) {
       let startX = null;
-
       viewport.addEventListener('pointerdown', (e) => { startX = e.clientX; });
       viewport.addEventListener('pointerup', (e) => {
         if (startX == null) return;
         const dx = e.clientX - startX;
         startX = null;
         if (Math.abs(dx) < 60) return;
-        if (dx < 0) next(); else prev();
+        if (dx < 0) setActive(index + 1); else setActive(index - 1);
       });
     }
 
@@ -99,45 +84,31 @@
   setupStage('reels');
   setupStage('stories');
 
-  // default tab
   openTab('events');
 
   // =========================================================
-  // Likes + Comments (AJAX)
+  // Helpers
   // =========================================================
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-
-  async function postJson(url, data){
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrf,
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
 
-  async function getJson(url){
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' }});
-    return res.json();
+  async function safeJson(res) {
+    // if Laravel redirected -> HTML, JSON parse will fail
+    const text = await res.text();
+    try { return JSON.parse(text); } catch (_) { return { __raw: text }; }
   }
 
-  function escapeHtml(s){
-    return String(s ?? '')
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
-
-  // ----------------------------
-  // Likes
-  // ----------------------------
+  // =========================================================
+  // Likes (keep this)
+  // =========================================================
   document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.igLikeBtn');
     if (!btn) return;
@@ -146,142 +117,194 @@
     const id = Number(btn.dataset.likeId);
     if (!type || !id) return;
 
-    try{
-      const data = await postJson('/social/like', { type, id });
+    try {
+      const res = await fetch('/social/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ type, id }),
+      });
 
-      if (data?.ok){
+      const data = await safeJson(res);
+
+      if (!res.ok) {
+        console.error('LIKE failed:', res.status, data);
+        return;
+      }
+
+      if (data?.ok) {
         btn.classList.toggle('liked', !!data.liked);
-
         const countEl = document.querySelector(`[data-like-count="${type}-${id}"]`);
         if (countEl) countEl.textContent = data.likes_count;
       }
-    }catch(err){
+    } catch (err) {
       console.error(err);
     }
   });
 
-  // ----------------------------
-  // Comments open + load
-  // ----------------------------
+  // =========================================================
+  // Comments Modal (ONLY SYSTEM)
+  // =========================================================
+  const modal  = document.getElementById('commentModal');
+  const cmList = document.getElementById('cmList');
+  const cmForm = document.getElementById('cmForm');
+  const cmType = document.getElementById('cmType');
+  const cmId   = document.getElementById('cmId');
+  const cmInput= document.getElementById('cmInput');
+
+  let activeCountElId = null;
+
+  const openModal = () => {
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => cmInput?.focus(), 50);
+  };
+
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    cmList.innerHTML = '';
+    cmInput.value = '';
+    activeCountElId = null;
+  };
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target && e.target.hasAttribute('data-cm-close')) closeModal();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
+  });
+
+  function renderCommentItem(c) {
+    const avatar = c.user?.avatar
+      ? `<img class="cmAvatarImg" src="${c.user.avatar}" alt="${escapeHtml(c.user.name)}">`
+      : `<div class="cmAvatarFallback">${escapeHtml(c.user?.initial || 'U')}</div>`;
+
+    return `
+      <div class="cmItem">
+        <div class="cmAvatar">${avatar}</div>
+        <div class="cmContent">
+          <div class="cmLine">
+            <span class="cmName">${escapeHtml(c.user?.name || 'User')}</span>
+            <span class="cmTime">${escapeHtml(c.created_at || '')}</span>
+          </div>
+          <div class="cmText">${escapeHtml(c.body)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadComments(type, id) {
+    cmList.innerHTML = `<div class="cmLoading">Loading...</div>`;
+
+    try {
+      const url = new URL('/worker/feed/comments', window.location.origin);
+      url.searchParams.set('type', type);
+      url.searchParams.set('id', String(id));
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        }
+      });
+
+      const data = await safeJson(res);
+
+      if (!res.ok) {
+        console.error('GET comments failed:', res.status, data);
+        cmList.innerHTML = `<div class="cmLoading">Failed to load comments.</div>`;
+        return;
+      }
+
+      const comments = data.comments || [];
+
+      if (!comments.length) {
+        cmList.innerHTML = `<div class="cmEmpty">No comments yet. Be the first.</div>`;
+        return;
+      }
+
+      cmList.innerHTML = comments.map(renderCommentItem).join('');
+      cmList.scrollTop = cmList.scrollHeight;
+    } catch (err) {
+      console.error(err);
+      cmList.innerHTML = `<div class="cmLoading">Failed to load comments.</div>`;
+    }
+  }
+
+  // Open modal
   document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.igCommentBtn');
+    const btn = e.target.closest('.jsCommentOpen');
     if (!btn) return;
 
-    const type = btn.dataset.cType;
-    const id = Number(btn.dataset.cId);
-    if (!type || !id) return;
+    const type = btn.dataset.type;
+    const id = btn.dataset.id;
 
-    const box = document.querySelector(`[data-comments-box="${type}-${id}"]`);
-    const list = document.querySelector(`[data-comments-list="${type}-${id}"]`);
-    if (!box || !list) return;
+    activeCountElId = btn.dataset.countEl || null;
 
-    const isHidden = box.classList.contains('hidden');
+    cmType.value = type;
+    cmId.value = id;
 
-    // Close other boxes
-    document.querySelectorAll('.igComments').forEach(x => x.classList.add('hidden'));
-
-    // Toggle this box
-    if (isHidden) box.classList.remove('hidden');
-    else box.classList.add('hidden');
-
-    if (!isHidden) return; // closed
-
-    list.innerHTML = `<div class="muted">Loading...</div>`;
-
-    try{
-      const data = await getJson(`/social/comments?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`);
-
-      if (!data?.ok){
-        list.innerHTML = `<div class="muted">Failed to load comments.</div>`;
-        return;
-      }
-
-      if (!data.comments.length){
-        list.innerHTML = `<div class="muted">No comments yet.</div>`;
-        return;
-      }
-
-      list.innerHTML = data.comments.map(c => {
-        const avatar = c.user.avatar
-          ? `<img class="igCAvatar" src="${c.user.avatar}" alt="avatar">`
-          : `<div class="igCAvatar" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);font-weight:900;">?</div>`;
-
-        return `
-          <div class="igCommentRow">
-            ${avatar}
-            <div class="igCBody">
-              <span class="igCName">${escapeHtml(c.user.name)}</span>
-              ${escapeHtml(c.body)}
-              <span class="igCTime">${escapeHtml(c.created_at)}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      list.scrollTop = list.scrollHeight;
-    }catch(err){
-      console.error(err);
-      list.innerHTML = `<div class="muted">Error loading comments.</div>`;
-    }
+    openModal();
+    await loadComments(type, id);
   });
 
-  // ----------------------------
-  // Comment submit
-  // ----------------------------
-  document.addEventListener('submit', async (e) => {
-    const form = e.target.closest('.igCommentForm');
-    if (!form) return;
-
+  // Submit comment
+  cmForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const key = form.dataset.commentForm; // e.g. post-5
-    const [type, idStr] = key.split('-');
-    const id = Number(idStr);
-
-    const input = form.querySelector('input[name="body"]');
-    const body = input?.value?.trim();
+    const type = cmType.value;
+    const id   = cmId.value;
+    const body = cmInput.value.trim();
     if (!body) return;
 
-    input.disabled = true;
+    cmInput.disabled = true;
 
-    try{
-      const data = await postJson('/social/comments', { type, id, body });
+    try {
+      const res = await fetch('/worker/feed/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrf,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ type, id, body }),
+      });
 
-      if (data?.ok){
-        const list = document.querySelector(`[data-comments-list="${type}-${id}"]`);
-        if (list){
-          if (list.textContent.includes('No comments yet')) list.innerHTML = '';
+      const data = await safeJson(res);
 
-          const c = data.comment;
-          const avatar = c.user.avatar
-            ? `<img class="igCAvatar" src="${c.user.avatar}" alt="avatar">`
-            : `<div class="igCAvatar" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);font-weight:900;">?</div>`;
-
-          const row = document.createElement('div');
-          row.innerHTML = `
-            <div class="igCommentRow">
-              ${avatar}
-              <div class="igCBody">
-                <span class="igCName">${escapeHtml(c.user.name)}</span>
-                ${escapeHtml(c.body)}
-                <span class="igCTime">${escapeHtml(c.created_at)}</span>
-              </div>
-            </div>
-          `;
-          list.appendChild(row.firstElementChild);
-          list.scrollTop = list.scrollHeight;
-        }
-
-        const countEl = document.querySelector(`[data-comment-count="${type}-${id}"]`);
-        if (countEl) countEl.textContent = data.comments_count;
-
-        input.value = '';
+      if (!res.ok) {
+        console.error('POST comment failed:', res.status, data);
+        return;
       }
-    }catch(err){
-      console.error(err);
-    }finally{
-      input.disabled = false;
-      input.focus();
+
+      const c = data.comment;
+
+      // remove empty/loading/failed text
+      cmList.querySelector('.cmEmpty')?.remove();
+      cmList.querySelector('.cmLoading')?.remove();
+
+      cmList.insertAdjacentHTML('beforeend', renderCommentItem(c));
+      cmList.scrollTop = cmList.scrollHeight;
+
+      cmInput.value = '';
+
+      // update count text (optional)
+      if (activeCountElId) {
+        const el = document.getElementById(activeCountElId);
+        if (el) el.textContent = String((parseInt(el.textContent || '0', 10) || 0) + 1);
+      }
+    } finally {
+      cmInput.disabled = false;
+      cmInput.focus();
     }
   });
 

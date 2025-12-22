@@ -635,3 +635,116 @@ body{
   font-weight:900;
   cursor:pointer;
 }
+
+
+
+/* ===== Comments Modal (IG-like) ===== */
+.cm.hidden{display:none !important}
+
+.cm{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+}
+
+.cmOverlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+}
+
+.cmDialog{
+  position:relative;
+  width:min(760px, 94vw);
+  height:min(620px, 88vh);
+  margin:6vh auto;
+  background:var(--bg-primary);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-md);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.cmHead{
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid var(--border-color);
+}
+
+.cmTitle{font-weight:900;font-size:18px}
+.cmClose{
+  width:40px;height:40px;border-radius:12px;
+  border:1px solid var(--border-color);
+  background:var(--bg-secondary);
+  color:var(--text-primary);
+  font-size:22px;font-weight:900;
+  cursor:pointer;
+}
+
+.cmBody{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  padding:14px 16px;
+}
+
+.cmList{display:flex;flex-direction:column;gap:12px}
+
+.cmItem{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.cmAvatar{width:40px;height:40px;flex:0 0 40px}
+.cmAvatarImg{
+  width:40px;height:40px;border-radius:50%;
+  object-fit:cover;border:1px solid var(--border-color);
+}
+.cmAvatarFallback{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  color:#fff;
+}
+
+.cmContent{flex:1;min-width:0}
+.cmLine{display:flex;gap:10px;align-items:baseline}
+.cmName{font-weight:900}
+.cmTime{color:var(--text-secondary);font-size:12px}
+.cmText{color:var(--text-secondary);margin-top:4px}
+
+.cmForm{
+  display:flex;
+  gap:10px;
+  padding:12px 12px;
+  border-top:1px solid var(--border-color);
+  background:var(--bg-secondary);
+}
+
+.cmInput{
+  flex:1;
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid var(--border-color);
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  outline:none;
+}
+.cmSend{
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--border-color);
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.cmLoading,.cmEmpty{color:var(--text-secondary);font-weight:800}

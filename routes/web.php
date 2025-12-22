@@ -30,6 +30,7 @@ use App\Http\Controllers\Worker\FeedController;
 use App\Http\Controllers\Employee\ContentController;
 use App\Http\Controllers\Social\LikeController;
 use App\Http\Controllers\Social\CommentController;
+use App\Http\Controllers\Worker\FeedCommentController;
 
 
 Route::post('/ai/staffing', [EventStaffingController::class, 'predictRoles']);
@@ -208,6 +209,13 @@ Route::middleware(['auth', 'role:WORKER'])->prefix('worker')->name('worker.')->g
         ->name('feed.index');
     Route::get('/employees/following', [FollowEmployeesController::class, 'index'])
     ->name('employees.following');
+
+
+   Route::get('/feed/comments', [FeedCommentController::class, 'index'])
+    ->name('feed.comments.index');
+
+Route::post('/feed/comments', [FeedCommentController::class, 'store'])
+    ->name('feed.comments.store');
 
     });
 

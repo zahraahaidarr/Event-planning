@@ -125,8 +125,6 @@
           <div class="igViewport" data-viewport="posts">
             @forelse($posts as $i => $p)
               @php
-                // if you used eager loading: $p->likes->isNotEmpty()
-                // fallback safe:
                 $liked = isset($p->likes) && $p->likes->isNotEmpty();
                 $likesCount = $p->likes_count ?? ($p->likes->count() ?? 0);
                 $commentsCount = $p->comments_count ?? ($p->comments->count() ?? 0);
@@ -152,32 +150,20 @@
                           class="igActionBtn igLikeBtn {{ $liked ? 'liked' : '' }}"
                           data-like-type="post"
                           data-like-id="{{ $p->id }}"
-                          aria-label="Like">
-                    ♥
-                  </button>
+                          aria-label="Like">♥</button>
 
+                  {{-- ✅ open modal comments --}}
                   <button type="button"
-                          class="igActionBtn igCommentBtn"
-                          data-c-type="post"
-                          data-c-id="{{ $p->id }}"
-                          aria-label="Comments">
-                    💬
-                  </button>
+                          class="igActionBtn jsCommentOpen"
+                          data-type="post"
+                          data-id="{{ $p->id }}"
+                          data-count-el="post-comment-count-{{ $p->id }}"
+                          aria-label="Comments">💬</button>
 
                   <div class="igCounts">
                     <span class="igLikeCount" data-like-count="post-{{ $p->id }}">{{ $likesCount }}</span> likes ·
-                    <span class="igCommentCount" data-comment-count="post-{{ $p->id }}">{{ $commentsCount }}</span> comments
+                    <span id="post-comment-count-{{ $p->id }}">{{ $commentsCount }}</span> comments
                   </div>
-                </div>
-
-                {{-- comments panel --}}
-                <div class="igComments hidden" data-comments-box="post-{{ $p->id }}">
-                  <div class="igCommentsList" data-comments-list="post-{{ $p->id }}"></div>
-
-                  <form class="igCommentForm" data-comment-form="post-{{ $p->id }}">
-                    <input type="text" name="body" placeholder="Add a comment..." maxlength="500" required>
-                    <button type="submit">Post</button>
-                  </form>
                 </div>
 
                 <div class="igBody">
@@ -238,25 +224,18 @@
                           data-like-id="{{ $r->id }}"
                           aria-label="Like">♥</button>
 
+                  {{-- ✅ open modal comments --}}
                   <button type="button"
-                          class="igActionBtn igCommentBtn"
-                          data-c-type="reel"
-                          data-c-id="{{ $r->id }}"
+                          class="igActionBtn jsCommentOpen"
+                          data-type="reel"
+                          data-id="{{ $r->id }}"
+                          data-count-el="reel-comment-count-{{ $r->id }}"
                           aria-label="Comments">💬</button>
 
                   <div class="igCounts">
                     <span class="igLikeCount" data-like-count="reel-{{ $r->id }}">{{ $likesCount }}</span> likes ·
-                    <span class="igCommentCount" data-comment-count="reel-{{ $r->id }}">{{ $commentsCount }}</span> comments
+                    <span id="reel-comment-count-{{ $r->id }}">{{ $commentsCount }}</span> comments
                   </div>
-                </div>
-
-                <div class="igComments hidden" data-comments-box="reel-{{ $r->id }}">
-                  <div class="igCommentsList" data-comments-list="reel-{{ $r->id }}"></div>
-
-                  <form class="igCommentForm" data-comment-form="reel-{{ $r->id }}">
-                    <input type="text" name="body" placeholder="Add a comment..." maxlength="500" required>
-                    <button type="submit">Post</button>
-                  </form>
                 </div>
 
                 <div class="igBody">
@@ -342,5 +321,32 @@
 
     </main>
   </div>
+
+  {{-- ✅ Comments Modal (Instagram-style) --}}
+  <div id="commentModal" class="cm hidden" aria-hidden="true">
+    <div class="cmOverlay" data-cm-close></div>
+
+    <div class="cmDialog" role="dialog" aria-modal="true" aria-labelledby="cmTitle">
+      <div class="cmHead">
+        <div id="cmTitle" class="cmTitle">Comments</div>
+        <button type="button" class="cmClose" data-cm-close aria-label="Close">×</button>
+      </div>
+
+      <div class="cmBody">
+        <div id="cmList" class="cmList"></div>
+      </div>
+
+      <form id="cmForm" class="cmForm">
+        <input type="hidden" id="cmType" name="type">
+        <input type="hidden" id="cmId" name="id">
+
+        <input id="cmInput" name="body" class="cmInput" type="text"
+               placeholder="Add a comment..." autocomplete="off" maxlength="500" required>
+
+        <button class="cmSend" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

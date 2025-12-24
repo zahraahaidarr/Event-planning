@@ -146,24 +146,21 @@
         {{-- Performance Insights --}}
 <div class="charts-section">
 
-    {{-- Top Workers & Volunteers --}}
-    <div class="chart-card">
-        <h2 class="chart-title">Top Workers & Volunteers Rating</h2>
-        <canvas id="workersRatingChart" height="180"></canvas>
-    </div>
+  {{-- Top Workers & Volunteers --}}
+  <div class="chart-card">
+      <h2 class="chart-title">Top Workers & Volunteers Rating</h2>
+      <canvas id="workersRatingChart" height="180"></canvas>
+  </div>
 
-    {{-- Top Clients --}}
-    <div class="chart-card">
-    <h2 class="chart-title">Top Reliable Clients</h2>
-    <p class="chart-subtitle">Completed vs Cancelled events</p>
-
-    <div id="clientsReliabilityList" class="reliability-list">
-        <p class="placeholder">Loading...</p>
-    </div>
-</div>
-
+  {{-- Top Clients Rating --}}
+  <div class="chart-card">
+      <h2 class="chart-title">Top Clients Rating</h2>
+      
+      <canvas id="clientsRatingChart" height="180"></canvas>
+  </div>
 
 </div>
+
 
 
         {{-- Recent Activity --}}
@@ -203,7 +200,8 @@
         recentEvents: @json($recentEvents),
 
         topWorkersRating: @json($topWorkersRating),
-topClientsReliability: @json($topClientsReliability),
+topClientsRating: @json($topClientsRating),
+
     };
 </script>
 

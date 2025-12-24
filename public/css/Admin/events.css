@@ -686,3 +686,153 @@ body{
   background: rgba(79,124,255,.18);   /* soft blue pill */
   color: var(--accent-primary);       /* your main blue */
 }
+
+
+
+
+/* =========================================================
+   Mobile improvements (PUT THIS AT THE END)
+========================================================= */
+@media (max-width: 768px){
+
+  /* allow full width content on phone */
+  .container{
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* hide sidebar already done, but keep here as safety */
+  .layout-admin .sidebar,
+  .layout-employee .sidebar{
+    display:none !important;
+  }
+
+  /* main content spacing */
+  .layout-admin .main-content,
+  .layout-employee .main-content{
+    padding: 14px 12px !important;
+    max-width: 100% !important;
+  }
+
+  /* header becomes stacked */
+  .header{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .header-left h1{ font-size: 22px; }
+  .header-left p{ font-size: 13px; }
+
+  /* action buttons wrap nicely */
+  .header-actions{
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  .btn{
+    width: 100%;
+    justify-content: center;
+  }
+  .icon-btn{
+    width: 44px;
+    height: 44px;
+  }
+
+  /* tabs become horizontally scrollable */
+  .tabs{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+  }
+  .tabs::-webkit-scrollbar{ height: 0; }
+  .tab{
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* table: keep scroll but improve readability */
+  .table-container{
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table{
+    min-width: 900px; /* forces scroll instead of crushing columns */
+  }
+  .table th, .table td{
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  /* action buttons wrap inside table cells */
+  .action-buttons{
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .btn-sm{
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  /* forms become 1 column (you already do, but enforce) */
+  .form-grid,
+  .grid2{
+    grid-template-columns: 1fr !important;
+  }
+
+  /* role rows stack (very important on phone) */
+  .role-item{
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .btn-remove{
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* modal behaves like mobile sheet/fullscreen */
+  .modal-content{
+    width: calc(100% - 24px) !important;
+    max-width: none !important;
+    max-height: calc(100vh - 24px) !important;
+    margin: 12px !important;
+    border-radius: var(--radius-md) !important;
+  }
+  .modal-header{
+    padding: 16px !important;
+  }
+  .modal-body{
+    padding: 16px !important;
+  }
+
+  /* wizard footer buttons full width */
+  .wizard-nav{
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+  }
+  .wizard-nav .btn{
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* image preview responsive */
+  .image-preview{
+    max-width: 100%;
+    height: auto;
+  }
+
+}
+
+/* extra small phones */
+@media (max-width: 420px){
+  .layout-admin .main-content,
+  .layout-employee .main-content{
+    padding: 12px 10px !important;
+  }
+  .table{ min-width: 820px; }
+}

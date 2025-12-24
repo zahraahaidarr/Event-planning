@@ -124,7 +124,7 @@ body{
 .icon-btn:hover{background:var(--bg-tertiary)}
 .logout-form{display:inline} /* keep flex gap intact */
 .logout-btn{
-    background:var(--danger);color:#fff;border:none;width:40px;height:40px;border-radius:var(--radius-sm);
+    background:var(--danger);color:#fff;border:none;border-radius:var(--radius-sm);
     display:flex;align-items:center;justify-content:center;font-weight:700;transition:background .2s ease
 }
 .logout-btn:hover{background:#ff4c4c}
@@ -281,4 +281,43 @@ body{
   gap:8px;
   color: var(--muted);
   font-size:12px;
+}
+
+
+
+
+/* ===== FIX LOGOUT BUTTON (put at END of file) ===== */
+.header-actions .logout-form{
+  display: inline-flex;
+}
+
+.header-actions .logout-btn{
+  width: auto !important;              /* remove 40x40 circle */
+  min-width: 110px;
+  height: 40px;
+
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  border: none;
+
+  background: var(--danger);
+  color: #fff;
+
+  display: inline-flex !important;     /* prevent weird flex shrink */
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+
+  box-shadow: 0 8px 22px rgba(255,107,107,.28);
+  transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+
+.header-actions .logout-btn:hover{
+  background: #ff4c4c;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255,107,107,.35);
 }

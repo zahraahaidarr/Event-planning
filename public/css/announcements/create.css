@@ -363,3 +363,65 @@ button:hover, .btn-primary:hover{ background:var(--primary-2); transform:transla
   .has-admin .admin-sidebar.open{ left:0; }
   .has-admin .admin-content-area{ padding:20px; }
 }
+
+
+
+/* =========================
+   Mobile fixes (Announcements Create)
+   Put at END of file
+========================= */
+@media (max-width: 768px){
+
+  /* remove center narrow layout */
+  .container{
+    max-width: 100%;
+    width: 100%;
+    margin: 16px auto;
+    padding: 18px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  /* make the form area full width */
+  .has-employee .content-area,
+  .has-admin .admin-content-area{
+    padding: 16px 12px;
+    justify-content: stretch;
+  }
+
+  /* sidebars hidden on mobile */
+  .has-employee .employee-sidebar.sidebar,
+  .has-admin .admin-sidebar.sidebar{
+    display: none;
+  }
+
+  /* inputs and button feel better on phone */
+  input[type="text"], textarea, select{
+    font-size: 16px;       /* prevents iOS zoom */
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  textarea{
+    height: 140px;
+  }
+
+  button, .btn-primary{
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  h1{
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+}
+
+/* extra small phones */
+@media (max-width: 420px){
+  .container{
+    margin: 12px auto;
+    padding: 16px 12px;
+  }
+}

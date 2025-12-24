@@ -331,3 +331,121 @@ body{
 
 /* ===== RTL helpers ===== */
 [dir="rtl"] .wrap{ direction:rtl }
+
+
+
+/* =========================================================
+   MOBILE OVERRIDES (PUT AT END)
+========================================================= */
+@media (max-width: 860px){
+
+  /* make sure page never scrolls sideways */
+  html, body{ overflow-x:hidden; }
+
+  /* single column + comfortable padding */
+  .wrap{
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  /* sidebar already hidden, rail already hidden at 1200px,
+     but force on phone */
+  .sidebar{ display:none !important; }
+  .rail{ display:none !important; }
+
+  /* remove top padding that was for desktop columns */
+  .content{ padding-top: 0 !important; }
+  .rail{ padding-top: 0 !important; }
+
+  /* TOPBAR -> stack nicely */
+  .topbar{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .bar-actions{
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  /* make action buttons easier on phone */
+  .btn{
+    width: 100%;
+    justify-content: center;
+    padding: 12px 14px;
+  }
+
+  /* search padding & icon stays correct */
+  .search input{
+    padding: 12px 14px 12px 42px;
+  }
+  [dir="rtl"] .search input{
+    padding: 12px 42px 12px 14px;
+  }
+
+  /* HERO -> single column */
+  .hero{
+    grid-template-columns: 1fr !important;
+    padding: 16px;
+    gap: 14px;
+  }
+  .hero h1{ font-size: 20px; }
+  .hero p{ font-size: 13px; }
+
+  /* metrics -> 2 columns on phone */
+  .metrics{
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+  .kpi{ padding: 14px; }
+  .kpi .value{ font-size: 20px; }
+
+  /* section header -> stack filters under title */
+  .section-head{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .filter-row{
+    width: 100%;
+  }
+  .filter-row .input,
+  .filter-row select{
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* cards grid -> 1 column */
+  .grid{
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  /* card banner a bit smaller on phone */
+  .card-banner{ height: 120px; }
+
+  /* actions inside card -> wrap + full width buttons */
+  .actions{
+    flex-wrap: wrap;
+  }
+  .actions .btn.small{
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+  }
+}
+
+/* extra small phones */
+@media (max-width: 420px){
+  .wrap{ padding: 10px !important; }
+  .metrics{ grid-template-columns: 1fr !important; }
+  .actions .btn.small{
+    width: 100%;
+    min-width: 0;
+  }
+}

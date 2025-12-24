@@ -1,3 +1,10 @@
+/* =========================================================
+   Admin Dashboard JS
+   - Recent Clients / Recent Events cards
+   - Top Workers & Volunteers rating chart (worker_rating)
+   - Top Clients rating chart (owner_rating)
+========================================================= */
+
 function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -8,16 +15,96 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function drawBarChart(canvasId, labels, data, color) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const parent = canvas.parentElement;
+
+    // ✅ HARD RESET CANVAS (removes ANY stray glyph like "!" 100%)
+    // Also makes canvas fit the card width
+    const targetWidth = parent ? parent.clientWidth : canvas.width || 600;
+    canvas.width = Math.max(300, targetWidth); // reset clears bitmap
+    canvas.height = canvas.height || 180;      // keep your blade height (180)
+
+    // make sure it behaves like a block element (no weird inline text artifacts)
+    canvas.style.display = 'block';
+
+    const ctx = canvas.getContext('2d');
+
+    // If no data -> stop (canvas already cleared by width reset)
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const numeric = data.map(v => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    });
+
+    const max = Math.max(...numeric, 5);
+
+    const barHeight = 22;
+    const gap = 14;
+
+    // layout
+    const labelX = 0;
+    const barX = 150;
+    const barMaxWidth = canvas.width - (barX + 80); // leave space for value text
+
+    // drawing settings
+    ctx.font = '13px sans-serif';
+    ctx.textBaseline = 'alphabetic';
+
+    labels.forEach((label, i) => {
+        const y = i * (barHeight + gap);
+
+        // Label
+        ctx.fillStyle = '#cbd5ff';
+        ctx.fillText(label, labelX, y + barHeight - 6);
+
+        // Bar width (safe)
+        const rawWidth = (numeric[i] / max) * barMaxWidth;
+        const barWidth = Number.isFinite(rawWidth) ? Math.max(0, rawWidth) : 0;
+
+        // Bar
+        ctx.fillStyle = color;
+        ctx.fillRect(barX, y, barWidth, barHeight);
+
+        // ✅ Value (numbers ONLY — no "!" possible after hard reset)
+        const val = numeric[i];
+        const text = (Number.isFinite(val) && val > 0) ? val.toFixed(2) : '';
+
+        if (text) {
+            ctx.fillStyle = '#fff';
+            ctx.fillText(text, barX + barWidth + 8, y + barHeight - 6);
+        }
+    });
+}
+
+function showChartPlaceholder(canvasId, message) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    const old = parent.querySelector('.chart-empty');
+    if (old) old.remove();
+
+    const p = document.createElement('p');
+    p.className = 'placeholder chart-empty';
+    p.textContent = message || 'No data yet.';
+    parent.appendChild(p);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const data = window.dashboardData || {};
 
-    // ----- Recent Employees -----
+    /* ===== Recent Clients ===== */
     const empList = document.getElementById('recent-employees-list');
     if (empList) {
         const employees = data.recentEmployees || [];
-
         if (!employees.length) {
-            empList.innerHTML = '<p>No employees found.</p>';
+            empList.innerHTML = '<p class="placeholder">No clients found.</p>';
         } else {
             empList.innerHTML = employees.map(e => {
                 const badgeClass = e.is_active ? 'badge-active' : 'badge-pending';
@@ -38,13 +125,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ----- Recent Events -----
+    /* ===== Recent Events ===== */
     const evList = document.getElementById('recent-events-list');
     if (evList) {
         const events = data.recentEvents || [];
-
         if (!events.length) {
-            evList.innerHTML = '<p>No events found.</p>';
+            evList.innerHTML = '<p class="placeholder">No events found.</p>';
         } else {
             evList.innerHTML = events.map(ev => {
                 const badgeClass = ev.is_done ? 'badge-active' : 'badge-pending';
@@ -64,110 +150,30 @@ document.addEventListener('DOMContentLoaded', function () {
             }).join('');
         }
     }
-});
-function drawBarChart(canvasId, labels, data, color) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const max = Math.max(...data, 5);
-
-    const barHeight = 22;
-    const gap = 14;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    labels.forEach((label, i) => {
-        const y = i * (barHeight + gap);
-
-        // Label
-        ctx.fillStyle = '#cbd5ff';
-        ctx.font = '13px sans-serif';
-        ctx.fillText(label, 0, y + barHeight - 6);
-
-        // Bar
-        const barWidth = (data[i] / max) * (canvas.width - 160);
-        ctx.fillStyle = color;
-        ctx.fillRect(150, y, barWidth, barHeight);
-
-        // Value
-        ctx.fillStyle = '#fff';
-        ctx.fillText(data[i].toFixed(2), 150 + barWidth + 8, y + barHeight - 6);
-    });
-}
-
-// ===== Render charts =====
-document.addEventListener('DOMContentLoaded', () => {
-    const w = window.dashboardData.topWorkersRating || [];
-    const c = window.dashboardData.topClientsRating || [];
-
-    drawBarChart(
-        'workersRatingChart',
-        w.map(x => `${x.name} (${x.ratings_count})`),
-w.map(x => Number(x.avg_rating || 0)),
-        '#4f7cff'
-    );
-
-    drawBarChart(
-        'clientsRatingChart',
-        c.map(x => `${x.name} (${x.ratings_count})`),
-c.map(x => Number(x.avg_rating || 0)),
-        '#9c6cff'
-    );
-});
-function renderReliability(listId, items) {
-    const wrap = document.getElementById(listId);
-    if (!wrap) return;
-
-    if (!items.length) {
-        wrap.innerHTML = `<p class="placeholder">No reliability data yet.</p>`;
-        return;
+    /* ===== Top Workers & Volunteers Rating ===== */
+    const w = data.topWorkersRating || [];
+    if (!w.length) {
+        showChartPlaceholder('workersRatingChart', 'No worker ratings yet.');
+    } else {
+        drawBarChart(
+            'workersRatingChart',
+            w.map(x => `${x.name}`), // ✅ no parentheses / no counts
+            w.map(x => Number(x.avg_rating || 0)),
+            '#4f7cff'
+        );
     }
 
-    wrap.innerHTML = items.map(x => {
-        const name = escapeHtml(x.name || 'Client');
-        const pct = Number(x.reliability_pct ?? 0);
-        const safePct = isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
-
-        const total = Number(x.total_events ?? 0) || 0;
-        const completed = Number(x.completed_events ?? 0) || 0;
-        const cancelled = Number(x.cancelled_events ?? 0) || 0;
-
-        return `
-            <div class="reliability-item">
-                <div class="reliability-ring" style="--p:${safePct}">
-                    <div class="reliability-ring-inner">
-                        <div class="reliability-pct">${safePct}%</div>
-                    </div>
-                </div>
-
-                <div class="reliability-info">
-                    <div class="reliability-name">${name}</div>
-                    <div class="reliability-meta">
-                        <span>✅ ${completed} completed</span>
-                        <span>•</span>
-                        <span>❌ ${cancelled} cancelled</span>
-                        <span>•</span>
-                        <span>📦 ${total} total</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const data = window.dashboardData || {};
-
-    // keep your workers chart
-    const w = data.topWorkersRating || [];
-    drawBarChart(
-        'workersRatingChart',
-        w.map(x => `${x.name} (${x.ratings_count})`),
-        w.map(x => parseFloat(x.avg_rating)),
-        '#4f7cff'
-    );
-
-    // ✅ NEW reliability circles
-    renderReliability('clientsReliabilityList', data.topClientsReliability || []);
+    /* ===== Top Clients Rating (owner_rating) ===== */
+    const c = data.topClientsRating || [];
+    if (!c.length) {
+        showChartPlaceholder('clientsRatingChart', 'No client ratings yet.');
+    } else {
+        drawBarChart(
+            'clientsRatingChart',
+            c.map(x => `${x.name}`), // ✅ no parentheses / no counts
+            c.map(x => Number(x.avg_rating || 0)),
+            '#9c6cff'
+        );
+    }
 });

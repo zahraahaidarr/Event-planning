@@ -10,6 +10,7 @@ use App\Models\EmployeeStory;
 use Illuminate\Http\Request;
 use App\Models\EmployeeStoryView;
 use Illuminate\Http\JsonResponse;
+use App\Models\Employee;
 
 class FeedController extends Controller
 {
@@ -17,18 +18,25 @@ class FeedController extends Controller
     {
         $user = $request->user();
 
-        $followedUserIds = $user->followingEmployees()
-            ->pluck('users.id')   // or ->pluck('id')
-            ->filter()
-            ->unique()
-            ->values();
+       $followedUserIds = $user->followingEmployees()
+    ->pluck('users.id')
+    ->filter()
+    ->unique()
+    ->values();
 
-        // Events (only published)
-        $events = Event::query()
-            ->whereIn('created_by', $followedUserIds)
-            ->where('status', 'PUBLISHED')
-            ->latest('created_at')
-            ->get();
+// convert followed users -> employee_ids
+$followedEmployeeIds = Employee::whereIn('user_id', $followedUserIds)
+    ->pluck('employee_id');
+
+// Events (created_by stores employee_id)
+$events = Event::query()
+    ->whereIn('created_by', $followedEmployeeIds)
+    ->whereIn('status', ['PUBLISHED']) // ✅ ADD THIS LINE
+    ->where('starts_at', '>=', now())
+    ->orderBy('starts_at', 'asc')
+    ->get();
+
+
 
         // Posts (with like/comment counts + whether current user liked)
         $posts = EmployeePost::query()

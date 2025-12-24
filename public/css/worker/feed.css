@@ -1155,3 +1155,192 @@ body{
 #tab-reels .igArrow.right{ right: calc(50% - 80px); }
 
 
+
+
+/* =========================================================
+   EVENTS — Card style like Discover (horizontal row)
+========================================================= */
+
+/* events pane must take full height like other panes */
+#tab-events{
+  display:flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;   /* ✅ important */
+  overflow: hidden; /* ✅ prevent page scroll */
+}
+
+/* scroll happens INSIDE the row container */
+.eventsRow{
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-wrap: wrap;        /* ✅ many cards go to next line */
+  align-content: flex-start;
+  gap: 16px;
+  padding: 8px;
+
+  overflow-y: auto;       /* ✅ scroll inside */
+  overflow-x: hidden;     /* ✅ no side scroll */
+}
+
+
+/* each card */
+.eventCard{
+  flex: 0 0 320px; /* card width like screenshot */
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+
+  scroll-snap-align: start;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+.eventMedia{
+  height: 140px;
+  background: rgba(0,0,0,.25);
+  border-bottom: 1px solid var(--border-color);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.eventMedia img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* like screenshot */
+  display:block;
+}
+
+.eventMediaEmpty{
+  color: var(--text-secondary);
+  font-weight: 900;
+  opacity: .8;
+}
+
+/* info area */
+.eventInfo{
+  padding: 14px 14px 16px;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0;              /* ✅ no stretch */
+}
+
+
+.eventTitle{
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  color: var(--text-primary);
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventMeta{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.eventMetaItem{
+  display:inline-flex;
+  gap: 6px;
+  align-items:center;
+}
+
+/* view button like screenshot */
+.eventBtn{
+   margin-top: 6px;  
+  width: fit-content;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition: transform .15s ease, filter .15s ease;
+}
+
+.eventBtn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+
+.eventCard{
+  flex: 0 0 calc((100% - 32px) / 3); /* 3 per row (gap 16*2=32) */
+  max-width: 360px;
+}
+
+@media (max-width: 1100px){
+  .eventCard{ flex-basis: calc((100% - 16px) / 2); }
+}
+@media (max-width: 680px){
+  .eventCard{ flex-basis: 100%; }
+}
+
+
+
+
+
+
+
+/* =========================================
+   REELS: make reel height = box height
+========================================= */
+
+/* 1) make the reels tab really own the full height */
+#tab-reels{
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 2) the stage must fill the tab */
+#tab-reels .igStage{
+  height: 100%;
+  min-height: 0;
+}
+
+/* 3) viewport must fill the stage (remove the min(82vh...) limit) */
+#tab-reels .igViewport{
+  height: 100%;
+  min-height: 0;
+  width: min(420px, 92vw);   /* keep phone width */
+}
+
+/* 4) the active slide must fill the viewport */
+#tab-reels .igCard.active,
+#tab-reels .igReelCard{
+  height: 100%;
+}
+
+/* 5) reel container fills the slide */
+#tab-reels .reelViewport{
+  height: 100%;
+}
+
+/* 6) video fills reelViewport exactly */
+#tab-reels .reelVideo{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+background: #000;  /* or contain if you want full video without crop */
+  display: block;
+}

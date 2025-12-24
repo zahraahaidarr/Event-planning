@@ -100,24 +100,52 @@
 
     <main id="feedContent">
 
-      {{-- EVENTS --}}
-      <section class="tabPane" id="tab-events">
-        @forelse($events as $event)
-          <article class="feedCard">
-            <div class="feedCardTop">
-              <div class="feedTitle">{{ $event->title ?? 'Event' }}</div>
-              <div class="feedDate">{{ optional($event->created_at)->format('Y-m-d H:i') }}</div>
+     <section class="tabPane" id="tab-events">
+
+  @if($events->isEmpty())
+    <div class="emptyBox">No upcoming events yet. Follow employees to see their events.</div>
+  @else
+    <div class="eventsRow">
+      @foreach($events as $event)
+        @php
+          $img = $event->image_path
+              ? asset('storage/' . ltrim($event->image_path,'/'))
+              : null;
+
+          $date = $event->starts_at
+              ? \Carbon\Carbon::parse($event->starts_at)->format('Y-m-d')
+              : optional($event->created_at)->format('Y-m-d');
+        @endphp
+
+        <article class="eventCard">
+          <div class="eventMedia">
+            @if($img)
+              <img src="{{ $img }}" alt="event image" loading="lazy">
+            @else
+              <div class="eventMediaEmpty">No Image</div>
+            @endif
+          </div>
+
+          <div class="eventInfo">
+            <h3 class="eventTitle">{{ $event->title ?? 'Event' }}</h3>
+
+            <div class="eventMeta">
+              <span class="eventMetaItem">📍 {{ $event->location ?? '-' }}</span>
+              <span class="eventMetaItem">🗓 {{ $date }}</span>
             </div>
 
-            <div class="feedBody">
-              <div><strong>Location:</strong> {{ $event->location ?? '-' }}</div>
-              <div><strong>Description:</strong> {{ $event->description ?? '-' }}</div>
-            </div>
-          </article>
-        @empty
-          <div class="emptyBox">No events yet. Follow employees to see their events.</div>
-        @endforelse
-      </section>
+            <a class="eventBtn"
+               href="{{ route('worker.events.discover', $event->event_id ?? $event->id) }}">
+              View
+            </a>
+          </div>
+        </article>
+      @endforeach
+    </div>
+  @endif
+
+</section>
+
 
       {{-- POSTS --}}
       <section class="tabPane hidden" id="tab-posts">

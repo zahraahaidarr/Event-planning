@@ -113,28 +113,33 @@
             <p class="event-hint">Click an event to view and manage its worker applications.</p>
 
             <div class="event-list" id="eventList">
-                @forelse($events as $event)
-                    <button
-                        type="button"
-                        class="event-card {{ $loop->first ? 'active' : '' }}"
-                        data-event-id="{{ $event->event_id }}"
-                    >
-                        <div class="event-card-title">
-                            {{ $event->title }}
-                        </div>
-                        <div class="event-card-meta">
-                            <span class="event-date">
-                                {{ $event->starts_at ? $event->starts_at->format('Y-m-d') : 'No date' }}
-                            </span>
-                            @if(optional($event->venue)->name)
-                                <span class="event-dot">•</span>
-                                <span class="event-venue">
-                                    {{ $event->venue->name }}
-                                </span>
-                            @endif
-                        </div>
-                    </button>
-                @empty
+ <button
+  type="button"
+  class="event-card {{ $events->count() ? 'active' : '' }}"
+  data-event-id="all"
+>
+  <div class="event-card-title">All Events</div>
+  <div class="event-card-meta">
+    <span class="event-date">All applications</span>
+  </div>
+</button>
+
+@forelse($events as $event)
+<button
+  type="button"
+  class="event-card"
+  data-event-id="{{ $event->event_id }}"
+  data-starts-at="{{ $event->starts_at ? $event->starts_at->toIso8601String() : '' }}"
+>
+
+    <div class="event-card-title">{{ $event->title }}</div>
+    <div class="event-card-meta">
+      <span class="event-date">
+        {{ $event->starts_at ? $event->starts_at->format('Y-m-d') : 'No date' }}
+      </span>
+    </div>
+  </button>
+@empty
                     <div class="empty-state small">
                         <div class="empty-icon">📭</div>
                         <h3 class="empty-title">No events found</h3>
@@ -168,6 +173,7 @@
     <h2 class="section-title">Applications</h2>
     <div class="filter-buttons">
         <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="pending">Pending</button>
         <button class="filter-btn" data-filter="accepted">Accepted</button>
         <button class="filter-btn" data-filter="rejected">Rejected</button>
     </div>

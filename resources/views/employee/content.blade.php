@@ -10,7 +10,7 @@
 <body>
 
 <div class="container">
-  {{-- Sidebar --}}
+    {{-- Sidebar --}}
     <aside class="sidebar">
         @php($user = Auth::user())
 
@@ -193,10 +193,7 @@
               <input name="media" type="file" accept="image/*,video/*" required>
             </div>
 
-            <div class="field">
-              <label>Expires at (optional)</label>
-              <input name="expires_at" type="datetime-local">
-            </div>
+            
           </div>
 
           <button class="btn btn-primary" type="submit">Upload Story</button>

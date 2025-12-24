@@ -54,10 +54,7 @@
         <a href="{{ route('worker.events.discover') }}" class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
           <span class="nav-icon">🗓️</span><span>Discover Events</span>
         </a>
-        <a href="{{ route('worker.follow.index') }}"
-   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
-  <span class="nav-icon">👥</span><span>Follow Employees</span>
-</a>
+       
 
         <a href="{{ route('worker.reservations') }}" class="nav-item {{ request()->routeIs('worker.reservations*') ? 'active' : '' }}">
           <span class="nav-icon">✅</span><span>My Reservations</span>
@@ -65,6 +62,10 @@
         <a href="{{ route('worker.submissions') }}" class="nav-item {{ request()->routeIs('worker.submissions*') ? 'active' : '' }}">
           <span class="nav-icon">📝</span><span>Post-Event Submissions</span>
         </a>
+         <a href="{{ route('worker.follow.index') }}"
+   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
+  <span class="nav-icon">👥</span><span>Follow clients</span>
+</a>
       </nav>
 
       <nav class="nav-section">

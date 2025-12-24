@@ -71,6 +71,10 @@
             <span class="nav-icon">📝</span>
             <span>Post-Event Submissions</span>
         </a>
+         <a href="{{ route('worker.follow.index') }}"
+   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
+  <span class="nav-icon">👥</span><span>Follow clients</span>
+</a>
     </nav>
 
     <nav class="nav-section">

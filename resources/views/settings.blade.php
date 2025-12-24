@@ -301,6 +301,10 @@
                 <span class="nav-icon">📝</span>
                 <span>Post-Event Submissions</span>
             </a>
+             <a href="{{ route('worker.follow.index') }}"
+   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
+  <span class="nav-icon">👥</span><span>Follow clients</span>
+</a>
         </nav>
 
         <nav class="nav-section">
@@ -524,6 +528,9 @@
                class="nav-item">
               <span class="nav-icon">📝</span><span>Post-Event Reports</span>
             </a>
+            <a href="{{ route('content.index') }}" class="nav-item {{ request()->routeIs('employee.content.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Create Content</span>
+                </a>
           </div>
 
           <div class="nav-section">

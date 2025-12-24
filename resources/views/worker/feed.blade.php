@@ -49,15 +49,17 @@
       <a href="{{ route('worker.events.discover') }}" class="nav-item {{ request()->routeIs('worker.events.discover*') ? 'active' : '' }}">
         <span class="nav-icon">🗓️</span><span>Discover Events</span>
       </a>
-      <a href="{{ route('worker.follow.index') }}" class="nav-item {{ request()->routeIs('worker.follow.*') ? 'active' : '' }}">
-        <span class="nav-icon">👥</span><span>Follow Employees</span>
-      </a>
+      
       <a href="{{ route('worker.reservations') }}" class="nav-item {{ request()->routeIs('worker.reservations*') ? 'active' : '' }}">
         <span class="nav-icon">✅</span><span>My Reservations</span>
       </a>
       <a href="{{ route('worker.submissions') }}" class="nav-item {{ request()->routeIs('worker.submissions*') ? 'active' : '' }}">
         <span class="nav-icon">📝</span><span>Post-Event Submissions</span>
       </a>
+       <a href="{{ route('worker.follow.index') }}"
+   class="nav-item {{ request()->routeIs('worker.following.*') ? 'active' : '' }}">
+  <span class="nav-icon">👥</span><span>Follow clients</span>
+</a>
     </nav>
 
     <nav class="nav-section">
@@ -85,8 +87,8 @@
 
   <div id="feedPage">
     <header id="feedHeader">
-      <h2>Feed (From Employees You Follow)</h2>
-      <a id="goFollowBtn" href="{{ route('worker.follow.index') }}">Follow Employees</a>
+      <h2>Feed (From clients You Follow)</h2>
+      <a id="goFollowBtn" href="{{ route('worker.follow.index') }}">Follow clients</a>
     </header>
 
     <nav id="feedTabs">
@@ -178,13 +180,7 @@
           <button type="button" class="igArrow right" data-next="posts" aria-label="Next post">›</button>
         </div>
 
-        @if($posts->count())
-          <div class="igDots" data-dots="posts">
-            @foreach($posts as $i => $p)
-              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="posts" data-index="{{ $i }}"></button>
-            @endforeach
-          </div>
-        @endif
+      
       </section>
 
       {{-- REELS --}}
@@ -200,52 +196,56 @@
                 $commentsCount = $r->comments_count ?? ($r->comments->count() ?? 0);
               @endphp
 
-              <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="reels" data-index="{{ $i }}">
-                <div class="igTop">
-                  <div class="igTitle">Reel</div>
-                  <div class="igMeta">{{ optional($r->created_at)->format('Y-m-d H:i') }}</div>
-                </div>
+             <article class="igCard igReelCard {{ $i === 0 ? 'active' : '' }}" data-slide="reels" data-index="{{ $i }}">
+  {{-- Reel header (top-left like IG) --}}
+  <div class="reelHeader">
+    <div class="reelUser">
+      <div class="reelUserName">Reel</div>
+      <div class="reelMeta">{{ optional($r->created_at)->format('Y-m-d H:i') }}</div>
+    </div>
+  </div>
 
-                <div class="igMedia">
-                  @if($r->video_path)
-                    <video class="igVideo" controls>
-                      <source src="{{ asset('storage/' . ltrim($r->video_path,'/')) }}">
-                    </video>
-                  @else
-                    <div class="igMediaEmpty">No video</div>
-                  @endif
-                </div>
+  {{-- Reel viewport --}}
+  <div class="reelViewport">
+    @if($r->video_path)
+      <video class="reelVideo" controls playsinline>
+        <source src="{{ asset('storage/' . ltrim($r->video_path,'/')) }}">
+      </video>
+    @else
+      <div class="igMediaEmpty">No video</div>
+    @endif
 
-                {{-- ❤️ + 💬 actions --}}
-                <div class="igActions">
-                  <button type="button"
-                          class="igActionBtn igLikeBtn {{ $liked ? 'liked' : '' }}"
-                          data-like-type="reel"
-                          data-like-id="{{ $r->id }}"
-                          aria-label="Like">♥</button>
+    {{-- Right-side actions (IG style) --}}
+    <div class="reelSide">
+      <button type="button"
+              class="reelAction igLikeBtn {{ $liked ? 'liked' : '' }}"
+              data-like-type="reel"
+              data-like-id="{{ $r->id }}"
+              aria-label="Like">
+        <span class="reelIcon">♥</span>
+        <span class="reelCount" data-like-count="reel-{{ $r->id }}">{{ $likesCount }}</span>
+      </button>
 
-                  {{-- ✅ open modal comments --}}
-                  <button type="button"
-                          class="igActionBtn jsCommentOpen"
-                          data-type="reel"
-                          data-id="{{ $r->id }}"
-                          data-count-el="reel-comment-count-{{ $r->id }}"
-                          aria-label="Comments">💬</button>
+      <button type="button"
+              class="reelAction jsCommentOpen"
+              data-type="reel"
+              data-id="{{ $r->id }}"
+              data-count-el="reel-comment-count-{{ $r->id }}"
+              aria-label="Comments">
+        <span class="reelIcon">💬</span>
+        <span class="reelCount" id="reel-comment-count-{{ $r->id }}">{{ $commentsCount }}</span>
+      </button>
+    </div>
 
-                  <div class="igCounts">
-                    <span class="igLikeCount" data-like-count="reel-{{ $r->id }}">{{ $likesCount }}</span> likes ·
-                    <span id="reel-comment-count-{{ $r->id }}">{{ $commentsCount }}</span> comments
-                  </div>
-                </div>
+    {{-- Bottom caption --}}
+    <div class="reelBottom">
+      <div class="reelCaption">
+        {{ $r->caption ?: 'No caption' }}
+      </div>
+    </div>
+  </div>
+</article>
 
-                <div class="igBody">
-                  @if($r->caption)
-                    <div class="igText">{{ $r->caption }}</div>
-                  @else
-                    <div class="igText muted">No caption</div>
-                  @endif
-                </div>
-              </article>
             @empty
               <div class="emptyBox">No reels yet.</div>
             @endforelse
@@ -254,13 +254,7 @@
           <button type="button" class="igArrow right" data-next="reels" aria-label="Next reel">›</button>
         </div>
 
-        @if($reels->count())
-          <div class="igDots" data-dots="reels">
-            @foreach($reels as $i => $r)
-              <button type="button" class="dot {{ $i===0?'active':'' }}" data-go="reels" data-index="{{ $i }}"></button>
-            @endforeach
-          </div>
-        @endif
+       
       </section>
 
 {{-- STORIES --}}

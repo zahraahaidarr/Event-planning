@@ -974,3 +974,184 @@ body{
 }
 
 .storyBubble.seen .storyRing{ background: rgba(255,255,255,.25); }
+
+
+/* =========================================================
+   REELS — Instagram-style (center video + right stacked actions)
+========================================================= */
+
+.igReelCard{
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* full card area used by the reel viewer */
+.igReelCard .reelViewport{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+/* top-left header like IG */
+.igReelCard .reelHeader{
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.igReelCard .reelUserName{
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.igReelCard .reelMeta{
+  color: rgba(255,255,255,.75);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* video: vertical IG vibe */
+.igReelCard .reelVideo{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover; /* IG-style */
+  background: #000;
+}
+
+/* right side stacked actions */
+.igReelCard .reelSide{
+  position: absolute;
+  right: 12px;
+  bottom: 90px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.igReelCard .reelAction{
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  backdrop-filter: blur(6px);
+  transition: transform .15s ease, background .15s ease;
+}
+
+.igReelCard .reelAction:hover{
+  transform: translateY(-1px);
+  background: rgba(0,0,0,.45);
+}
+
+.igReelCard .reelIcon{
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.igReelCard .reelCount{
+  font-size: 11px;
+  font-weight: 900;
+  opacity: .9;
+}
+
+/* liked state uses your existing class */
+.igReelCard .igLikeBtn.liked{
+  color: var(--danger);
+  border-color: rgba(255,107,107,.35);
+  background: rgba(255,107,107,.14);
+}
+
+/* bottom caption area like IG */
+.igReelCard .reelBottom{
+  position: absolute;
+  left: 12px;
+  right: 74px; /* leave space for right buttons */
+  bottom: 12px;
+  z-index: 6;
+}
+
+.igReelCard .reelCaption{
+  color: rgba(255,255,255,.92);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.35;
+  text-shadow: 0 6px 18px rgba(0,0,0,.6);
+  max-width: 520px;
+}
+
+/* make reels viewport feel like a phone screen on desktop */
+#tab-reels .igViewport{
+  width: min(430px, 92vw);
+  height: 100%;
+}
+
+
+/* ================================
+   FIX REELS HEIGHT (no compression)
+================================ */
+#tab-reels .igStage{
+  align-items: center;
+  justify-content: center;
+}
+
+#tab-reels .igViewport{
+  /* phone-like frame */
+  height: min(82vh, 720px);
+  width: min(420px, 92vw);
+}
+
+/* reel container fills viewport */
+#tab-reels .igReelCard,
+#tab-reels .igReelCard .reelViewport{
+  height: 100%;
+}
+
+/* video must cover like IG (no squish) */
+#tab-reels .reelVideo{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+
+/* ================================
+   REELS ARROWS AT THE BOTTOM
+================================ */
+#tab-reels .igArrow{
+  top: auto;
+  bottom: 16px;
+  transform: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+}
+
+#tab-reels .igArrow.left{ left: calc(50% - 80px); }
+#tab-reels .igArrow.right{ right: calc(50% - 80px); }
+
+

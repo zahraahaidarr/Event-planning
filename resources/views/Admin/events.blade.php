@@ -112,84 +112,87 @@
         </aside>
     @else
         {{-- ========== EMPLOYEE SIDEBAR (same style as admin) ========== --}}
-        <aside class="sidebar">
-            @php($user = Auth::user())
+            {{-- Sidebar --}}
+    <aside class="sidebar">
+        @php($user = Auth::user())
 
-            <div class="logo">
-                <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
-                    @if($user && $user->avatar_path)
-                        <img
-                            src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
-                            alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
-                            class="logo-avatar"
-                        >
-                    @else
-                        <div class="logo-icon">
-                            {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
-                        </div>
-                    @endif
-
-                    <div class="logo-id">
-                        <div class="logo-name">
-                            {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
-                        </div>
-                        <div class="logo-role">
-                            Client
-                        </div>
+        <div class="logo">
+            <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="logo-link">
+                @if($user && $user->avatar_path)
+                    <img
+                        src="{{ asset('storage/' . ltrim($user->avatar_path, '/')) }}"
+                        alt="{{ $user->first_name ?? $user->name ?? 'Profile' }}"
+                        class="logo-avatar"
+                    >
+                @else
+                    <div class="logo-icon">
+                        {{ strtoupper(substr($user->first_name ?? $user->name ?? 'U', 0, 1)) }}
                     </div>
-                </a>
-            </div>
+                @endif
 
-            <nav class="nav-section">
+                <div class="logo-id">
+                    <div class="logo-name">
+                        {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
+                    </div>
+                    <div class="logo-role">Client</div>
+                </div>
+            </a>
+        </div>
+
+        <nav>
+            <div class="nav-section">
                 <a href="{{ Route::has('employee.dashboard') ? route('employee.dashboard') : '#' }}"
                    class="nav-item {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
                     <span class="nav-icon">📊</span><span>Dashboard</span>
                 </a>
 
                 <a href="{{ Route::has('events.index') ? route('events.index') : '#' }}"
-                   class="nav-item {{ request()->routeIs('events.index') ? 'active' : '' }}">
+                   class="nav-item {{ request()->routeIs('events.*') ? 'active' : '' }}">
                     <span class="nav-icon">📅</span><span>Event Management</span>
                 </a>
 
                 <a href="{{ route('employee.volunteer.assignment') }}"
-                   class="nav-item">
+                   class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
                     <span class="nav-icon">👥</span><span>Worker Assignment</span>
                 </a>
 
                 <a href="{{ route('employee.postEventReports.index') }}"
-                   class="nav-item">
+                   class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span><span>Post-Event Reports</span>
                 </a>
-            </nav>
+                <a href="{{ route('content.index') }}" class="nav-item {{ request()->routeIs('employee.content.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Create Content</span>
+                </a>
+            </div>
 
-            <nav class="nav-section">
+            <div class="nav-section">
                 <div class="nav-label">Communication</div>
 
                 <a href="{{ route('employee.messages') }}"
-                   class="nav-item">
+                   class="nav-item {{ request()->routeIs('employee.messages') ? 'active' : '' }}">
                     <span class="nav-icon">💬</span><span>Messages</span>
                 </a>
 
                 <a href="{{ route('announcements.create') }}"
-                   class="nav-item">
+                   class="nav-item {{ request()->routeIs('announcements.create') ? 'active' : '' }}">
                     <span class="nav-icon">📢</span><span>Send Announcement</span>
                 </a>
 
                 <a href="{{ Route::has('employee.announcements.index') ? route('employee.announcements.index') : '#' }}"
-                   class="nav-item">
+                   class="nav-item {{ request()->routeIs('employee.announcements.*') ? 'active' : '' }}">
                     <span class="nav-icon">📢</span><span>Announcements</span>
                 </a>
-            </nav>
+            </div>
 
-            <nav class="nav-section">
+            <div class="nav-section">
                 <div class="nav-label">Account</div>
-
                 <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
-                   class="nav-item">
-                    <span class="nav-icon">🔧</span><span>Settings</span>
+                   class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
+                    <span class="nav-icon">⚙️</span><span>Settings</span>
                 </a>
-            </nav>
-        </aside>
+            </div>
+        </nav>
+    </aside>
     @endif
 
 

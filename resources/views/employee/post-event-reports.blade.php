@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="app-container">
-    {{-- Sidebar --}}
+        {{-- Sidebar --}}
     <aside class="sidebar">
         @php($user = Auth::user())
 
@@ -34,9 +34,7 @@
                     <div class="logo-name">
                         {{ trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? 'User') }}
                     </div>
-                    <div class="logo-role">
-                        Client
-                    </div>
+                    <div class="logo-role">Client</div>
                 </div>
             </a>
         </div>
@@ -55,14 +53,15 @@
 
                 <a href="{{ route('employee.volunteer.assignment') }}"
                    class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span>
-                    <span>Worker Assignment</span>
+                    <span class="nav-icon">👥</span><span>Worker Assignment</span>
                 </a>
 
-                {{-- Post-Event Reports --}}
                 <a href="{{ route('employee.postEventReports.index') }}"
                    class="nav-item {{ request()->routeIs('employee.postEventReports.*') ? 'active' : '' }}">
                     <span class="nav-icon">📝</span><span>Post-Event Reports</span>
+                </a>
+                <a href="{{ route('content.index') }}" class="nav-item {{ request()->routeIs('employee.content.*') ? 'active' : '' }}">
+                    <span class="nav-icon">📝</span><span>Create Content</span>
                 </a>
             </div>
 
@@ -87,14 +86,12 @@
 
             <div class="nav-section">
                 <div class="nav-label">Account</div>
-
                 <a href="{{ Route::has('settings') ? route('settings') : '#' }}"
                    class="nav-item {{ request()->routeIs('settings') ? 'active' : '' }}">
                     <span class="nav-icon">⚙️</span><span>Settings</span>
                 </a>
             </div>
         </nav>
-
     </aside>
 
     <main class="main-content">

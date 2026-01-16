@@ -15,6 +15,7 @@ use App\Models\RoleType;
 use App\Models\EventCategory;
 use App\Models\Employee;
 use App\Services\Notify;
+use App\Models\Venue;
 
 
 class EventsController extends Controller
@@ -109,10 +110,15 @@ $eventsPayload = $events->map(function ($e) {
         'name' => $r->name,
     ]);
 
+    $venuesPayload = Venue::orderBy('name')->get([
+    'id', 'name', 'area_m2', 'city'
+    ]);
+
     return view('admin.events', [
         'eventsPayload'     => $eventsPayload,
         'categoriesPayload' => $categoriesPayload,
         'roleTypesPayload'  => $roleTypesPayload,
+        'venuesPayload'     => $venuesPayload,
     ]);
 }
 

@@ -11,6 +11,10 @@ const rolesFromBackend = Array.isArray(window.initialRoleTypes)
   ? window.initialRoleTypes
   : [];
 
+const venuesFromBackend = Array.isArray(window.initialVenues)
+  ? window.initialVenues
+  : [];
+
 // Use real DB values; fall back only if tables are empty
 let categoryList = categoriesFromBackend.length
   ? categoriesFromBackend.map(c => c.name)
@@ -241,8 +245,11 @@ function openCreateModal() {
   $('#eventForm').reset();
   $('#rolesContainer').innerHTML = '';
   ensureCategoryOptions();
+   ensureVenueOptions();   
   buildStep2CapacityRows();
   setWizardStep(1);
+  const area = $('#venue_area_m2');
+  if (area) area.value = '';
   $('#eventModal').classList.add('active');
 }
 
@@ -401,6 +408,8 @@ async function submitEvent(status = 'PUBLISHED') {
   fd.append('venue_area_m2', $('#venue_area_m2').value || 0);
   fd.append('expected_attendees', $('#expected_attendees').value || 0);
   fd.append('status', status);
+const venueVal = $('#venue_id').value || '';
+fd.append('venue_id', venueVal === 'other' ? '' : venueVal);
 
   fd.append('roles', JSON.stringify(roles));
 
@@ -643,6 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('.table').addEventListener('click', handleTableClicks);
 
   ensureCategoryOptions();
+  ensureVenueOptions();
+wireVenueAutoFill();
   buildStep2CapacityRows();
   wireTabs();
   renderEvents();
@@ -665,3 +676,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+function ensureVenueOptions() {
+  const sel = document.getElementById('venue_id');
+  if (!sel) return;
+
+  const venuesHtml = venuesFromBackend
+    .map(v => `<option value="${v.id}" data-area="${v.area_m2 ?? ''}">
+                ${v.name}${v.city ? ' • ' + v.city : ''}
+              </option>`)
+    .join('');
+
+  sel.innerHTML =
+    '<option value="">Select venue...</option>' +
+    venuesHtml +
+    '<option value="other">Other...</option>';
+}
+
+
+function wireVenueAutoFill() {
+  const sel  = document.getElementById('venue_id');
+  const area = document.getElementById('venue_area_m2');
+  if (!sel || !area) return;
+
+  const setAreaMode = (mode) => {
+    if (mode === 'manual') {
+      area.readOnly = false;
+      area.placeholder = 'Enter area...';
+      area.value = ''; // clear
+    } else {
+      area.readOnly = true;
+      area.placeholder = 'Auto-filled';
+    }
+  };
+
+  // default state
+  setAreaMode('auto');
+
+  sel.addEventListener('change', () => {
+    const val = sel.value;
+
+    // ✅ If Other -> manual input
+    if (val === 'other') {
+      setAreaMode('manual');
+      return;
+    }
+
+    // ✅ If empty -> reset
+    if (!val) {
+      area.value = '';
+      setAreaMode('auto');
+      return;
+    }
+
+    // ✅ Normal venue -> auto fill + readonly
+    const opt = sel.options[sel.selectedIndex];
+    const a = opt ? opt.getAttribute('data-area') : '';
+    area.value = a || '';
+    setAreaMode('auto');
+  });
+}
+

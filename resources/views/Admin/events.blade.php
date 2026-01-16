@@ -257,22 +257,33 @@
         <form id="eventForm">
           <!-- STEP 1 -->
           <section id="step1" class="step active">
-            <h3 class="h3">Event Space & Auto-Staffing</h3>
-            <div class="grid2">
-              <div class="field">
-                <label>Venue Area (m²)</label>
-                <input id="venue_area_m2" type="number" min="0" placeholder="e.g., 450">
-              </div>
-              <div class="field">
-                <label>Expected Attendees</label>
-                <input id="expected_attendees" type="number" min="0" placeholder="e.g., 1200">
-              </div>
-              <div class="field full">
-                <label>Event Category</label>
-                <select id="wizard_event_category" class="form-select"></select>
-              </div>
-            </div>
-          </section>
+  <h3 class="h3">Event Space & Auto-Staffing</h3>
+
+  <div class="grid2">
+    <div class="field full">
+      <label>Venue</label>
+      <select id="venue_id" class="form-select">
+        <option value="">Select venue...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Venue Area (m²)</label>
+      <input id="venue_area_m2" type="number" min="0" placeholder="Auto-filled" readonly>
+    </div>
+
+    <div class="field">
+      <label>Expected Attendees</label>
+      <input id="expected_attendees" type="number" min="0" placeholder="e.g., 1200">
+    </div>
+
+    <div class="field full">
+      <label>Event Category</label>
+      <select id="wizard_event_category" class="form-select"></select>
+    </div>
+  </div>
+</section>
+
 
           <!-- STEP 2 -->
           <section id="step2" class="step">
@@ -387,6 +398,7 @@
     window.initialEvents     = @json($eventsPayload);
     window.initialCategories = @json($categoriesPayload);
     window.initialRoleTypes  = @json($roleTypesPayload);
+    window.initialVenues = @json($venuesPayload);
   </script>
 
   <script src="{{ asset('js/admin/events.js') }}"></script>

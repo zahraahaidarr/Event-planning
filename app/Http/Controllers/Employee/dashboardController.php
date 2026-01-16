@@ -19,6 +19,55 @@ class DashboardController extends Controller
         $employeeId  = $employeeRow->employee_id ?? null;
 
         $createdByIds = $employeeId ? [$userId, $employeeId] : [$userId];
+        // 0) Monthly chart data (last 12 months): Completed vs Not Completed
+$startMonth = $now->copy()->startOfMonth()->subMonths(11);
+$endMonth   = $now->copy()->endOfMonth();
+
+// Total events per month (by event start date)
+$eventsPerMonth = DB::table('events as e')
+    ->whereIn('e.created_by', $createdByIds)
+    ->whereNotNull('e.starts_at')
+    ->whereBetween('e.starts_at', [$startMonth, $endMonth])
+    ->selectRaw("DATE_FORMAT(e.starts_at, '%Y-%m') as ym, COUNT(*) as total")
+    ->groupBy('ym')
+    ->pluck('total', 'ym');
+
+// Completed events per month (distinct event_id that has COMPLETED reservation)
+$completedPerMonth = DB::table('workers_reservations as wr')
+    ->join('events as e', 'e.event_id', '=', 'wr.event_id')
+    ->whereIn('e.created_by', $createdByIds)
+    ->whereNotNull('e.starts_at')
+    ->whereBetween('e.starts_at', [$startMonth, $endMonth])
+    ->where('wr.status', 'COMPLETED')
+    ->selectRaw("DATE_FORMAT(e.starts_at, '%Y-%m') as ym, COUNT(DISTINCT wr.event_id) as completed")
+    ->groupBy('ym')
+    ->pluck('completed', 'ym');
+
+// Build fixed 12-month timeline with zeros
+$labels = [];
+$completedSeries = [];
+$notCompletedSeries = [];
+
+$cursor = $startMonth->copy();
+for ($i = 0; $i < 12; $i++) {
+    $ym = $cursor->format('Y-m');
+    $labels[] = $cursor->format('M Y');
+
+    $total = (int)($eventsPerMonth[$ym] ?? 0);
+    $comp  = (int)($completedPerMonth[$ym] ?? 0);
+
+    $completedSeries[] = $comp;
+    $notCompletedSeries[] = max($total - $comp, 0);
+
+    $cursor->addMonth();
+}
+
+$eventsMonthlyChart = [
+    'labels' => $labels,
+    'completed' => $completedSeries,
+    'notCompleted' => $notCompletedSeries,
+];
+
 
         // 1) Total events created by this employee
         $totalEvents = DB::table('events')
@@ -258,6 +307,7 @@ $recentActivity = array_slice($recentActivity, 0, 3);
             'tasks' => $tasks,
             'tasksCount' => $tasksCount,
             'recentActivity' => $recentActivity,
+            'eventsMonthlyChart' => $eventsMonthlyChart,
 
             // keep if blade still references it somewhere
             'activeEvents'         => 0,

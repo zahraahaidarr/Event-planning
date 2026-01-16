@@ -21,12 +21,15 @@
             'upcomingEvents'  => $upcomingEvents ?? [],
             'tasks'           => $tasks ?? [],
             'recentActivity'  => $recentActivity ?? [],
+            'eventsMonthlyChart' => $eventsMonthlyChart ?? null,
+
         ];
     @endphp
 
     <script>
         window.dashboardData = {{ \Illuminate\Support\Js::from($dashboardData) }};
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="{{ asset('js/employee/dashboard.js') }}" defer></script>
 </head>
@@ -140,45 +143,38 @@
 
         {{-- Stats --}}
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-label">Total Events</span>
-                    <div class="stat-icon" style="background:rgba(79,124,255,.15);color:var(--primary)">📅</div>
-                </div>
-                <div class="stat-value">{{ $totalEvents }}</div>
-                <div class="stat-change positive"><span>•</span><span>All events created by you</span></div>
-            </div>
+            <div class="stat-card" style="grid-column: span 2;">
+    <div class="stat-header">
+        <span class="stat-label">Events Overview</span>
+    </div>
+
+    <div style="height:220px;">
+        <canvas id="eventsLineChart"></canvas>
+
+    </div>
+
+    <div class="stat-change positive" style="margin-top:10px;">
+        <span>Completed: {{ $completedEvents }}</span>
+        <span>•</span>
+        <span>Not completed: {{ max(($totalEvents - $completedEvents), 0) }}</span>
+    </div>
+</div>
+
 
             <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-label">Completed Events</span>
-                    <div class="stat-icon" style="background:rgba(54,211,153,.15);color:var(--success)">✅</div>
-                </div>
-                <div class="stat-value">{{ $completedEvents }}</div>
-                <div class="stat-change positive"><span>•</span><span>Events Done</span></div>
-            </div>
+    <div class="stat-header">
+        <span class="stat-label">Workers Overview</span>
+    </div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-label">Total Workers</span>
-                    <div class="stat-icon" style="background:rgba(156,108,255,.15);color:var(--accent)">👥</div>
-                </div>
-                <div class="stat-value">{{ $totalPeople }}</div>
-                <div class="stat-change positive">
-                    <span>Vol: {{ $totalVolunteersOnly }}</span>
-                    <span>•</span>
-                    <span>Paid: {{ $totalPaidWorkersOnly }}</span>
-                </div>
-            </div>
+    <div style="height:180px;">
+        <canvas id="workersPieChart"></canvas>
+    </div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-label">Pending Reports</span>
-                    <div class="stat-icon" style="background:rgba(244,191,80,.15);color:var(--warning)">📝</div>
-                </div>
-                <div class="stat-value">{{ $pendingReports }}</div>
-                <div class="stat-change negative"><span>•</span><span>Pending submissions for your events</span></div>
-            </div>
+    
+</div>
+
+
+            
         </div>
 
         {{-- Upcoming / Tasks --}}

@@ -1,3 +1,9 @@
+function cssVar(name) {
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+}
+
 function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -149,4 +155,97 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('');
         }
     }
+// ---------------- Events Line Chart ----------------
+const chartCanvas = document.getElementById('eventsLineChart');
+const monthly = data.eventsMonthlyChart;
+
+if (chartCanvas && monthly && Array.isArray(monthly.labels)) {
+
+    const primary = cssVar('--primary'); // Create Event blue
+    const danger  = cssVar('--danger');  // Logout red
+
+    new Chart(chartCanvas, {
+        type: 'line',
+        data: {
+            labels: monthly.labels,
+            datasets: [
+                {
+                    label: 'Completed',
+                    data: monthly.completed || [],
+                    borderColor: primary,
+                    backgroundColor: primary + '33',
+                    pointBackgroundColor: primary,
+                    tension: 0.35,
+                },
+                {
+                    label: 'Not Completed',
+                    data: monthly.notCompleted || [],
+                    borderColor: danger,
+                    backgroundColor: danger + '33',
+                    pointBackgroundColor: danger,
+                    tension: 0.35,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: cssVar('--text') }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: cssVar('--muted') },
+                    grid: { color: 'rgba(255,255,255,0.08)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: cssVar('--muted'), precision: 0 },
+                    grid: { color: 'rgba(255,255,255,0.08)' }
+                }
+            }
+        }
+    });
+}
+
+// ---------------- Workers Pie Chart ----------------
+const workersCanvas = document.getElementById('workersPieChart');
+
+if (workersCanvas) {
+    const volunteers = Number(data.totalVolunteersOnly || 0);
+    const paid       = Number(data.totalPaidWorkersOnly || 0);
+
+    const primary = cssVar('--primary'); // blue
+    const danger  = cssVar('--danger');  // red
+
+    new Chart(workersCanvas, {
+        type: 'pie',
+        data: {
+            labels: ['Volunteers', 'Paid'],
+            datasets: [{
+                data: [volunteers, paid],
+                backgroundColor: [primary, danger],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: cssVar('--text'),
+                        font: { weight: '600' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+
 });

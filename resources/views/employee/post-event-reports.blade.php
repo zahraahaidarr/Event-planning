@@ -53,7 +53,7 @@
 
                 <a href="{{ route('employee.volunteer.assignment') }}"
                    class="nav-item {{ request()->routeIs('employee.volunteer.assignment') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span><span>Worker Assignment</span>
+                    <span class="nav-icon">👥</span><span>Worker Application</span>
                 </a>
 
                 <a href="{{ route('employee.postEventReports.index') }}"

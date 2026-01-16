@@ -521,7 +521,7 @@
 
             <a href="{{ Route::has('volunteers.assign') ? route('volunteers.assign') : '#' }}"
                class="nav-item {{ request()->routeIs('volunteers.assign') ? 'active' : '' }}">
-              <span class="nav-icon">👥</span><span>Worker Assignment</span>
+              <span class="nav-icon">👥</span><span>Worker Application</span>
             </a>
 
             <a href="{{ route('employee.postEventReports.index') }}"

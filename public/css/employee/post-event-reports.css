@@ -696,3 +696,7 @@ input[type="text"]:focus {
     color: var(--muted);
 }
 
+
+.pagination-wrapper {
+  display: none;
+}

@@ -68,7 +68,7 @@
 
                 <a href="{{ route('employee.volunteer.assignment') }}"
                    class="nav-item {{ request()->routeIs('volunteers.assign') ? 'active' : '' }}">
-                    <span class="nav-icon">👥</span><span>Worker Assignment</span>
+                    <span class="nav-icon">👥</span><span>Worker Application</span>
                 </a>
 
                 <a href="{{ route('employee.postEventReports.index') }}"
@@ -247,7 +247,7 @@
                 <label>Audience</label>
                 <select name="audience" required>
                     <option value="workers"   {{ old('audience')==='workers' ? 'selected' : '' }}>Workers</option>
-                    <option value="employees" {{ old('audience')==='employees' ? 'selected' : '' }}>Employees</option>
+                    <option value="employees" {{ old('audience')==='employees' ? 'selected' : '' }}>Clients</option>
                     <option value="both"      {{ old('audience')==='both' ? 'selected' : '' }}>Both</option>
                 </select>
 

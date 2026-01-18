@@ -39,14 +39,17 @@ $events = Event::query()
 
 
         // Posts (with like/comment counts + whether current user liked)
-        $posts = EmployeePost::query()
-            ->whereIn('employee_user_id', $followedUserIds)
-            ->withCount(['likes', 'comments'])
-            ->with(['likes' => function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            }])
-            ->latest('created_at')
-            ->get();
+$posts = EmployeePost::query()
+    ->whereIn('employee_user_id', $followedUserIds)
+    ->withCount(['likes', 'comments'])
+    ->with(['likes' => function ($q) use ($user) {
+        $q->where('user_id', $user->id);
+    }])
+    ->latest('created_at')
+    ->get();
+
+
+
 
         // Reels (with like/comment counts + whether current user liked)
         $reels = EmployeeReel::query()

@@ -14,11 +14,25 @@ use App\Models\EmployeeStory;
 use App\Models\Comment;
 use App\Services\AiEventGuard;
 
+use App\Models\Event;
+use App\Models\Employee;
+
 class ContentController extends Controller
 {
     public function index(Request $request)
     {
         $userId = $request->user()->id;
+
+        // ✅ Get employee_id (your employees table doesn't have "id")
+        $employeeId = Employee::where('user_id', $userId)->value('employee_id');
+
+        // ✅ Load events created by this employee
+        $events = collect();
+        if ($employeeId) {
+            $events = Event::where('created_by', $employeeId)
+                ->orderByDesc('starts_at')
+                ->get(['event_id', 'title']);
+        }
 
         // ✅ Posts + reels: count likes/comments WITHOUT changing normal data
         $posts = EmployeePost::where('employee_user_id', $userId)
@@ -42,12 +56,10 @@ class ContentController extends Controller
                 'posts' => $posts->map(function ($p) {
                     return [
                         'id' => $p->id,
-                        'title' => $p->title,
+                        'title' => $p->title, // (kept for your feed rendering, even if you no longer input title)
                         'content' => $p->content,
                         'media_url' => $p->media_path ? asset('storage/' . $p->media_path) : null,
                         'created_at_formatted' => optional($p->created_at)->format('Y-m-d H:i'),
-
-                        // ✅ NEW (for stats)
                         'likes_count' => (int) ($p->likes_count ?? 0),
                         'comments_count' => (int) ($p->comments_count ?? 0),
                     ];
@@ -59,14 +71,11 @@ class ContentController extends Controller
                         'caption' => $r->caption,
                         'video_url' => $r->video_path ? asset('storage/' . $r->video_path) : null,
                         'created_at_formatted' => optional($r->created_at)->format('Y-m-d H:i'),
-
-                        // ✅ NEW (for stats)
                         'likes_count' => (int) ($r->likes_count ?? 0),
                         'comments_count' => (int) ($r->comments_count ?? 0),
                     ];
                 })->values(),
 
-                // ✅ Stories unchanged
                 'stories' => $stories->map(function ($s) {
                     $path = $s->media_path ?? '';
                     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
@@ -83,15 +92,9 @@ class ContentController extends Controller
             ]);
         }
 
-        return view('employee.content', compact('posts', 'reels', 'stories'));
+        return view('employee.content', compact('posts', 'reels', 'stories', 'events'));
     }
 
-    /**
-     * ✅ NEW: return comments for a post or reel (JSON)
-     * Route example:
-     * GET /employee/content/comments?type=post&id=4
-     * GET /employee/content/comments?type=reel&id=1
-     */
     public function comments(Request $request)
     {
         $userId = $request->user()->id;
@@ -119,7 +122,6 @@ class ContentController extends Controller
 
         $comments = Comment::where('commentable_type', $commentableType)
             ->where('commentable_id', $commentableId)
-            // ✅ your users table doesn't have `name`, so only select first_name/last_name
             ->with(['user:id,first_name,last_name'])
             ->latest()
             ->get()
@@ -143,17 +145,32 @@ class ContentController extends Controller
         ]);
     }
 
-    // -------------------- your store methods (UNCHANGED) --------------------
-
     public function storePost(Request $request, AiEventGuard $ai)
     {
         $userId = $request->user()->id;
 
+        // ✅ Get employee_id for ownership check (created_by is employee_id)
+        $employeeId = Employee::where('user_id', $userId)->value('employee_id');
+        if (!$employeeId) {
+            return back()->withErrors(['event_id' => 'Employee profile not found.'])->withInput();
+        }
+
         $data = $request->validate([
-            'title'   => ['required', 'string', 'max:120'],
-            'content' => ['required', 'string', 'max:5000'],
-            'media'   => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'event_id' => ['required', 'integer'],
+            'content'  => ['required', 'string', 'max:5000'],
+            'media'    => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
+
+        // ✅ Ensure selected event belongs to this employee
+        $eventOk = Event::where('event_id', $data['event_id'])
+            ->where('created_by', $employeeId)
+            ->exists();
+
+        if (!$eventOk) {
+            return back()->withErrors([
+                'event_id' => 'Invalid event selection.',
+            ])->withInput();
+        }
 
         $tempPath = null;
         if ($request->hasFile('media')) {
@@ -187,11 +204,12 @@ class ContentController extends Controller
             $finalPath = str_replace('temp/employee_posts', 'employee_posts', $tempPath);
             Storage::disk('public')->move($tempPath, $finalPath);
         }
+$eventTitle = Event::where('event_id', $data['event_id'])->value('title');
 
         EmployeePost::create([
             'employee_user_id' => $userId,
             'category_id'      => $result['category_id'],
-            'title'            => $data['title'],
+            'title'            => $eventTitle, 
             'content'          => $data['content'],
             'media_path'       => $finalPath,
         ]);

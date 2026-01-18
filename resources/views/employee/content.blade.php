@@ -137,9 +137,29 @@
 
           <div class="grid">
             <div class="field">
-              <label>Title</label>
-              <input name="title" type="text" placeholder="Post title..." required>
-            </div>
+  <label>Event</label>
+
+  <select name="event_id" required>
+    <option value="" disabled selected>Select your event...</option>
+
+    @forelse($events as $ev)
+      <option value="{{ $ev->event_id }}" {{ old('event_id') == $ev->event_id ? 'selected' : '' }}>
+        {{ $ev->title }} (ID: {{ $ev->event_id }})
+      </option>
+    @empty
+      {{-- no options --}}
+    @endforelse
+  </select>
+
+  @if($events->isEmpty())
+    <div class="muted" style="margin-top:8px;">
+      You have no events yet. Create an event first.
+    </div>
+  @endif
+</div>
+
+
+
 
             <div class="field">
               <label>Media (optional image)</label>

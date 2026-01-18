@@ -162,7 +162,7 @@
 
               <article class="igCard {{ $i === 0 ? 'active' : '' }}" data-slide="posts" data-index="{{ $i }}">
                 <div class="igTop">
-                  <div class="igTitle">{{ $p->title }}</div>
+                  <div class="igTitle">{{ $p->title ?? 'Event' }}</div>
                   <div class="igMeta">{{ $p->created_at?->format('Y-m-d H:i') }}</div>
                 </div>
 

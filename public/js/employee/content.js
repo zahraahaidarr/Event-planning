@@ -3,6 +3,7 @@
   const page = document.getElementById('contentPage');
 
   const apiUrl = page?.dataset.api;
+  const commentsUrl = page?.dataset.commentsUrl; // ✅ NEW
   const postTpl = page?.dataset.deletePostTemplate || '';
   const reelTpl = page?.dataset.deleteReelTemplate || '';
   const storyTpl = page?.dataset.deleteStoryTemplate || '';
@@ -11,7 +12,7 @@
   const reelsList = document.getElementById('reelsList');
   const storiesList = document.getElementById('storiesList');
 
-  // Tabs
+  // ---------------- Tabs ----------------
   document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -23,7 +24,7 @@
     });
   });
 
-  // Helpers
+  // ---------------- Helpers ----------------
   const esc = (s) => (s ?? '').toString()
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -75,13 +76,110 @@
     });
   };
 
-  // Make list a grid
   const ensureGrid = (el) => {
     if (!el) return;
     el.classList.add('items', 'gridCards');
   };
 
-  // Render POSTS (grid cards)
+  // ---------------- Comments Modal ----------------
+  const modal = document.getElementById('commentsModal');
+  const modalBody = document.getElementById('commentsModalBody');
+
+  const openModal = () => {
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeModal = () => {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  };
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target?.dataset?.close === '1') closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+    });
+  }
+
+  const renderComments = (comments) => {
+    if (!modalBody) return;
+
+    if (!comments?.length) {
+      modalBody.innerHTML = `<div class="muted">No comments yet.</div>`;
+      return;
+    }
+
+    modalBody.innerHTML = comments.map(c => `
+      <div class="cItem">
+        <div class="cTop">
+          <div class="cName">${esc(c.user_name || 'User')}</div>
+          <div class="cDate">${esc(c.created_at_formatted || '')}</div>
+        </div>
+        <div class="cText">${esc(c.body || '')}</div>
+      </div>
+    `).join('');
+  };
+
+  const loadComments = async (type, id) => {
+    if (!commentsUrl || !modalBody) return;
+
+    modalBody.innerHTML = `<div class="muted">Loading...</div>`;
+    openModal();
+
+    try {
+      const url = new URL(commentsUrl, window.location.origin);
+      url.searchParams.set('type', type);
+      url.searchParams.set('id', id);
+
+      const res = await fetch(url.toString(), {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        modalBody.innerHTML = `<div class="muted">Failed to load comments.</div><pre class="muted" style="white-space:pre-wrap">${esc(txt)}</pre>`;
+        return;
+      }
+
+      const data = await res.json();
+      renderComments(data.comments || []);
+    } catch (e) {
+      modalBody.innerHTML = `<div class="muted">Network error while loading comments.</div>`;
+    }
+  };
+
+  // Event delegation: click on 💬
+  const bindCommentClicks = (root) => {
+    if (!root) return;
+
+    root.querySelectorAll('.js-comments').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        const id = btn.dataset.id;
+        if (!type || !id) return;
+        loadComments(type, id);
+      });
+    });
+  };
+
+  // ---------------- Stats UI ----------------
+  const renderStats = (type, id, likes, comments) => {
+    const l = Number(likes || 0);
+    const c = Number(comments || 0);
+    return `
+      <div class="feedStats">
+        <span class="statItem">❤️ ${l}</span>
+        <button type="button" class="statItem statBtn js-comments" data-type="${esc(type)}" data-id="${esc(id)}">💬 ${c}</button>
+      </div>
+    `;
+  };
+
+  // ---------------- Render POSTS ----------------
   const renderPosts = (posts) => {
     ensureGrid(postsList);
 
@@ -111,14 +209,17 @@
           </div>
 
           <div class="feedText">${esc(p.content)}</div>
+
+          ${renderStats('post', p.id, p.likes_count, p.comments_count)}
         </div>
       </article>
     `).join('');
 
     bindDelete(postsList);
+    bindCommentClicks(postsList); // ✅ NEW
   };
 
-  // Render REELS (grid cards, video not cropped)
+  // ---------------- Render REELS ----------------
   const renderReels = (reels) => {
     ensureGrid(reelsList);
 
@@ -149,15 +250,21 @@
             </div>
           </div>
 
-          ${r.caption ? `<div class="feedSubText">${esc(r.caption)}</div>` : `<div class="feedSubText muted">No caption</div>`}
+          ${r.caption
+            ? `<div class="feedSubText">${esc(r.caption)}</div>`
+            : `<div class="feedSubText muted">No caption</div>`
+          }
+
+          ${renderStats('reel', r.id, r.likes_count, r.comments_count)}
         </div>
       </article>
     `).join('');
 
     bindDelete(reelsList);
+    bindCommentClicks(reelsList); // ✅ NEW
   };
 
-  // Render STORIES (grid cards, image/video not cropped)
+  // ---------------- Render STORIES ----------------
   const renderStories = (stories) => {
     ensureGrid(storiesList);
 
@@ -200,7 +307,7 @@
     bindDelete(storiesList);
   };
 
-  // Load JSON
+  // ---------------- Load JSON ----------------
   const load = async () => {
     if (!apiUrl) return;
 

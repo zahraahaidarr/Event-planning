@@ -97,7 +97,8 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
     Route::post('/employee/content/posts',   [ContentController::class, 'storePost'])->name('content.posts.store');
     Route::post('/employee/content/reels',   [ContentController::class, 'storeReel'])->name('content.reels.store');
     Route::post('/employee/content/stories', [ContentController::class, 'storeStory'])->name('content.stories.store');
-
+    Route::get('/employee/content/comments', [ContentController::class, 'comments'])
+    ->name('employee.content.comments');
     // Delete
     Route::delete('/employee/content/posts/{post}',   [ContentController::class, 'destroyPost'])->name('content.posts.destroy');
     Route::delete('/employee/content/reels/{reel}',   [ContentController::class, 'destroyReel'])->name('content.reels.destroy');

@@ -95,6 +95,7 @@
   <main class="main-content"
         id="contentPage"
         data-api="{{ url('/employee/content') }}"
+              data-comments-url="{{ url('/employee/content/comments') }}"
         data-delete-post-template="{{ url('/employee/content/posts') }}/:id"
         data-delete-reel-template="{{ url('/employee/content/reels') }}/:id"
         data-delete-story-template="{{ url('/employee/content/stories') }}/:id"
@@ -205,6 +206,21 @@
     </div>
   </main>
 </div>
+<div id="commentsModal" class="cModal hidden" aria-hidden="true">
+  <div class="cModalOverlay" data-close="1"></div>
+
+  <div class="cModalBox" role="dialog" aria-modal="true">
+    <div class="cModalHeader">
+      <div class="cModalTitle">Comments</div>
+      <button type="button" class="cModalClose" data-close="1">✕</button>
+    </div>
+
+    <div id="commentsModalBody" class="cModalBody">
+      <div class="muted">Loading...</div>
+    </div>
+  </div>
+</div>
+
 
 <script src="{{ asset('js/employee/content.js') }}"></script>
 </body>

@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Models\EmployeePost;
 use App\Models\EmployeeReel;
 use App\Models\EmployeeStory;
+use App\Models\Comment;
 use App\Services\AiEventGuard;
 
 class ContentController extends Controller
@@ -19,10 +20,23 @@ class ContentController extends Controller
     {
         $userId = $request->user()->id;
 
-        $posts   = EmployeePost::where('employee_user_id', $userId)->latest()->get();
-        $reels   = EmployeeReel::where('employee_user_id', $userId)->latest()->get();
-        $stories = EmployeeStory::where('employee_user_id', $userId)->latest()->get();
+        // ✅ Posts + reels: count likes/comments WITHOUT changing normal data
+        $posts = EmployeePost::where('employee_user_id', $userId)
+            ->withCount(['likes', 'comments'])
+            ->latest()
+            ->get();
 
+        $reels = EmployeeReel::where('employee_user_id', $userId)
+            ->withCount(['likes', 'comments'])
+            ->latest()
+            ->get();
+
+        // ✅ Stories: keep same (no likes/comments)
+        $stories = EmployeeStory::where('employee_user_id', $userId)
+            ->latest()
+            ->get();
+
+        // JSON response for your JS
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([
                 'posts' => $posts->map(function ($p) {
@@ -32,6 +46,10 @@ class ContentController extends Controller
                         'content' => $p->content,
                         'media_url' => $p->media_path ? asset('storage/' . $p->media_path) : null,
                         'created_at_formatted' => optional($p->created_at)->format('Y-m-d H:i'),
+
+                        // ✅ NEW (for stats)
+                        'likes_count' => (int) ($p->likes_count ?? 0),
+                        'comments_count' => (int) ($p->comments_count ?? 0),
                     ];
                 })->values(),
 
@@ -41,9 +59,14 @@ class ContentController extends Controller
                         'caption' => $r->caption,
                         'video_url' => $r->video_path ? asset('storage/' . $r->video_path) : null,
                         'created_at_formatted' => optional($r->created_at)->format('Y-m-d H:i'),
+
+                        // ✅ NEW (for stats)
+                        'likes_count' => (int) ($r->likes_count ?? 0),
+                        'comments_count' => (int) ($r->comments_count ?? 0),
                     ];
                 })->values(),
 
+                // ✅ Stories unchanged
                 'stories' => $stories->map(function ($s) {
                     $path = $s->media_path ?? '';
                     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
@@ -63,6 +86,65 @@ class ContentController extends Controller
         return view('employee.content', compact('posts', 'reels', 'stories'));
     }
 
+    /**
+     * ✅ NEW: return comments for a post or reel (JSON)
+     * Route example:
+     * GET /employee/content/comments?type=post&id=4
+     * GET /employee/content/comments?type=reel&id=1
+     */
+    public function comments(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $data = $request->validate([
+            'type' => ['required', 'in:post,reel'],
+            'id'   => ['required', 'integer'],
+        ]);
+
+        if ($data['type'] === 'post') {
+            $item = EmployeePost::findOrFail($data['id']);
+            if ((int)$item->employee_user_id !== (int)$userId) {
+                abort(403, 'Unauthorized');
+            }
+            $commentableType = EmployeePost::class;
+            $commentableId = $item->id;
+        } else {
+            $item = EmployeeReel::findOrFail($data['id']);
+            if ((int)$item->employee_user_id !== (int)$userId) {
+                abort(403, 'Unauthorized');
+            }
+            $commentableType = EmployeeReel::class;
+            $commentableId = $item->id;
+        }
+
+        $comments = Comment::where('commentable_type', $commentableType)
+            ->where('commentable_id', $commentableId)
+            // ✅ your users table doesn't have `name`, so only select first_name/last_name
+            ->with(['user:id,first_name,last_name'])
+            ->latest()
+            ->get()
+            ->map(function ($c) {
+                $u = $c->user;
+                $name = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
+                if ($name === '') $name = 'User #' . $c->user_id;
+
+                return [
+                    'id' => $c->id,
+                    'user_name' => $name,
+                    'body' => $c->body,
+                    'created_at_formatted' => optional($c->created_at)->format('Y-m-d H:i'),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'ok' => true,
+            'comments' => $comments,
+        ]);
+    }
+
+    // -------------------- your store methods (UNCHANGED) --------------------
+
     public function storePost(Request $request, AiEventGuard $ai)
     {
         $userId = $request->user()->id;
@@ -73,28 +155,17 @@ class ContentController extends Controller
             'media'   => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        // 1) TEMP upload (so we can delete if rejected)
         $tempPath = null;
         if ($request->hasFile('media')) {
             $tempPath = $request->file('media')->store('temp/employee_posts', 'public');
         }
 
-        // 2) AI check
-       $result = $ai->check("Post upload", $tempPath);
+        $result = $ai->check("Post upload", $tempPath);
 
-
-        // AI errors
         if (($result['related'] ?? null) === null || ($result['reason'] ?? '') !== '') {
-            // If it's a normal "not related", we handle below.
-            // Here we only catch technical issues:
             $techReasons = [
-                'ai_unreachable',
-                'image_too_large_for_ai',
-                'ai_http_error',
-                'ai_bad_json',
-                'ai_missing_output',
-                'bad_ai_format',
-                'file_missing',
+                'ai_unreachable','image_too_large_for_ai','ai_http_error','ai_bad_json',
+                'ai_missing_output','bad_ai_format','file_missing',
             ];
 
             if (in_array(($result['reason'] ?? ''), $techReasons, true)) {
@@ -103,7 +174,6 @@ class ContentController extends Controller
             }
         }
 
-        // Not related
         if (!($result['related'] ?? false) || empty($result['category_id'])) {
             if ($tempPath) Storage::disk('public')->delete($tempPath);
 
@@ -112,14 +182,12 @@ class ContentController extends Controller
             ])->withInput();
         }
 
-        // 3) Move to final
         $finalPath = null;
         if ($tempPath) {
             $finalPath = str_replace('temp/employee_posts', 'employee_posts', $tempPath);
             Storage::disk('public')->move($tempPath, $finalPath);
         }
 
-        // 4) Publish
         EmployeePost::create([
             'employee_user_id' => $userId,
             'category_id'      => $result['category_id'],
@@ -140,20 +208,17 @@ class ContentController extends Controller
             'video'   => ['required', 'file', 'mimes:mp4,mov,webm', 'max:51200'],
         ]);
 
-        // TEMP upload
         $tempVideo = $request->file('video')->store('temp/employee_reels', 'public');
 
         $captionText = trim($data['caption'] ?? '');
         $result = $ai->check("Reel caption:\n" . $captionText, null);
 
-        // Technical AI errors
         $techReasons = ['ai_unreachable', 'ai_http_error', 'ai_bad_json', 'ai_missing_output', 'bad_ai_format'];
         if (in_array(($result['reason'] ?? ''), $techReasons, true)) {
             Storage::disk('public')->delete($tempVideo);
             return $this->handleAiFailure('video', $result, true);
         }
 
-        // Not related
         if (!($result['related'] ?? false) || empty($result['category_id'])) {
             Storage::disk('public')->delete($tempVideo);
 
@@ -162,7 +227,6 @@ class ContentController extends Controller
             ])->withInput();
         }
 
-        // Move to final
         $finalPath = str_replace('temp/employee_reels', 'employee_reels', $tempVideo);
         Storage::disk('public')->move($tempVideo, $finalPath);
 
@@ -185,7 +249,6 @@ class ContentController extends Controller
             'expires_at' => ['nullable', 'date'],
         ]);
 
-        // TEMP upload
         $tempPath = $request->file('media')->store('temp/employee_stories', 'public');
 
         $ext = strtolower($request->file('media')->getClientOriginalExtension());
@@ -200,22 +263,15 @@ class ContentController extends Controller
 
         $result = $ai->check("Story upload", $tempPath);
 
-        // Technical AI errors
         $techReasons = [
-            'ai_unreachable',
-            'image_too_large_for_ai',
-            'ai_http_error',
-            'ai_bad_json',
-            'ai_missing_output',
-            'bad_ai_format',
-            'file_missing',
+            'ai_unreachable','image_too_large_for_ai','ai_http_error','ai_bad_json',
+            'ai_missing_output','bad_ai_format','file_missing',
         ];
         if (in_array(($result['reason'] ?? ''), $techReasons, true)) {
             Storage::disk('public')->delete($tempPath);
             return $this->handleAiFailure('media', $result, true);
         }
 
-        // Not related
         if (!($result['related'] ?? false) || empty($result['category_id'])) {
             Storage::disk('public')->delete($tempPath);
 
@@ -224,7 +280,6 @@ class ContentController extends Controller
             ]);
         }
 
-        // Move to final
         $finalPath = str_replace('temp/employee_stories', 'employee_stories', $tempPath);
         Storage::disk('public')->move($tempPath, $finalPath);
 
@@ -244,14 +299,12 @@ class ContentController extends Controller
 
     private function handleAiFailure(string $field, array $result, bool $withInput = false)
     {
-        // Log details for debugging (not shown to user)
         Log::error('AI Guard failure', [
             'reason'      => $result['reason'] ?? null,
             'http_status' => $result['http_status'] ?? null,
             'http_body'   => $result['http_body'] ?? null,
         ]);
 
-        // Friendly messages
         $reason = $result['reason'] ?? 'unknown';
 
         $msg = match ($reason) {
@@ -264,7 +317,6 @@ class ContentController extends Controller
         };
 
         $resp = back()->withErrors([$field => $msg]);
-
         return $withInput ? $resp->withInput() : $resp;
     }
 

@@ -493,3 +493,71 @@ input:focus,textarea:focus{
   transform:translateY(-1px);
   background:rgba(255,107,107,.28);
 }
+.feedStats{display:flex;gap:14px;margin-top:10px;color:rgba(255,255,255,.75);font-weight:600;font-size:13px}
+.statItem{display:inline-flex;align-items:center;gap:6px}
+/* clickable stat button */
+.statBtn{
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+.statBtn:hover{ opacity: .85; text-decoration: underline; }
+
+/* modal */
+.cModal.hidden{ display:none; }
+.cModal{ position:fixed; inset:0; z-index:9999; }
+.cModalOverlay{ position:absolute; inset:0; background:rgba(0,0,0,.55); }
+.cModalBox{
+  position:relative;
+  width:min(620px, 92vw);
+  margin:8vh auto 0;
+  background: #12183a;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  overflow:hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+}
+.cModalHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.cModalTitle{ font-weight:700; color:#eaf0ff; }
+.cModalClose{
+  border:0;
+  background:transparent;
+  color:#eaf0ff;
+  font-size:18px;
+  cursor:pointer;
+  padding:4px 8px;
+  border-radius:10px;
+}
+.cModalClose:hover{ background: rgba(255,255,255,.08); }
+
+.cModalBody{
+  max-height: 55vh;
+  overflow:auto;
+  padding: 14px 16px;
+}
+
+.cItem{
+  padding: 12px 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,.03);
+}
+.cTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+}
+.cName{ font-weight:700; }
+.cDate{ opacity:.7; font-size:12px; }
+.cText{ opacity:.95; }

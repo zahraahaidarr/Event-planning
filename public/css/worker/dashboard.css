@@ -449,3 +449,47 @@ body{
     min-width: 0;
   }
 }
+
+
+
+.rating-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1c2250, #12162c);
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+}
+
+.rating-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+}
+
+.rating-score {
+  font-weight: 900;
+  font-size: 16px;
+  color: #ffd166;
+}
+
+.rating-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #9aa3ff;
+}
+
+.stars {
+  margin-top: 10px;
+  font-size: 20px;
+  letter-spacing: 4px;
+}
+
+.star {
+  color: #3a3f66;
+}
+
+.star.filled {
+  color: #ffd166;
+  text-shadow: 0 0 10px rgba(255, 209, 102, 0.6);
+}

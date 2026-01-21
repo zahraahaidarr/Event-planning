@@ -7,11 +7,7 @@
 
   // ---- Demo fallback if backend didn't pass employees ----
   const fallback = [
-    { id: 1, name: "Ahmed Al-Rashid",   email: "ahmed.rashid@volunteerhub.com",   role: "Event Coordinator",      status: "active",    eventsManaged: 24, joinDate: "2024-06-15" },
-    { id: 2, name: "Fatima Hassan",     email: "fatima.hassan@volunteerhub.com", role: "Volunteer Manager",      status: "suspended", eventsManaged: 18, joinDate: "2024-07-20" },
-    { id: 3, name: "Mohammed Ali",      email: "mohammed.ali@volunteerhub.com",  role: "Event Coordinator",      status: "active",    eventsManaged: 15, joinDate: "2024-08-10" },
-    { id: 4, name: "Sarah Abdullah",    email: "sarah.abdullah@volunteerhub.com",role: "Communications Manager", status: "pending",   eventsManaged: 8,  joinDate: "2024-09-05" }
-  ];
+   ];
 
   // Master list (source after server search), and current filtered list
   let employeesAll = (Array.isArray(window.initialEmployees) && window.initialEmployees.length)

@@ -132,7 +132,7 @@
 
       {{-- POSTS --}}
       <section class="tabPane" id="tab-posts">
-        <form class="form" method="POST" action="{{ route('content.posts.store') }}" enctype="multipart/form-data">
+<form id="postForm" class="form" method="POST" action="{{ route('content.posts.store') }}" enctype="multipart/form-data">
           @csrf
 
           <div class="grid">
@@ -144,7 +144,7 @@
 
     @forelse($events as $ev)
       <option value="{{ $ev->event_id }}" {{ old('event_id') == $ev->event_id ? 'selected' : '' }}>
-        {{ $ev->title }} (ID: {{ $ev->event_id }})
+        {{ $ev->title }} 
       </option>
     @empty
       {{-- no options --}}
@@ -167,7 +167,7 @@
             </div>
 
             <div class="field full">
-              <label>Content</label>
+              <label>Caption</label>
               <textarea name="content" rows="5" placeholder="Write something..." required></textarea>
             </div>
           </div>
@@ -181,7 +181,7 @@
 
       {{-- REELS --}}
       <section class="tabPane hidden" id="tab-reels">
-        <form class="form" method="POST" action="{{ route('content.reels.store') }}" enctype="multipart/form-data">
+<form id="reelForm" class="form" method="POST" action="{{ route('content.reels.store') }}" enctype="multipart/form-data">
           @csrf
 
           <div class="grid">
@@ -205,7 +205,7 @@
 
       {{-- STORIES --}}
       <section class="tabPane hidden" id="tab-stories">
-        <form class="form" method="POST" action="{{ route('content.stories.store') }}" enctype="multipart/form-data">
+<form id="storyForm" class="form" method="POST" action="{{ route('content.stories.store') }}" enctype="multipart/form-data">
           @csrf
 
           <div class="grid">

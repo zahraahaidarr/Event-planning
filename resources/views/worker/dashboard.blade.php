@@ -142,7 +142,7 @@
         <div class="kpi"><small>Upcoming Events</small><div class="value">{{ $upcomingEventsCount }}</div><span class="pill">Next 14 days</span></div>
         <div class="kpi"><small>Reserved</small><div class="value">{{ $reservedCount }}</div><span class="pill">Confirmed</span></div>
         <div class="kpi"><small>Completed</small><div class="value">{{ $completedAwaitingReviewCount }}</div><span class="pill">Event finished</span></div>
-        <div class="kpi"><small>Hours Volunteered</small><div class="value">{{ rtrim(rtrim(number_format($hoursVolunteered, 1), '0'), '.') }}h</div><span class="pill">Approved hours</span></div>
+        <div class="kpi"><small>Hours Worked</small><div class="value">{{ rtrim(rtrim(number_format($hoursVolunteered, 1), '0'), '.') }}h</div><span class="pill">Approved hours</span></div>
       </section>
 
       {{-- This week --}}
@@ -233,11 +233,42 @@
 
       </div>
     </div>
+<div class="rating-box">
 
-    <div style="margin-top:12px; display:flex; gap:8px">
-      <a class="btn small" href="{{ route('worker.reservations') }}">My Reservations</a>
-      <a class="btn small secondary" href="{{ route('worker.submissions') }}">Submit Report</a>
+  <div class="rating-head">
+    <strong>My Rating</strong>
+
+    @if(isset($avgWorkerRating) && $avgWorkerRating !== null)
+      <span class="rating-score">{{ number_format($avgWorkerRating, 2) }}/5</span>
+
+    @else
+      <span class="meta">—</span>
+    @endif
+  </div>
+
+  @if(isset($avgWorkerRating) && $avgWorkerRating !== null)
+    <div class="rating-sub">
+      Average rating from clients
     </div>
+
+    @php
+      $full = (int) floor($avgWorkerRating);
+    @endphp
+
+    <div class="stars">
+      @for ($i = 1; $i <= 5; $i++)
+        <span class="star {{ $i <= $full ? 'filled' : '' }}">★</span>
+      @endfor
+    </div>
+  @else
+    <div class="rating-sub">
+      No ratings yet
+    </div>
+  @endif
+
+</div>
+
+
   </div>
 
   {{-- ✅ NEXT EVENT (MOVED HERE) --}}

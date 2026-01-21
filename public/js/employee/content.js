@@ -13,16 +13,35 @@
   const storiesList = document.getElementById('storiesList');
 
   // ---------------- Tabs ----------------
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+ // ---------------- Tabs ----------------
+const tabs = Array.from(document.querySelectorAll('.tab'));
+const panes = Array.from(document.querySelectorAll('.tabPane'));
 
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.tabPane').forEach(p => p.classList.add('hidden'));
-      document.getElementById('tab-' + tab)?.classList.remove('hidden');
-    });
-  });
+const setActiveTab = (tabName, pushUrl = true) => {
+  tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  panes.forEach(p => p.classList.toggle('hidden', p.id !== ('tab-' + tabName)));
+
+  // remember
+  localStorage.setItem('content_active_tab', tabName);
+
+  // keep in URL so refresh keeps it
+  if (pushUrl) {
+    const u = new URL(window.location.href);
+    u.searchParams.set('tab', tabName);
+    window.history.replaceState({}, '', u.toString());
+  }
+};
+
+// click tab
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+});
+
+// on load: URL tab > localStorage > default posts
+const urlTab = new URL(window.location.href).searchParams.get('tab');
+const savedTab = localStorage.getItem('content_active_tab');
+setActiveTab(urlTab || savedTab || 'posts', false);
+
 
   // ---------------- Helpers ----------------
   const esc = (s) => (s ?? '').toString()
@@ -331,6 +350,24 @@
       storiesList.innerHTML = emptyBox('Network error while loading stories.');
     }
   };
+// ---------------- Remember tab on submit ----------------
+document.getElementById('postForm')?.addEventListener('submit', () => {
+  localStorage.setItem('content_active_tab', 'posts');
+});
+
+document.getElementById('reelForm')?.addEventListener('submit', () => {
+  localStorage.setItem('content_active_tab', 'reels');
+  const u = new URL(window.location.href);
+  u.searchParams.set('tab', 'reels');
+  window.history.replaceState({}, '', u.toString());
+});
+
+document.getElementById('storyForm')?.addEventListener('submit', () => {
+  localStorage.setItem('content_active_tab', 'stories');
+  const u = new URL(window.location.href);
+  u.searchParams.set('tab', 'stories');
+  window.history.replaceState({}, '', u.toString());
+});
 
   load();
 })();

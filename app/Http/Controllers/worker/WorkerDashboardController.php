@@ -11,8 +11,9 @@ use App\Models\Announcement;
 use App\Models\WorkerReservation;
 use App\Models\Event;
 
-use App\Models\EventCategory; // event_categories: category_id, name
-use App\Models\RoleType;      // role_types: role_type_id, name
+use App\Models\EventCategory; 
+use App\Models\RoleType;      
+use Illuminate\Support\Facades\DB;
 
 class WorkerDashboardController extends Controller
 {
@@ -56,6 +57,14 @@ class WorkerDashboardController extends Controller
             ->where('status', 'COMPLETED')
             ->whereNotNull('credited_hours')
             ->sum('credited_hours');
+$avgWorkerRating = DB::table('post_event_submissions')
+    ->where('worker_id', $workerId)
+    ->where('status', 'approved')          // ✅ add this
+    ->whereNotNull('worker_rating')
+    ->avg('worker_rating');
+
+$avgWorkerRating = $avgWorkerRating !== null ? round($avgWorkerRating, 2) : null; // or 1 decimal if you want
+
 
         // =========================
         // Filters data
@@ -179,7 +188,8 @@ $workerId = $worker->worker_id;
             'roleTypes',
             'locations',
             'recentAnnouncements',
-            'nextReservation'
+            'nextReservation',
+            'avgWorkerRating'
         ));
     }
 }

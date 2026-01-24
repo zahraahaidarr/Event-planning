@@ -176,7 +176,7 @@
                 <input type="text"
                        id="searchInput"
                        name="search"
-                       placeholder="Volunteer name..."
+                       placeholder="worker name..."
                        value="{{ $filters['search'] ?? '' }}">
             </div>
         </form>

@@ -101,16 +101,21 @@ $eventsMonthlyChart = [
             ->where('s.status', 'pending')
             ->count();
 // --- Upcoming Events list (real data) ---
+$rolesTotals = DB::table('work_roles')
+    ->select('event_id', DB::raw('SUM(required_spots) as required_spots'))
+    ->groupBy('event_id');
+
+$reservedTotals = DB::table('workers_reservations')
+    ->where('status', 'RESERVED')
+    ->select('event_id', DB::raw('COUNT(DISTINCT worker_id) as assigned_count'))
+    ->groupBy('event_id');
+
 $upcomingEvents = DB::table('events as e')
-    ->leftJoin('work_roles as wr', 'wr.event_id', '=', 'e.event_id')
-->leftJoin('workers_reservations as res', function ($join) {
-    $join->on('res.event_id', '=', 'e.event_id')
-         ->where('res.status', 'RESERVED');
-})
+    ->leftJoinSub($rolesTotals, 'rt', 'rt.event_id', '=', 'e.event_id')
+    ->leftJoinSub($reservedTotals, 'rs', 'rs.event_id', '=', 'e.event_id')
     ->whereIn('e.created_by', $createdByIds)
     ->whereNotNull('e.starts_at')
     ->where('e.starts_at', '>', $now)
-    ->groupBy('e.event_id', 'e.title', 'e.location', 'e.starts_at', 'e.ends_at', 'e.status')
     ->selectRaw('
         e.event_id,
         e.title,
@@ -118,12 +123,13 @@ $upcomingEvents = DB::table('events as e')
         e.starts_at,
         e.ends_at,
         e.status,
-        COALESCE(SUM(DISTINCT wr.required_spots), 0) as required_spots,
-        COUNT(DISTINCT res.reservation_id) as assigned_count
+        COALESCE(rt.required_spots, 0) as required_spots,
+        COALESCE(rs.assigned_count, 0) as assigned_count
     ')
     ->orderBy('e.starts_at', 'asc')
     ->limit(4)
     ->get();
+
 
 // Helper: add badge & progress values
 $upcomingEvents = $upcomingEvents->map(function ($ev) {

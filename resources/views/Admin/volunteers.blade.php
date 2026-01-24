@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Volunteer Oversight - Admin Portal</title>
+    <title>Worker Oversight - Admin Portal</title>
 <script src="{{ asset('js/preferences.js') }}" defer></script>
     <link rel="stylesheet" href="{{ asset('css/Admin/volunteers.css') }}">
     <script>window.initialVolunteers = @json($volunteers ?? []);</script>
@@ -91,7 +91,7 @@
     <main class="main-content">
         <div class="header">
             <div class="header-left">
-                <h1>Volunteer Oversight</h1>
+                <h1>Worker Oversight</h1>
                 <p>Monitor and manage Worker accounts</p>
             </div>
            

@@ -315,10 +315,7 @@ function renderApplications() {
             <span class="info-value">${app.phone ?? '-'}</span>
           </div>
 
-          <div class="info-item">
-            <span class="info-label">Credited hours</span>
-            <span class="info-value">${hours.toFixed(2)} h</span>
-          </div>
+          
 
           <div class="info-item">
             <span class="info-label">Previous Events</span>

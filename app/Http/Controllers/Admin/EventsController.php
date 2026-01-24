@@ -29,7 +29,9 @@ class EventsController extends Controller
 
     // Base query: load category + count reservations
     $eventsQuery = Event::with('category')
-    ->withCount('reservations')
+    ->withCount([
+        'reservations as reserved_count' => fn($q) => $q->where('status', 'RESERVED'),
+    ])
     ->withCount([
         'reservations as completed_count' => fn($q) => $q->where('status', 'COMPLETED'),
         'reservations as cancelled_count' => fn($q) => $q->where('status', 'CANCELLED'),
@@ -60,6 +62,7 @@ class EventsController extends Controller
         'total_spots',
         'starts_at',
         'created_at',
+        'ends_at',
     ]);
 
     $categories = EventCategory::orderBy('name')
@@ -70,21 +73,7 @@ class EventsController extends Controller
 
 $eventsPayload = $events->map(function ($e) {
 
-    // ✅ Default: Published
-    $derivedStatus = 'PUBLISHED';
 
-    // ✅ Rule 1: if event ended (time passed) AND no reservations -> CANCELLED
-    if ($e->ends_at && now()->gt($e->ends_at) && (int) $e->reservations_count === 0) {
-        $derivedStatus = 'CANCELLED';
-    }
-    // ✅ Rule 2: if reservations has CANCELLED -> CANCELLED
-    elseif ((int) $e->cancelled_count > 0) {
-        $derivedStatus = 'CANCELLED';
-    }
-    // ✅ Rule 3: if reservations has COMPLETED -> COMPLETED
-    elseif ((int) $e->completed_count > 0) {
-        $derivedStatus = 'COMPLETED';
-    }
 
     return [
         'id'         => $e->event_id,
@@ -92,9 +81,9 @@ $eventsPayload = $events->map(function ($e) {
         'category'   => optional($e->category)->name ?? '-',
         'date'       => optional($e->starts_at)->format('Y-m-d'),
         'location'   => $e->location,
-        'status'     => $derivedStatus,
+        'status'     => $e->status,
         'totalSpots' => $e->total_spots ?? 0,
-        'applicants' => (int) $e->reservations_count,
+        'applicants' => (int) ($e->reserved_count ?? 0),
     ];
 });
 

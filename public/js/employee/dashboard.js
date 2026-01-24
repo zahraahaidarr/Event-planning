@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="progress-bar">
                                     <div class="progress-fill" style="width:${safePct}%"></div>
                                 </div>
-                                <span>${done}/${total} volunteers</span>
+                                <span>${done}/${total} workers</span>
                             </div>
                         </div>
 

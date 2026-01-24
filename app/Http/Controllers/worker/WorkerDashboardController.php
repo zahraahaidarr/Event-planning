@@ -174,6 +174,11 @@ $worker = $user->worker()->with('roleType')->first();
 if (!$worker) {
     abort(403, 'Worker profile not found for this user.');
 }
+$completedCount = WorkerReservation::query()
+    ->where('worker_id', $workerId)
+    ->where('status', 'COMPLETED')
+    ->count();
+
 
 $workerId = $worker->worker_id;
 
@@ -189,7 +194,9 @@ $workerId = $worker->worker_id;
             'locations',
             'recentAnnouncements',
             'nextReservation',
-            'avgWorkerRating'
+            'avgWorkerRating',
+            'completedCount'
+
         ));
     }
 }

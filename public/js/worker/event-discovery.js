@@ -329,7 +329,7 @@ function openEventModal(eventOrId) {
 
     body.innerHTML = `
         <img src="${selectedEvent.image}" alt="${selectedEvent.title}"
-             style="width:100%;border-radius:var(--radius-md);margin-bottom:16px;">
+             style="width:100%;border-radius:var(--radius-md);margin-bottom:16px;"class="modal-event-image">
         <h3 style="margin-bottom:8px;">${selectedEvent.title}</h3>
         <p style="color:var(--text-secondary);margin-bottom:16px;">${selectedEvent.description}</p>
 

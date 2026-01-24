@@ -141,7 +141,7 @@
       <section class="metrics" aria-label="Key metrics">
         <div class="kpi"><small>Upcoming Events</small><div class="value">{{ $upcomingEventsCount }}</div><span class="pill">Next 14 days</span></div>
         <div class="kpi"><small>Reserved</small><div class="value">{{ $reservedCount }}</div><span class="pill">Confirmed</span></div>
-        <div class="kpi"><small>Completed</small><div class="value">{{ $completedAwaitingReviewCount }}</div><span class="pill">Event finished</span></div>
+        <div class="kpi"><small>Completed</small><div class="value">{{ $completedCount  }}</div><span class="pill">Event finished</span></div>
         <div class="kpi"><small>Hours Worked</small><div class="value">{{ rtrim(rtrim(number_format($hoursVolunteered, 1), '0'), '.') }}h</div><span class="pill">Approved hours</span></div>
       </section>
 

@@ -43,7 +43,6 @@ class AiEventGuard
             ];
         }
 
-        // ---------- prompt ----------
         $prompt = <<<TEXT
 You are a strict classifier for an events platform.
 
@@ -62,7 +61,6 @@ User content:
 $text
 TEXT;
 
-        // ✅ correct content types: input_text + input_image
         $contentParts = array_values(array_filter([
             ["type" => "input_text", "text" => $prompt],
             $imagePart,

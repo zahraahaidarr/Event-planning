@@ -131,23 +131,20 @@ public function index()
  public function setStatus($id, Request $request)
     {
         $request->validate([
-            'status' => 'required|string|in:ACTIVE,SUSPENDED', // only these two from UI
+            'status' => 'required|string|in:ACTIVE,SUSPENDED', 
         ]);
 
-        // Load employee + linked user
+        
         $employee = Employee::with('user:id,status')->find($id);
         if (!$employee || !$employee->user) {
             return response()->json(['ok' => false, 'message' => 'Employee or user not found'], Response::HTTP_NOT_FOUND);
         }
 
         DB::transaction(function () use ($employee, $request) {
-            // Single source of truth on users.status
-            $employee->user->status = $request->input('status'); // ACTIVE | SUSPENDED
+            
+            $employee->user->status = $request->input('status'); 
             $employee->user->save();
 
-            // (Optional) mirror a column on employees table if you keep one:
-            // $employee->status = strtolower($request->input('status')); // active/suspended
-            // $employee->save();
         });
 
          Notify::to(
@@ -160,9 +157,6 @@ public function index()
 
         return response()->json(['ok' => true, 'message' => 'Status updated.']);
     }
-
-    // DELETE /admin/employees/{id}
- // make sure this is at the top with the other uses
 
 public function destroy($id)
 {

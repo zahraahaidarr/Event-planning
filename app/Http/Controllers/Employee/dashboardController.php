@@ -116,6 +116,7 @@ $upcomingEvents = DB::table('events as e')
     ->whereIn('e.created_by', $createdByIds)
     ->whereNotNull('e.starts_at')
     ->where('e.starts_at', '>', $now)
+        ->whereNotIn('e.status', ['CANCELLED', 'COMPLETED'])
     ->selectRaw('
         e.event_id,
         e.title,
